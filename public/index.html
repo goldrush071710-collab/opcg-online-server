@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Multiplayer V2</title>
+    <title>OPCG Master Engine - Live Multiplayer</title>
     <style>
         :root { --card-w: 75px; --card-h: 105px; --leader-w: 100px; --leader-h: 140px; --don-w: 60px; --don-h: 84px; --side-w: 250px; --op-blue: #0088cc; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #080808; color: #f0f0f0; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; user-select: none; }
@@ -12,22 +12,28 @@
         
         .board-section { display: grid; grid-template-columns: 80px 120px 1fr 80px; gap: 8px; background: #151515; padding: 10px; border-radius: 12px; border: 2px solid #222; position: relative; }
         
-        /* PLAYER LAYOUT (Front Line at Top) */
+        /* PLAYER LAYOUT (Front Line at Top of my section) */
         #my-board { grid-template-rows: auto auto auto; }
         #my-board .char-zone { grid-row: 1; }
         #my-board .stage-zone { grid-row: 2; }
         #my-board .don-zone { grid-row: 3; }
         #my-board .leader-zone { grid-row: 1 / 3; }
         #my-board .life-zone { grid-row: 1 / 3; }
+        #my-board .drop-deck { grid-row: 1; }
+        #my-board .drop-trash { grid-row: 2; }
+        #my-board .don-deck { grid-row: 3; }
 
-        /* OPPONENT LAYOUT (Flipped: Front Line at Bottom) */
+        /* OPPONENT LAYOUT (Flipped: Front Line at Bottom of their section) */
         #opp-board { grid-template-rows: auto auto auto; border-color: #c0392b; }
         #opp-board .don-zone { grid-row: 1; }
         #opp-board .stage-zone { grid-row: 2; }
         #opp-board .char-zone { grid-row: 3; }
         #opp-board .leader-zone { grid-row: 2 / 4; }
         #opp-board .life-zone { grid-row: 2 / 4; }
-        #opp-board .card { pointer-events: none; }
+        #opp-board .drop-deck { grid-row: 3; }
+        #opp-board .drop-trash { grid-row: 2; }
+        #opp-board .don-deck { grid-row: 1; }
+        #opp-board .card { pointer-events: none; } /* Cant touch opponent cards */
 
         .slot { border: 2px dashed #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px; text-transform: uppercase; text-align: center; flex-direction: column; position: relative; min-height: var(--card-h); }
         .flex-zone { display: flex; gap: 8px; padding: 8px; justify-content: flex-start; align-items: center; border: 2px dashed #333; border-radius: 8px; position: relative; flex-wrap: wrap; min-height: 100px; }
@@ -36,6 +42,8 @@
         .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; cursor: grab; border: 1px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 20; transition: transform 0.2s ease, filter 0.2s; background-color: #222; }
         .leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 10 !important; flex-shrink: 0; }
+        #hand-bar .card { cursor: pointer; }
+        .life-zone .card { position: absolute !important; cursor: grab; z-index: 20;}
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
@@ -45,49 +53,93 @@
         .rush-tag { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f39c12; color: black; padding: 2px; border-radius: 4px; font-size: 12px; z-index: 45; }
 
         #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 0; height: 130px; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
+
         button { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: var(--op-blue); }
         .stat-card { background: #000; padding: 8px; border-radius: 6px; border: 1px solid #222; text-align: center; font-size: 12px; font-weight: bold; }
+        
+        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 160px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
+        #context-menu div { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #222; font-size: 11px; }
+        #context-menu div:hover { background: var(--op-blue); }
+
+        #home-screen { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;}
+        .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center;}
+        
+        #inspector { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100000; display: none; padding: 50px; overflow-y: auto; pointer-events: auto;}
         #zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999999; display: none; align-items: center; justify-content: center; cursor: pointer; }
         #zoom-img { height: 75vh; max-width: 90vw; object-fit: contain; border: 4px solid var(--op-blue); border-radius: 15px; }
+        
+        #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.2); z-index: 89999; display: none; pointer-events: none; }
+        #select-msg { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto;}
+        body.select-mode { cursor: crosshair !important; }
+        body.select-mode .card { outline: 3px dashed #ffcc00; cursor: crosshair !important; pointer-events: auto !important; }
     </style>
 </head>
 <body>
 
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
-        <h2 style="color:var(--op-blue);">OPCG Multiplayer</h2>
+        <h2 style="margin-top:0; color:var(--op-blue);">OPCG Multiplayer</h2>
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button onclick="createLobby()">CREATE LOBBY</button>
-            <button onclick="showJoinLobby()">JOIN LOBBY</button>
+            <button onclick="createLobby()" style="flex:1; padding: 15px; font-size:14px; background:#2ecc71;">CREATE LOBBY</button>
+            <button onclick="showJoinLobby()" style="flex:1; padding: 15px; font-size:14px; background:#e67e22;">JOIN LOBBY</button>
         </div>
     </div>
+
     <div class="menu-box" id="menu-join" style="display:none;">
-        <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE">
-        <button onclick="joinLobby()">JOIN</button>
+        <h2 style="margin-top:0; color:#e67e22;">Join Lobby</h2>
+        <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="width:80%; padding:10px; font-size:20px; text-align:center; text-transform:uppercase; margin-bottom:15px; background:#000; color:#fff; border:1px solid #444;">
+        <br>
+        <button onclick="joinLobby()" style="width:80%; background:#e67e22;">JOIN</button>
     </div>
+
     <div class="menu-box" id="menu-deck" style="display:none;">
-        <h2>Lobby: <span id="display-room-code">----</span></h2>
-        <p id="lobby-status">Waiting...</p>
-        <button onclick="selectDeck('Franky')" id="btn-select-franky" disabled>SELECT FRANKY DECK</button>
+        <h2 style="margin-top:0; color:var(--op-blue);">Lobby Code: <span id="display-room-code" style="color:#e74c3c;">----</span></h2>
+        <p id="lobby-status">Waiting for opponent to join...</p>
+        <hr style="border-color:#333; margin:20px 0;">
+        <div id="deck-list">
+            <div style="padding:10px; background:#222; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                <b>Franky Pro Deck</b> 
+                <button onclick="selectDeck('Franky Pro Deck')" id="btn-select-franky" disabled>SELECT</button>
+            </div>
+        </div>
     </div>
 </div>
 
+<div id="select-overlay"></div>
+<div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
+
 <div id="sidebar">
-    <div class="stat-card" style="background:#2c3e50; color:#fff;">OPP DON!!: <span id="opp-don">0</span></div>
-    <div class="stat-card">DECK: <span id="deck-count">0</span> | TRASH: <span id="trash-count">0</span></div>
-    <div class="stat-card" style="border-color:#e74c3c;">LIFE: <span id="life-count">0</span></div>
+    <div class="stat-card" style="background:#2c3e50; margin-bottom:5px; color:#fff;">OPP DON!!: <span id="opp-don">0</span></div>
+    
+    <div style="display:flex; gap:5px;">
+        <div class="stat-card" style="flex:1; cursor:pointer;" onclick="openInspector('deck')">DECK: <span id="deck-count">0</span></div>
+        <div class="stat-card" style="flex:1; cursor:pointer;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
+    </div>
+    <div class="stat-card" style="border-color:#e74c3c; margin-bottom: 5px;">LIFE: <span id="life-count">0</span></div>
+    
+    <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px;">+1 LIFE FROM DECK</button>
+    <button onclick="resetOncePerGame()" style="background:#8e44ad; border-color:#fff;">RESET ONCE PER GAME</button>
+    <hr style="width:100%; border:0; border-top:1px solid #333;">
+    
     <button onclick="endTurn()" style="background:#2980b9; height: 50px;">END TURN</button>
-    <button onclick="spawnDon()">+ DON!!</button>
-    <button onclick="killDon()">- DON!!</button>
-    <button onclick="resetOncePerGame()" style="background:#8e44ad;">RESET ONCE PER GAME</button>
+    <div style="display:flex; gap:5px; margin-top:5px;">
+        <button onclick="spawnDonAction()" style="flex:1">+ DON!!</button>
+        <button onclick="killDon()" style="flex:1; background:#e67e22">- DON!!</button>
+    </div>
 </div>
 
 <div id="viewport">
     <div id="opp-board" class="board-section">
-        <div id="opp-don-deck" class="slot don-deck card-back"></div>
+        <div class="opp-hud" style="position: absolute; top: -15px; right: 15px; background: #c0392b; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; z-index: 50;">Opponent Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
+        
+        <div id="opp-don-deck" class="slot don-deck card-back">DON!!<br><span id="opp-don-deck-count" style="font-size:18px;">10</span></div>
         <div id="opp-don-zone" class="flex-zone don-zone" data-label="Cost Area"></div>
-        <div id="opp-stage-zone" class="flex-zone stage-zone" data-label="Stage Area"></div>
+        <div id="opp-stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
         <div id="opp-char-zone-front" class="flex-zone char-zone" data-label="Front Line"></div>
+        
+        <div id="opp-drop-deck" class="slot drop-deck card-back">Deck</div>
+        <div id="opp-drop-trash" class="slot drop-trash">Trash</div>
         <div id="opp-leader-zone" class="slot leader-zone">Leader</div>
         <div id="opp-life-zone" class="slot life-zone">Life</div>
     </div>
@@ -96,88 +148,334 @@
         <div id="life-zone" class="slot life-zone">Life</div>
         <div id="leader-zone" class="slot leader-zone">Leader</div>
         <div id="char-zone-front" class="flex-zone char-zone" data-label="Front Line"></div>
-        <div id="stage-zone" class="flex-zone stage-zone" data-label="Stage Area"></div>
-        <div id="don-deck" class="slot don-deck card-back"></div>
+        <div id="stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
+        
+        <div id="drop-deck" class="slot drop-deck card-back">Deck</div>
+        <div id="drop-trash" class="slot drop-trash">Trash</div>
+        
+        <div id="don-deck" class="slot don-deck card-back">DON!!<br><span id="don-deck-count" style="font-size:18px;">10</span></div>
         <div id="don-zone" class="flex-zone don-zone" data-label="Cost Area"></div>
     </div>
 </div>
 
 <div id="hand-bar"></div>
 <div id="context-menu"></div>
-<div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img"></div>
+<div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
+<div id="inspector">
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h2 id="insp-title" style="margin:0; color:var(--op-blue);">Inspector</h2>
+        <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px;">CLOSE</button>
+    </div>
+    <div id="insp-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px;"></div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
+
 <script>
-    const socket = io();
+    const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
-    // FULL CARD DATABASE RESTORED
+    // FULL CARD DB (Gold Standard)
     const CARD_DB = {
-        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
-        "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Char)", type: "Character", cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true },
-        "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", cost: 11, traits: ["Straw Hat Pirates"], hasHandAction: true },
-        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasOnRest: true },
-        "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", cost: 3, traits: ["Straw Hat Crew"], hasAttack: true }
-        // ... (Remaining DB IDs remain standard)
+        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Cyborg", "Water Seven"], hasMain: true },
+        "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates", "Cyborg", "Water Seven"], hasOnPlay: true },
+        "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", cost: 3, traits: ["Water Seven"], hasOnPlay: true },
+        "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", cost: 5, traits: ["Straw Hat Pirates"], hasAttack: true },
+        "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", cost: 11, traits: ["Straw Hat Pirates", "Invention"], hasHandAction: true },
+        "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", cost: 1, traits: ["Straw Hat Crew"], hasOnPlay: true },
+        "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", cost: 3, traits: ["Straw Hat Crew"], hasAttack: true },
+        "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", cost: 5, traits: ["Straw Hat Crew"], hasOnPlay: true },
+        "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", cost: 4, traits: ["Alabasta"], hasOnPlay: true },
+        "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", cost: 8, traits: ["Roger Pirates"], hasOnPlay: true },
+        "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", cost: 3, traits: ["Straw Hat Pirates"] },
+        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
+        "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
+        "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
+        "https://i.imgur.com/L3W1rAw.png": { name: "Kurosai Fr-U IV", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
+        "https://i.imgur.com/NAjePQD.png": { name: "Shark Submerge III", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasAuto: true },
+        "https://i.imgur.com/cdHtYcm.png": { name: "Event 1", type: "Event", cost: 0, traits: ["Straw Hat Crew"] },
+        "https://i.imgur.com/A8Z5aKe.png": { name: "Event 2", type: "Event", cost: 0, traits: ["Straw Hat Crew"] }
     };
 
-    let DECK_ARR = [], TRASH_ARR = [], DON_DECK_COUNT = 10, OPP_DON = 0, turnNum = 1, isFirst = true, dragged = null;
+    const deckArray = [
+        "https://i.imgur.com/llnj5xT.png", 
+        ...Array(4).fill("https://i.imgur.com/2lEVHJP.png"),
+        ...Array(4).fill("https://i.imgur.com/f6TtmW9.png"),
+        ...Array(4).fill("https://i.imgur.com/bzg3Xpr.png"),
+        ...Array(2).fill("https://i.imgur.com/zmZCFVB.png"),
+        ...Array(4).fill("https://i.imgur.com/WCFtQ4V.png"),
+        ...Array(3).fill("https://i.imgur.com/5LAj93m.png"),
+        ...Array(4).fill("https://i.imgur.com/XzXandk.png"),
+        ...Array(4).fill("https://i.imgur.com/l16quan.png"),
+        ...Array(3).fill("https://i.imgur.com/gAedzn3.png"),
+        ...Array(2).fill("https://i.imgur.com/egPJ3rM.png"),
+        ...Array(2).fill("https://i.imgur.com/KdMSz8v.png"),
+        ...Array(2).fill("https://i.imgur.com/oULaM8n.png"),
+        ...Array(2).fill("https://i.imgur.com/YRa5DDx.png"),
+        ...Array(2).fill("https://i.imgur.com/L3W1rAw.png"),
+        ...Array(2).fill("https://i.imgur.com/NAjePQD.png"),
+        ...Array(3).fill("https://i.imgur.com/cdHtYcm.png"),
+        ...Array(3).fill("https://i.imgur.com/A8Z5aKe.png")
+    ];
 
-    // LIVE SYNC ENGINE
+    let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON = 0, isFirst = true;
+    let dragged = null, hovered = null, rightClickedCard = null;
+    let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
+    let selectConfig = null, SEARCH_ARR = [];
+
+    // ==========================================
+    // MULTIPLAYER SOCKET & SYNC LOGIC
+    // ==========================================
+    function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; }); }
+    function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
+    function joinLobby() {
+        const code = document.getElementById('room-code-input').value.trim();
+        socket.emit('join_room', code, (res) => {
+            if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = code; document.getElementById('lobby-status').innerText = "Connected! Select deck."; document.getElementById('btn-select-franky').disabled = false; }
+        });
+    }
+
+    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Select your deck."; document.getElementById('btn-select-franky').disabled = false; });
+    function selectDeck(deckName) { document.getElementById('btn-select-franky').innerText = "READY"; document.getElementById('btn-select-franky').disabled = true; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', deckName); }
+
+    // Independent Mulligan & Game Start
+    socket.on('game_start', (data) => {
+        document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst;
+        DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR);
+        
+        createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); 
+        for(let i=0; i<5; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } }
+        updateLifePositions();
+        for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); refreshStats();
+
+        setTimeout(() => {
+            if(confirm("Mulligan? (Return hand to deck, shuffle, draw 5)")) {
+                document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); });
+                shuffleArray(DECK_ARR);
+                for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true});
+            }
+            turnNum = 1; if(isFirst) { OPP_DON = 0; spawnDonLocal(); } else { OPP_DON = 1; spawnDonLocal(); spawnDonLocal(); }
+            alert(`Game Start! You are going ${isFirst ? 'FIRST' : 'SECOND'}.`);
+            saveState(); // FIRST SYNC AFTER MULLIGAN
+        }, 500);
+    });
+
+    // The Live Save Hook
     function saveState() {
-        const field = Array.from(document.querySelectorAll('#my-board .card')).map(c => ({
-            id: c.id, url: c.dataset.url, zone: c.parentElement.id,
-            rested: c.classList.contains('rested'), power: c.querySelector('.power-badge').innerText, 
-            pVis: c.querySelector('.power-badge').style.display, rush: c.querySelector('.rush-tag').style.display,
-            turnPlayed: c.dataset.turnPlayed
+        const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({
+            id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId,
+            rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), power: c.querySelector('.power-badge').innerText, pVis: c.querySelector('.power-badge').style.display, rush: c.querySelector('.rush-tag').style.display
         }));
-        socket.emit('board_update', { field, don: DON_DECK_COUNT, handCount: document.querySelectorAll('#hand-bar .card').length });
+        const activeDonCount = document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)').length;
+        
+        socket.emit('board_update', { deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, oppActiveDon: activeDonCount, field, handCount: document.querySelectorAll('#hand-bar .card').length });
         refreshStats();
     }
 
+    // Live Mirror Receiving
     socket.on('opponent_board_update', (s) => {
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
-            const map = {"char-zone-front":"opp-char-zone-front", "stage-zone":"opp-stage-zone", "leader-zone":"opp-leader-zone", "don-zone":"opp-don-zone", "life-zone":"opp-life-zone"};
-            const target = document.getElementById(map[d.zone]);
-            if(target) {
-                const c = createCard(d.url, 0, 0, { isOpponent: true, id: 'opp-'+d.id });
-                if(d.rested) c.classList.add('rested');
-                c.querySelector('.power-badge').innerText = d.power;
-                c.querySelector('.power-badge').style.display = d.pVis;
-                target.appendChild(c);
+            // MIRROR MAPPING: Opponent's zones are translated to the top board
+            const map = { "char-zone-front":"opp-char-zone-front", "stage-zone":"opp-stage-zone", "leader-zone":"opp-leader-zone", "don-zone":"opp-don-zone", "life-zone":"opp-life-zone", "drop-trash":"opp-drop-trash" };
+            const targetZoneId = map[d.zone] || d.zone;
+            const z = document.getElementById(targetZoneId);
+            
+            if(z) {
+                const c = createCard(d.url, 0, 0, { isOpponent: true, isLife: d.isLife==="true", isBack: d.back, id: 'opp-'+d.id });
+                if(d.rested) c.classList.add('rested'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
+                c.querySelector('.power-badge').innerText = d.power; c.querySelector('.power-badge').style.display = d.pVis; c.querySelector('.rush-tag').style.display = d.rush;
+                z.appendChild(c);
+                if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 20) + 'px'; }
             }
         });
+
+        // Mirror Attachments
+        document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => {
+             const p = document.getElementById(d.dataset.parentId);
+             if(p) {
+                 const r = p.getBoundingClientRect(); const vr = document.getElementById('opp-board').getBoundingClientRect();
+                 d.style.position = 'absolute'; d.style.left = (r.left - vr.left + 10) + 'px'; d.style.top = (r.top - vr.top - 15) + 'px'; d.style.zIndex = "15"; d.style.opacity = "0.5";
+                 const b = p.querySelector('.don-badge'); const count = document.querySelectorAll(`[data-parent-id="${p.id}"]`).length;
+                 b.innerText = count; b.style.display = count > 0 ? 'flex' : 'none';
+             }
+        });
+        
+        document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON = s.oppActiveDon; document.getElementById('opp-don').innerText = OPP_DON; 
     });
 
-    // SUMMONING SICKNESS & RULES ENGINE RESTORED
-    window.simulateAttack = function() {
-        const c = rightClickedCard;
-        if(c.dataset.turnPlayed == turnNum && c.querySelector('.rush-tag').style.display !== 'flex') {
-            alert("This character is still sleeping!"); return;
-        }
-        if(CARD_DB[c.dataset.url]?.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) spawnDon();
-        c.classList.add('rested'); saveState();
+    // ==========================================
+    // UI & DRAG LOGIC
+    // ==========================================
+    window.addEventListener('mousedown', (e) => { if(!e.target.closest('#context-menu') && !e.target.closest('#inspector')) hideMenu(); });
+    function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
+    
+    document.getElementById('drop-deck').onclick = () => drawCardAction();
+    document.getElementById('drop-deck').oncontextmenu = (e) => {
+        e.preventDefault(); if(DECK_ARR.length === 0) return;
+        const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+        menu.innerHTML = `<div onclick="drawCardAction(); hideMenu();">Draw 1 Card</div><div onclick="let v=parseInt(prompt('Search Top X?','5')); if(v) openSearch(v); hideMenu();">Search Top X</div>`;
     };
 
-    // INTERACTION HELPERS
-    function createCard(url, x, y, opts={}) {
-        const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-'+Date.now();
-        c.dataset.url = url; c.style.backgroundImage = `url('${url}')`;
-        c.innerHTML = `<div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`;
-        if(!opts.isOpponent) {
-            c.onmousedown = (e) => { if(e.button===0) dragged = c; };
-            c.onauxclick = (e) => { if(e.button===1) zoomCard(url); };
-            c.oncontextmenu = (e) => { e.preventDefault(); rightClickedCard=c; showMenu(e); };
+    window.addEventListener('mousemove', (e) => {
+        if (!dragged || selectConfig) return;
+        if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } }
+        if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 10) + 'px'; don.style.top = (e.clientY - offY - 20 - (i * 12)) + 'px'; don.style.zIndex = "4900"; }); }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        if (!dragged || selectConfig) return;
+        const c = dragged; dragged = null; 
+        if(!isDragging) { if(c.parentElement.id === 'hand-bar') playCardConfirm(c); return; }
+
+        c.style.zIndex = 20;
+        const trashR = document.getElementById('drop-trash').getBoundingClientRect(); const handR = document.getElementById('hand-bar').getBoundingClientRect(); const deckR = document.getElementById('drop-deck').getBoundingClientRect(); const lifeR = document.getElementById('life-zone').getBoundingClientRect();
+
+        if (isInside(e, trashR)) { moveToTrash(c); }
+        else if (isInside(e, handR)) { toHand(c); }
+        else if (isInside(e, deckR)) { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState();}
+        else if (isInside(e, lifeR)) { dropToLife(c); }
+        else if (c.dataset.isDon === "true") {
+            const target = Array.from(document.elementsFromPoint(e.clientX, e.clientY)).find(el => el.classList.contains('card') && el !== c && (CARD_DB[el.dataset.url]?.type === 'Character' || CARD_DB[el.dataset.url]?.type === 'Leader'));
+            if (target && !['hand-bar', 'life-zone'].includes(target.parentElement.id) && !target.id.includes('opp-')) { c.dataset.parentId = target.id; updateBadges(target.id); }
+            organizeDon(); saveState();
+        } else {
+            const orig = document.getElementById(c.dataset.origZone);
+            if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); }
         }
+    });
+
+    function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
+
+    function createCard(url, x, y, opts = {}) {
+        const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString();
+        c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`;
+        if (opts.isBack) c.classList.add('card-back');
+        if (!opts.isOpponent) bindCardEvents(c);
+        if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c);
         return c;
     }
 
-    function zoomCard(url) { document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; }
-    function spawnDon() { if(DON_DECK_COUNT>0) { DON_DECK_COUNT--; document.getElementById('don-zone').appendChild(createCard(DON_URL)); saveState(); } }
-    function refreshStats() { document.getElementById('deck-count').innerText = DECK_ARR.length; document.getElementById('life-count').innerText = document.querySelectorAll('#life-zone .card').length; }
+    function bindCardEvents(c) {
+        c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && c.dataset.isDon !== "true") return; offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; };
+        c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        c.oncontextmenu = (e) => {
+            e.preventDefault(); if(selectConfig) return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu');
+            menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+            let h = `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div><div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`;
+            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:000">Activate Main</div>`;
+            if (db?.hasAttack && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) {
+                const isSick = (c.dataset.turnPlayed == turnNum) && (c.querySelector('.rush-tag').style.display !== 'flex');
+                if(!isSick) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:fff">Attack</div>`; else h += `<div style="background:#555; color:#999; cursor:not-allowed;" title="Summoning Sickness">Attack (Sleeping)</div>`;
+            }
+            if (c.dataset.isLife === "true") h += `<div onclick="flipLife()">Flip Life</div><div onclick="takeLife()">Take to Hand</div>`;
+            if (c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`;
+            h += `<div onclick="detachDon()">Detach DON!!</div>`;
+            menu.innerHTML = h;
+        };
+        c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
+    }
+
+    // ==========================================
+    // GOLD STANDARD GAME LOGIC
+    // ==========================================
+    function playCardConfirm(c) { const db = CARD_DB[c.dataset.url]; if(!db) return; if(confirm(`Play ${db.name} for ${db.cost} DON!!?`)) { rightClickedCard = c; window.playCard(); } }
+    window.playCard = function(isFree = false) {
+        const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; hideMenu();
+        if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); if(activeDons.length < db.cost) { alert(`Need ${db.cost} active DON!!`); return; } }
+        executePlay(c, db, isFree);
+    }
+
+    function executePlay(c, db, isFree) {
+        if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); }
+        c.classList.remove('card-back'); c.dataset.isLife = "false"; c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; c.dataset.turnPlayed = turnNum;
+        if(db.type === 'Stage') { document.getElementById('stage-zone').appendChild(c); } else { const fz = document.getElementById('char-zone-front'); const bz = document.getElementById('stage-zone'); if(fz.children.length < 5) fz.appendChild(c); else bz.appendChild(c); }
+        saveState(); setTimeout(() => triggerOnPlay(c, db), 100);
+    }
+
+    function triggerOnPlay(cardEl, db) {
+        const hasLogic = ["Franky (Character)", "Nami", "Sanji & Pudding", "Bon Clay", "Gol D. Roger", "Brachio Tank V"].includes(db.name) && (db.hasOnPlay || db.type === 'Character');
+        if (!hasLogic) return; if(!confirm(`Activate On Play effect of ${db.name}?`)) return;
+
+        if(db.name === "Franky (Character)") {
+            const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).filter(s => CARD_DB[s.dataset.url]?.traits?.includes("Invention"));
+            if(stages.length > 0) { startSelection('rest_stage', 1, "Select Invention Stage to Rest", () => {}); } else { alert("No active Invention stages found!"); }
+        }
+        if(db.name === "Nami") { openSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"]); }
+        if(db.name === "Sanji & Pudding") { if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length <= OPP_DON) drawCardAction(); }
+        if(db.name === "Bon Clay") { spawnDonLocal(false); saveState(); }
+        if(db.name === "Gol D. Roger") { if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length >= 10 || OPP_DON >= 10) { applyPower(document.querySelector('#leader-zone .card'), 2000); saveState(); } }
+    }
+
+    window.activateMain = function() {
+        hideMenu(); const c = rightClickedCard; const db = CARD_DB[c.dataset.url];
+        if(c.classList.contains('rested')) { alert("Card is rested."); return; }
+        
+        if(db.type === "Stage" && db.traits?.includes("Invention")) {
+            if(document.body.dataset.merryUsed === "true") { alert("Once Per Game effect already used!"); return; }
+            const invs = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).filter(s => CARD_DB[s.dataset.url]?.traits?.includes("Invention"));
+            if(invs.length >= 5) {
+                const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { alert("General Franky is not in Deck."); return; }
+                if(confirm("Rest 5 Invention Stages to search General Franky?")) { document.body.dataset.merryUsed = "true"; invs.slice(0,5).forEach(s => s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); saveState(); }
+            } else { alert("Need 5 active Invention stages."); }
+        }
+    };
+
+    window.simulateAttack = function() {
+        hideMenu(); const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; 
+        if(db.name === "Zoro-juurou") { if(document.querySelectorAll('#life-zone .card').length <= 3) spawnDonLocal(false); }
+        c.classList.add('rested'); saveState();
+    }
+
+    function restCard(cardEl) { cardEl.classList.toggle('rested'); saveState(); }
+
+    // ==========================================
+    // UTILITIES & SYNC TRIGGERS
+    // ==========================================
+    window.endTurn = function() { turnNum++; document.querySelectorAll('#my-board .card').forEach(c => { c.classList.remove('rested'); delete c.dataset.parentId; delete c.dataset.spUsed; if(c.querySelector('.don-badge')) c.querySelector('.don-badge').style.display = 'none'; if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none'; if(c.querySelector('.power-badge')) { c.querySelector('.power-badge').innerText = '+0'; c.querySelector('.power-badge').style.display = 'none'; } }); spawnDonLocal(false); spawnDonLocal(false); drawCardAction(); organizeDon(); saveState(); }
+    window.moveToTrash = function(c) { deleteCardData(c); TRASH_ARR.push(c.dataset.url); c.remove(); saveState(); hideMenu(); }
+    window.flipLife = function() { rightClickedCard.classList.toggle('card-back'); hideMenu(); saveState(); };
+    window.takeLife = function() { toHand(rightClickedCard); hideMenu(); };
+    function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
+    window.dropToLife = function(c) { const s = prompt("Top or Bottom of Life? (t/b)", "t"); if(!s) return; c.dataset.isLife = "true"; c.classList.add('card-back'); c.style.position = 'absolute'; const z = document.getElementById('life-zone'); if(s.toLowerCase().startsWith("b")) z.prepend(c); else z.appendChild(c); updateLifePositions(); saveState(); }
+    function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
+    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 25) + 'px'; c.style.zIndex = 20 + i; }); }
     
-    // ... (Multiplayer Lobbies and Deck Setup Logic)
+    function organizeDon() {
+        const vr = document.getElementById('my-board').getBoundingClientRect();
+        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => {
+            if(d.dataset.parentId) { const p = document.getElementById(d.dataset.parentId); if(p) { const r = p.getBoundingClientRect(); d.style.position='absolute'; d.style.left=(r.left-vr.left+10)+'px'; d.style.top=(r.top-vr.top-15)+'px'; d.style.zIndex="15"; d.style.opacity="0.5"; } } 
+            else { document.getElementById('don-zone').appendChild(d); d.style.opacity = "1"; d.style.position="relative"; d.style.left="0"; d.style.top="0";}
+        });
+    }
+
+    function spawnDonLocal(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); organizeDon(); } }
+    window.spawnDonAction = function() { spawnDonLocal(false); saveState(); };
+    window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; saveState(); } };
+    window.drawCardAction = function() { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); saveState(); };
+    window.deckToLife = function() { if(DECK_ARR.length) { const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); updateLifePositions(); saveState(); } };
+    
+    function refreshStats() { document.getElementById('deck-count').innerText=DECK_ARR.length; document.getElementById('trash-count').innerText=TRASH_ARR.length; document.getElementById('life-count').innerText=document.querySelectorAll('#life-zone .card').length; document.getElementById('don-deck-count').innerText=DON_DECK_COUNT; }
+    function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
+    
+    window.onkeydown=(e)=>{ if(e.key.toLowerCase()==='r'&&hovered) { restCard(hovered); } };
+    window.setPower=(v)=>{ const p = rightClickedCard.querySelector('.power-badge'); if(v === 0) { p.innerText='+0'; p.style.display='none'; } else { const cur = parseInt(p.innerText.replace('+','')); p.innerText=`+${cur+v}`; p.style.display='flex'; } hideMenu(); saveState(); };
+    function applyPower(c,v){ const p=c.querySelector('.power-badge'); const cur=parseInt(p.innerText.replace('+','')); p.innerText=`+${cur+v}`; p.style.display='flex'; }
+    window.detachDon=()=>{ document.querySelectorAll(`[data-parent-id="${rightClickedCard.id}"]`).forEach(d=>delete d.dataset.parentId); updateBadges(rightClickedCard.id); organizeDon(); hideMenu(); saveState(); };
+    function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+    
+    // Selection Engine for Effects (Restored)
+    function startSelection(mode, max, message, callback) { selectConfig = { mode, max, current: [], callback }; document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; }
+    window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); selectConfig = null; }
+    function handleSelection(card) {
+        if(selectConfig.mode === 'rest_stage') { if(card.parentElement.id !== 'stage-zone' || !CARD_DB[card.dataset.url]?.traits?.includes("Invention") || card.classList.contains('rested')) { alert("Select active Invention stage."); return; } }
+        selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`;
+        if(selectConfig.current.length >= selectConfig.max) {
+            const completed = [...selectConfig.current];
+            if(selectConfig.mode === 'rest_stage') { completed[0].classList.add('rested'); saveState(); }
+            window.cancelSelection(); if(selectConfig?.callback) selectConfig.callback();
+        }
+    }
 </script>
 </body>
 </html>
