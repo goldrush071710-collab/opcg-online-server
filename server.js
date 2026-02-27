@@ -26,6 +26,10 @@ io.on('connection', (socket) => {
             rooms[roomId].p2 = socket.id;
             socket.join(roomId);
             socket.roomId = roomId;
+            
+            // FIX: Tell everyone in the room (Player 1) that Player 2 has arrived
+            io.to(roomId).emit('player_joined');
+            
             callback({ success: true });
         } else {
             callback({ success: false, msg: 'Room is full or does not exist.' });
@@ -40,7 +44,7 @@ io.on('connection', (socket) => {
         if (room.p1 === socket.id) room.p1Ready = true;
         if (room.p2 === socket.id) room.p2Ready = true;
 
-        // If both are ready, start the game and decide who goes first randomly
+        // Start the game if both are ready
         if (room.p1Ready && room.p2Ready) {
             const p1GoesFirst = Math.random() > 0.5;
             io.to(room.p1).emit('game_start', { isFirst: p1GoesFirst });
@@ -48,7 +52,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Sync board movements to the other player
+    // Sync board movements
     socket.on('board_update', (boardState) => {
         if(socket.roomId) {
             socket.to(socket.roomId).emit('opponent_board_update', boardState);
@@ -56,15 +60,14 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('Player disconnected:', socket.id);
         if(socket.roomId && rooms[socket.roomId]) {
             socket.to(socket.roomId).emit('opponent_disconnected');
-            delete rooms[socket.roomId]; // Close the room if someone leaves
+            delete rooms[socket.roomId];
         }
     });
 });
 
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-    console.log(`Server is running! Open http://localhost:${PORT} in your browser.`);
+    console.log(`Server is running!`);
 });
