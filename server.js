@@ -42,11 +42,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Mirror Syncing: Send my update to the other person
     socket.on('board_update', (boardState) => {
-        if(socket.roomId) {
-            socket.to(socket.roomId).emit('opponent_board_update', boardState);
-        }
+        if(socket.roomId) socket.to(socket.roomId).emit('opponent_board_update', boardState);
+    });
+
+    // NEW: Turn Relay
+    socket.on('pass_turn', () => {
+        if(socket.roomId) socket.to(socket.roomId).emit('turn_passed');
     });
 
     socket.on('disconnect', () => {
@@ -57,4 +59,5 @@ io.on('connection', (socket) => {
     });
 });
 
-http.listen(3000, () => console.log("Server Live"));
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => console.log(`Server Live on port ${PORT}`));
