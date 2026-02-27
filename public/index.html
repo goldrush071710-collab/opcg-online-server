@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Structured Rules</title>
+    <title>OPCG Master Engine - Matchmaking & Playmats</title>
     <style>
-        /* SCALED DOWN AND PADDED TO PREVENT OVERLAP */
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
             --leader-h: 12vh; --leader-w: calc(var(--leader-h) * 0.71); 
-            --don-h: 7.5vh; --don-w: calc(var(--don-h) * 0.71); 
+            --don-h: var(--card-h); --don-w: var(--card-w); /* Increased DON size to match cards */
             --side-w: 220px; --op-blue: #0088cc; 
         }
         
@@ -16,14 +15,18 @@
         
         #sidebar { width: var(--side-w); background: #111; border-right: 2px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 8px; z-index: 100; box-sizing: border-box; }
         
-        /* ADDED PADDING BOTTOM SO BOARD DOES NOT GO UNDER HAND/CHAT */
         #viewport { flex-grow: 1; position: relative; background: #0c0c0c; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 10px; padding-bottom: 16vh; box-sizing: border-box; height: 100vh; }
         
-        .board-section { display: grid; grid-template-columns: 80px 90px 1fr 80px; grid-template-rows: auto auto auto; gap: 5px; background: #151515; padding: 8px; border-radius: 12px; border: 2px solid #222; position: relative; flex: 1; min-height: 0;}
+        /* PLAYMAT BACKGROUND ADDED HERE */
+        .board-section { 
+            display: grid; grid-template-columns: 80px 90px 1fr 80px; grid-template-rows: auto auto auto; gap: 5px; 
+            background: linear-gradient(rgba(15,15,15,0.75), rgba(15,15,15,0.75)), url('https://i.imgur.com/ECXZ5CI.jpeg') no-repeat center center;
+            background-size: cover; padding: 8px; border-radius: 12px; border: 2px solid #222; position: relative; flex: 1; min-height: 0;
+        }
         
-        .slot { border: 2px dashed #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px; text-transform: uppercase; text-align: center; flex-direction: column; position: relative; min-height: var(--card-h); }
-        .flex-zone { display: flex; gap: 6px; padding: 6px; justify-content: flex-start; align-items: center; border: 2px dashed #333; border-radius: 8px; position: relative; flex-wrap: wrap; min-height: calc(var(--card-h) + 10px); }
-        .flex-zone::after { content: attr(data-label); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #222; font-size: 2vh; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
+        .slot { border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 10px; text-transform: uppercase; text-align: center; flex-direction: column; position: relative; min-height: var(--card-h); }
+        .flex-zone { display: flex; gap: 6px; padding: 6px; justify-content: flex-start; align-items: center; border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; position: relative; flex-wrap: wrap; min-height: calc(var(--card-h) + 10px); }
+        .flex-zone::after { content: attr(data-label); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.1); font-size: 2vh; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
         .life-zone { grid-column: 1; grid-row: 1 / 3; border-color: #e74c3c; width: var(--card-w); align-self: start; height: calc(var(--card-h) + 70px); position: relative; }
         .leader-zone { grid-column: 2; grid-row: 1 / 3; border-color: var(--op-blue); width: var(--leader-w); height: var(--leader-h); justify-self: center; align-self: center; } 
@@ -34,8 +37,7 @@
         .don-deck { grid-column: 1; grid-row: 3; border-color: #ffcc00; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; color: white; width: var(--card-w); height: var(--card-h);}
         .don-zone { grid-column: 2 / 4; grid-row: 3; border-color: #ffcc00; max-width: 60%; }
 
-        /* FLIPPED OPPONENT BOARD */
-        #opp-board { border-color: #c0392b; opacity: 0.95; transform: rotate(180deg); }
+        #opp-board { border-color: #c0392b; transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
         #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -15px; left: 15px; background: #c0392b; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 1.2vh; color: #fff; z-index: 50; transform: rotate(180deg);}
@@ -44,7 +46,7 @@
         #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 10 !important; flex-shrink: 0; }
         .life-zone .card { position: absolute !important; z-index: 20;}
-        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); }
+        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: default !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
@@ -55,7 +57,6 @@
 
         #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 300px; height: 15vh; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
 
-        /* CHAT SYSTEM */
         #chat-container { position: absolute; bottom: 0; right: 0; width: 300px; height: 15vh; background: #111; border-top: 2px solid var(--op-blue); border-left: 2px solid #333; display: flex; flex-direction: column; z-index: 85;}
         #chat-messages { flex: 1; overflow-y: auto; padding: 5px; font-size: 12px; color: #ccc; }
         #chat-form { display: flex; height: 30px; }
@@ -104,9 +105,10 @@
     <div class="menu-box" id="menu-main">
         <h2 style="margin:0; color:var(--op-blue);">OPCG Master Engine</h2>
         <div style="display:flex; gap:10px;">
-            <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">ONLINE (HOST)</button>
-            <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">ONLINE (JOIN)</button>
+            <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">HOST LOBBY</button>
+            <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">JOIN LOBBY</button>
         </div>
+        <button onclick="randomMatch()" style="background:#3498db; padding: 15px;">RANDOM MATCH</button>
         <hr style="border-color:#333; width:100%;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:15px;">DEV MODE (SINGLE PLAYER)</button>
     </div>
@@ -116,7 +118,10 @@
         <button onclick="joinLobby()" style="background:#e67e22; padding: 15px;">JOIN</button>
     </div>
     <div class="menu-box" id="menu-deck" style="display:none;">
-        <h2 style="margin:0; color:var(--op-blue);">Lobby Code: <span id="display-room-code" style="color:#e74c3c;">----</span></h2>
+        <h2 style="margin:0; color:var(--op-blue); display: flex; align-items: center; justify-content: center;">
+            Lobby: <span id="display-room-code" style="color:#e74c3c; margin-left: 10px;">----</span> 
+            <button onclick="copyCode()" style="margin-left:15px; background:#3498db; padding:5px 10px;">COPY</button>
+        </h2>
         <p id="lobby-status">Waiting for opponent to join...</p>
         <button onclick="selectDeck('Franky')" id="btn-select-franky" disabled style="padding: 15px;">SELECT FRANKY DECK</button>
     </div>
@@ -198,7 +203,6 @@
     let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
     let SEARCH_ARR = [];
 
-    // --- CUSTOM MODAL ---
     function showModal(msg, type, onConfirm, onCancel, defaultVal = "") {
         const over = document.getElementById('custom-modal-overlay');
         document.getElementById('custom-modal-msg').innerText = msg;
@@ -222,7 +226,6 @@
         }
     }
 
-    // --- CHAT SYSTEM ---
     function sendChat(e) {
         e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim();
         if(!msg) return; appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = '';
@@ -230,9 +233,8 @@
     socket.on('chat_msg', (msg) => { appendChat("Opp: " + msg, "#e74c3c"); });
     function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
 
-    // --- CARD DATABASE (TRAITS FIXED FOR SEARCHES) ---
     const CARD_DB = {
-        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
+        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true },
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", cost: 3, traits: ["Water Seven"], hasOnPlay: true },
         "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", cost: 5, traits: ["Straw Hat Pirates"], hasAttack: true },
@@ -243,7 +245,6 @@
         "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", cost: 4, traits: ["Alabasta"], hasOnPlay: true },
         "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", cost: 8, traits: ["Roger Pirates"], hasOnPlay: true },
         "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", cost: 3, traits: ["Straw Hat Pirates"] },
-        // STRAW HAT PIRATES TRAITS ADDED BACK TO ALL INVENTIONS
         "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
         "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
         "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
@@ -273,17 +274,27 @@
         else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; }
     }
 
-    // --- SETUP MODES ---
     function startDevMode() {
         isDevMode = true; document.getElementById('home-screen').style.display = 'none';
         document.getElementById('sidebar-manual-controls').style.display = 'block';
         DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); 
-        for(let i=0; i<5; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction();
+        const leaderLife = CARD_DB[deckArray[0]]?.life || 5;
+        for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction();
     }
 
     function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; }); }
     function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
     function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Connected! Select deck."; document.getElementById('btn-select-franky').disabled = false; } else { showModal("Invalid or full room.", "alert"); } }); }
+    
+    function randomMatch() {
+        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent...";
+        socket.emit('join_random', (res) => {
+            document.getElementById('display-room-code').innerText = res.roomId;
+            if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Select deck."; document.getElementById('btn-select-franky').disabled = false; }
+        });
+    }
+
+    function copyCode() { const c = document.getElementById('display-room-code').innerText; navigator.clipboard.writeText(c).then(()=>showModal("Code copied!", "alert")); }
 
     socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Select your deck."; document.getElementById('btn-select-franky').disabled = false; });
     function selectDeck(deckName) { document.getElementById('btn-select-franky').innerText = "READY"; document.getElementById('btn-select-franky').disabled = true; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', deckName); }
@@ -291,7 +302,9 @@
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false;
         DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); 
-        for(let i=0; i<5; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
+        
+        const leaderLife = CARD_DB[deckArray[0]]?.life || 5;
+        for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
         for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); refreshStats();
 
         setTimeout(() => { showModal("Mulligan? (Return hand, shuffle, draw 5)", "confirm", 
@@ -306,7 +319,6 @@
         showModal(`Game Start! You are going ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => { saveState(); });
     }
 
-    // --- SYNC ENGINE ---
     function saveState() {
         if(isDevMode) return;
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({
@@ -334,7 +346,6 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; 
     });
 
-    // --- TURN PHASES & END OF TURN ---
     socket.on('turn_passed', () => {
         isMyTurn = true; turnNum++; updateTurnUI();
         document.querySelectorAll('#my-board .card').forEach(c => { c.classList.remove('rested'); delete c.dataset.parentId; if(c.querySelector('.don-badge')) c.querySelector('.don-badge').style.display = 'none'; if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none'; if(c.querySelector('.power-badge')) { c.querySelector('.power-badge').innerText = '+0'; c.querySelector('.power-badge').style.display = 'none'; } });
@@ -344,7 +355,6 @@
     
     window.endTurn = function() { 
         if(!isDevMode && !isMyTurn) return; 
-        
         const leader = document.querySelector('#leader-zone .card');
         if(!isDevMode && leader && CARD_DB[leader.dataset.url]?.name === "Franky") {
             if(DECK_ARR.length >= 5) {
@@ -365,7 +375,6 @@
         }
     }
 
-    // --- DRAG, DROP & INTERACTION ---
     window.addEventListener('mousedown', (e) => { if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); });
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
     
@@ -394,7 +403,10 @@
     function bindCardEvents(c) {
         c.onmousedown = (e) => { if (e.button !== 0) return; const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && c.dataset.isDon !== "true" && !isDevMode) return; offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; };
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
-        c.oncontextmenu = (e) => { e.preventDefault(); rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+        c.oncontextmenu = (e) => { 
+            e.preventDefault(); 
+            if(c.dataset.isDon === "true") return; // DON RIGHT-CLICK LOCK
+            rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             let h = `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`;
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:000">Activate Main</div>`; 
