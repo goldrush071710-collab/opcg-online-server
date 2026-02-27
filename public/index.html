@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Matchmaking & Playmats</title>
+    <title>OPCG Master Engine - Sticky Attachments</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
             --leader-h: 12vh; --leader-w: calc(var(--leader-h) * 0.71); 
-            --don-h: var(--card-h); --don-w: var(--card-w); /* Increased DON size to match cards */
+            --don-h: var(--card-h); --don-w: var(--card-w); 
             --side-w: 220px; --op-blue: #0088cc; 
         }
         
@@ -17,10 +17,9 @@
         
         #viewport { flex-grow: 1; position: relative; background: #0c0c0c; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 10px; padding-bottom: 16vh; box-sizing: border-box; height: 100vh; }
         
-        /* PLAYMAT BACKGROUND ADDED HERE */
         .board-section { 
             display: grid; grid-template-columns: 80px 90px 1fr 80px; grid-template-rows: auto auto auto; gap: 5px; 
-            background: linear-gradient(rgba(15,15,15,0.75), rgba(15,15,15,0.75)), url('https://i.imgur.com/ECXZ5CI.jpeg') no-repeat center center;
+            background: linear-gradient(rgba(15,15,15,0.85), rgba(15,15,15,0.85)), url('https://i.imgur.com/ECXZ5CI.jpeg') no-repeat center center;
             background-size: cover; padding: 8px; border-radius: 12px; border: 2px solid #222; position: relative; flex: 1; min-height: 0;
         }
         
@@ -44,9 +43,9 @@
 
         .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 20; transition: transform 0.2s ease, filter 0.2s; background-color: #222; }
         #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
-        .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 10 !important; flex-shrink: 0; }
+        .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         .life-zone .card { position: absolute !important; z-index: 20;}
-        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: default !important; }
+        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: grab !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
@@ -330,6 +329,7 @@
 
     socket.on('opponent_board_update', (s) => {
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
+        
         s.field.forEach(d => {
             const targetZoneId = d.zone.replace('my-', 'opp-').replace('char-', 'opp-char-').replace('stage-', 'opp-stage-').replace('leader-', 'opp-leader-').replace('don-z', 'opp-don-z').replace('life-', 'opp-life-');
             const z = document.getElementById(targetZoneId);
@@ -340,15 +340,33 @@
                 if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 15) + 'px'; }
             }
         });
+        
+        // OPPONENT DON CASCADING LOGIC
+        const parentCountsOpp = {};
         document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => {
-             const p = document.getElementById(d.dataset.parentId); if(p) { const r = p.getBoundingClientRect(); const vr = document.getElementById('opp-board').getBoundingClientRect(); d.style.position = 'absolute'; d.style.left = (r.left - vr.left + 10) + 'px'; d.style.top = (r.top - vr.top - 15) + 'px'; d.style.zIndex = "15"; d.style.opacity = "0.5"; const b = p.querySelector('.don-badge'); const count = document.querySelectorAll(`[data-parent-id="${p.id}"]`).length; b.innerText = count; b.style.display = count > 0 ? 'flex' : 'none'; }
+            const p = document.getElementById(d.dataset.parentId);
+            if(p) {
+                parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1;
+                const idx = parentCountsOpp[d.dataset.parentId] - 1;
+                const r = p.getBoundingClientRect(); const vr = document.getElementById('opp-board').getBoundingClientRect();
+                d.style.position = 'absolute'; 
+                d.style.left = (r.left - vr.left + 5 + (idx * 5)) + 'px'; 
+                d.style.top = (r.top - vr.top + 15 + (idx * 15)) + 'px'; 
+                d.style.zIndex = 15 - idx; d.style.opacity = "1"; 
+                const b = p.querySelector('.don-badge'); const count = document.querySelectorAll(`[data-parent-id="${p.id}"]`).length; b.innerText = count; b.style.display = count > 0 ? 'flex' : 'none'; 
+            }
         });
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; 
     });
 
     socket.on('turn_passed', () => {
         isMyTurn = true; turnNum++; updateTurnUI();
-        document.querySelectorAll('#my-board .card').forEach(c => { c.classList.remove('rested'); delete c.dataset.parentId; if(c.querySelector('.don-badge')) c.querySelector('.don-badge').style.display = 'none'; if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none'; if(c.querySelector('.power-badge')) { c.querySelector('.power-badge').innerText = '+0'; c.querySelector('.power-badge').style.display = 'none'; } });
+        document.querySelectorAll('#my-board .card').forEach(c => { 
+            c.classList.remove('rested'); delete c.dataset.parentId; 
+            if(c.querySelector('.don-badge')) c.querySelector('.don-badge').style.display = 'none'; 
+            if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none'; 
+            if(c.querySelector('.power-badge')) { c.querySelector('.power-badge').innerText = '+0'; c.querySelector('.power-badge').style.display = 'none'; } 
+        });
         drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); organizeDon(); saveState();
         showModal("It's your turn! (Draw & DON phases executed)", "alert");
     });
@@ -381,7 +399,15 @@
     document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
     document.getElementById('drop-deck').oncontextmenu = (e) => { e.preventDefault(); if(!isDevMode) return; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; menu.innerHTML = `<div onclick="drawCardAction(); hideMenu();">Draw 1 Card</div>`; };
 
-    window.addEventListener('mousemove', (e) => { if (!dragged) return; if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 10) + 'px'; don.style.top = (e.clientY - offY - 20 - (i * 12)) + 'px'; don.style.zIndex = "4900"; }); } });
+    window.addEventListener('mousemove', (e) => { 
+        if (!dragged) return; 
+        if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
+        if(isDragging) { 
+            dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; 
+            document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 5 + (i*5)) + 'px'; don.style.top = (e.clientY - offY + 15 + (i*15)) + 'px'; don.style.zIndex = 15 - i; }); 
+        } 
+    });
+
     window.addEventListener('mouseup', (e) => { 
         if (!dragged) return; const c = dragged; dragged = null; 
         if(!isDragging) { if(c.parentElement.id === 'hand-bar') playCardConfirm(c); return; } 
@@ -391,7 +417,16 @@
         else if (isInside(e, handR)) { if(!isDevMode && c.dataset.origZone !== 'hand-bar' && c.dataset.origZone !== 'life-zone') { snapBack(c); } else { toHand(c); } } 
         else if (isInside(e, deckR)) { if(!isDevMode) { snapBack(c); } else { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState(); } } 
         else if (isInside(e, lifeR)) { if(!isDevMode) { snapBack(c); } else { dropToLife(c); } } 
-        else if (c.dataset.isDon === "true") { const target = Array.from(document.elementsFromPoint(e.clientX, e.clientY)).find(el => el.classList.contains('card') && el !== c && (CARD_DB[el.dataset.url]?.type === 'Character' || CARD_DB[el.dataset.url]?.type === 'Leader')); if (target && !['hand-bar', 'life-zone'].includes(target.parentElement.id) && !target.id.includes('opp-')) { c.dataset.parentId = target.id; updateBadges(target.id); } organizeDon(); saveState(); } 
+        else if (c.dataset.isDon === "true") { 
+            const target = Array.from(document.elementsFromPoint(e.clientX, e.clientY)).find(el => el.classList.contains('card') && el !== c && (CARD_DB[el.dataset.url]?.type === 'Character' || CARD_DB[el.dataset.url]?.type === 'Leader')); 
+            if (target && !['hand-bar', 'life-zone'].includes(target.parentElement.id) && !target.id.includes('opp-')) { 
+                c.dataset.parentId = target.id; updateBadges(target.id); 
+            } else {
+                // If dropped in space/don zone, un-link it (For -DON!! effects)
+                if (c.dataset.parentId) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); }
+            }
+            organizeDon(); saveState(); 
+        } 
         else { snapBack(c); } 
     });
 
@@ -405,15 +440,14 @@
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
         c.oncontextmenu = (e) => { 
             e.preventDefault(); 
-            if(c.dataset.isDon === "true") return; // DON RIGHT-CLICK LOCK
+            if(c.dataset.isDon === "true") return; // DON MENUS DISABLED
             rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             let h = `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`;
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:000">Activate Main</div>`; 
             if (db?.hasAttack && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) { const isSick = (c.dataset.turnPlayed == turnNum) && (c.querySelector('.rush-tag').style.display !== 'flex'); if(!isSick) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:fff">Attack</div>`; else h += `<div style="background:#555; color:#999; cursor:not-allowed;" title="Summoning Sickness">Attack (Sleeping)</div>`; } 
-            if (c.dataset.isLife === "true") h += `<div onclick="flipLife()">Flip Life</div><div onclick="takeLife()">Take to Hand</div>`; 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
-            h += `<div onclick="detachDon()">Detach DON!!</div>`; menu.innerHTML = h; 
+            menu.innerHTML = h; 
         };
         c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
     }
@@ -472,12 +506,33 @@
 
     function restCard(cardEl) { cardEl.classList.toggle('rested'); saveState(); }
     window.moveToTrash = function(c) { deleteCardData(c); TRASH_ARR.push(c.dataset.url); c.remove(); saveState(); hideMenu(); }
-    window.flipLife = function() { rightClickedCard.classList.toggle('card-back'); hideMenu(); saveState(); };
-    window.takeLife = function() { toHand(rightClickedCard); hideMenu(); };
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
     function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
-    function organizeDon() { const vr = document.getElementById('my-board').getBoundingClientRect(); document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => { if(d.dataset.parentId) { const p = document.getElementById(d.dataset.parentId); if(p) { const r = p.getBoundingClientRect(); d.style.position='absolute'; d.style.left=(r.left-vr.left+10)+'px'; d.style.top=(r.top-vr.top-15)+'px'; d.style.zIndex="15"; d.style.opacity="0.5"; } } else { document.getElementById('don-zone').appendChild(d); d.style.opacity = "1"; d.style.position="relative"; d.style.left="0"; d.style.top="0";} }); }
+    
+    // CASCADING DON VISUAL ENGINE
+    function organizeDon() { 
+        const vr = document.getElementById('my-board').getBoundingClientRect(); 
+        const parentCounts = {};
+        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => { 
+            if(d.dataset.parentId) { 
+                const p = document.getElementById(d.dataset.parentId); 
+                if(p) { 
+                    parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1;
+                    const idx = parentCounts[d.dataset.parentId] - 1;
+                    const r = p.getBoundingClientRect(); 
+                    d.style.position='absolute'; 
+                    d.style.left=(r.left-vr.left + 5 + (idx*5))+'px'; 
+                    d.style.top=(r.top-vr.top + 15 + (idx*15))+'px'; 
+                    d.style.zIndex = 15 - idx; d.style.opacity="1"; 
+                } 
+            } else { 
+                document.getElementById('don-zone').appendChild(d); 
+                d.style.opacity = "1"; d.style.position="relative"; d.style.left="0"; d.style.top="0"; d.style.zIndex="20";
+            } 
+        }); 
+    }
+    
     function spawnDonLocal(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); organizeDon(); } }
     window.spawnDonAction = function() { spawnDonLocal(false); saveState(); };
     window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; saveState(); } };
@@ -488,7 +543,6 @@
     window.onkeydown=(e)=>{ if(e.key.toLowerCase()==='r'&&hovered) { restCard(hovered); } };
     window.setPower=(v)=>{ const p = rightClickedCard.querySelector('.power-badge'); if(v === 0) { p.innerText='+0'; p.style.display='none'; } else { const cur = parseInt(p.innerText.replace('+','')); p.innerText=`+${cur+v}`; p.style.display='flex'; } hideMenu(); saveState(); };
     function applyPower(c,v){ const p=c.querySelector('.power-badge'); const cur=parseInt(p.innerText.replace('+','')); p.innerText=`+${cur+v}`; p.style.display='flex'; }
-    window.detachDon=()=>{ document.querySelectorAll(`[data-parent-id="${rightClickedCard.id}"]`).forEach(d=>delete d.dataset.parentId); updateBadges(rightClickedCard.id); organizeDon(); hideMenu(); saveState(); };
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 </script>
 </body>
