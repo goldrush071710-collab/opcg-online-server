@@ -46,9 +46,14 @@ io.on('connection', (socket) => {
         if(socket.roomId) socket.to(socket.roomId).emit('opponent_board_update', boardState);
     });
 
-    // NEW: Turn Relay
+    // TRUE TURN PASSING RELAY
     socket.on('pass_turn', () => {
         if(socket.roomId) socket.to(socket.roomId).emit('turn_passed');
+    });
+
+    // MULTIPLAYER CHAT RELAY
+    socket.on('chat_msg', (msg) => {
+        if(socket.roomId) socket.to(socket.roomId).emit('chat_msg', msg);
     });
 
     socket.on('disconnect', () => {
@@ -60,4 +65,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Server Live on port ${PORT}`));
+http.listen(PORT, () => console.log(`Server Live!`));
