@@ -2,73 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Live Multiplayer</title>
+    <title>OPCG Master Engine - Stable Multiplayer</title>
     <style>
-        /* AGGRESSIVELY DOWNSIZED TO PREVENT SCROLLING */
-        :root { --card-w: 55px; --card-h: 77px; --leader-w: 75px; --leader-h: 105px; --don-w: 45px; --don-h: 63px; --side-w: 220px; --op-blue: #0088cc; }
+        /* Standard readable sizes */
+        :root { --card-w: 75px; --card-h: 105px; --leader-w: 100px; --leader-h: 140px; --don-w: 60px; --don-h: 84px; --side-w: 250px; --op-blue: #0088cc; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #080808; color: #f0f0f0; margin: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; user-select: none; }
         
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #080808; color: #f0f0f0; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; user-select: none; }
+        #sidebar { width: var(--side-w); background: #111; border-right: 2px solid #333; display: flex; flex-direction: column; padding: 15px; gap: 8px; z-index: 100; box-sizing: border-box; overflow-y: auto; }
         
-        #sidebar { width: var(--side-w); background: #111; border-right: 2px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 8px; z-index: 100; box-sizing: border-box; overflow-y: auto; }
+        #viewport { flex-grow: 1; position: relative; background: #0c0c0c; overflow-y: auto; z-index: 1; display: flex; flex-direction: column; gap: 20px; padding: 20px; box-sizing: border-box; padding-bottom: 200px; }
         
-        /* NO SCROLL VIEWPORT */
-        #viewport { flex-grow: 1; position: relative; background: #0c0c0c; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 10px; box-sizing: border-box; padding-bottom: 120px; height: 100vh; }
+        /* Both boards use the exact same clean, standard layout */
+        .board-section { display: grid; grid-template-columns: 80px 120px 1fr 80px; grid-template-rows: auto auto auto; gap: 10px; background: #151515; padding: 15px; border-radius: 12px; border: 2px solid #222; position: relative; }
         
-        /* 1:1 BOARD LAYOUT (FITS EXACTLY HALF THE SCREEN) */
-        .board-section { display: grid; grid-template-columns: 70px 90px 1fr 70px; grid-template-rows: auto auto auto; gap: 6px; background: #151515; padding: 10px; border-radius: 12px; border: 2px solid #222; position: relative; flex: 1; overflow: hidden; box-sizing: border-box;}
-        
-        /* IDENTICAL GRID PLACEMENT FOR BOTH PLAYERS */
-        .life-zone { grid-column: 1; grid-row: 1 / 3; align-self: start; height: calc(var(--card-h) + 40px); }
-        .leader-zone { grid-column: 2; grid-row: 1 / 3; align-self: center; justify-self: center; }
-        .char-zone { grid-column: 3; grid-row: 1; }
-        .stage-zone { grid-column: 3; grid-row: 2; }
-        .don-zone { grid-column: 2 / 4; grid-row: 3; }
-        .drop-deck { grid-column: 4; grid-row: 1; }
-        .drop-trash { grid-column: 4; grid-row: 2; }
-        .don-deck { grid-column: 1; grid-row: 3; }
-
-        /* THE LITERAL 180 PLAYMAT FLIP */
-        #opp-board { transform: rotate(180deg); border-color: #c0392b; }
-        
-        /* FLIP CARDS SO THEY ARE READABLE TO YOU */
-        #opp-board .card { transform: rotate(180deg); pointer-events: none; }
-        #opp-board .card.rested { transform: rotate(270deg); } /* 180 flip + 90 rest */
-
         .slot { border: 2px dashed #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px; text-transform: uppercase; text-align: center; flex-direction: column; position: relative; min-height: var(--card-h); }
-        .flex-zone { display: flex; gap: 6px; padding: 6px; justify-content: flex-start; align-items: center; border: 2px dashed #333; border-radius: 8px; position: relative; flex-wrap: wrap; min-height: 85px; }
-        .flex-zone::after { content: attr(data-label); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #222; font-size: 18px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
+        .flex-zone { display: flex; gap: 8px; padding: 8px; justify-content: flex-start; align-items: center; border: 2px dashed #333; border-radius: 8px; position: relative; flex-wrap: wrap; min-height: 110px; }
+        .flex-zone::after { content: attr(data-label); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #222; font-size: 20px; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
+        .life-zone { grid-column: 1; grid-row: 1 / 3; border-color: #e74c3c; width: var(--card-w); align-self: start; height: calc(var(--card-h) + 120px); position: relative; }
+        .leader-zone { grid-column: 2; grid-row: 1 / 3; border-color: var(--op-blue); width: var(--leader-w); height: var(--leader-h); justify-self: center; align-self: center; } 
+        .char-zone { grid-column: 3; grid-row: 1; border-color: #2ecc71; }
+        .stage-zone { grid-column: 3; grid-row: 2; border-color: #9b59b6; width: 100%; }
+        .drop-deck { grid-column: 4; grid-row: 1; background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg'); background-size: 100% 100%; cursor: pointer; border-color: #666; color: white; text-shadow: 1px 1px 2px black; font-weight: bold; width: var(--card-w); height: var(--card-h);}
+        .drop-trash { grid-column: 4; grid-row: 2; width: var(--card-w); height: var(--card-h); border-color: #7f8c8d; cursor: pointer; z-index: 50; }
+        .don-deck { grid-column: 1; grid-row: 3; border-color: #ffcc00; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; color: white; text-shadow: 1px 1px 2px black; font-weight: bold; font-size: 12px; width: var(--card-w); height: var(--card-h);}
+        .don-zone { grid-column: 2 / 4; grid-row: 3; border-color: #ffcc00; max-width: 60%; }
+
+        #opp-board { border-color: #c0392b; opacity: 0.95; }
+        #opp-board .card { pointer-events: none; }
+        .opp-hud { position: absolute; top: -15px; right: 15px; background: #c0392b; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; z-index: 50;}
+
+        /* Card Styles */
         .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; cursor: grab; border: 1px solid #000; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index: 20; transition: transform 0.2s ease, filter 0.2s; background-color: #222; }
-        .leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
+        #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 10 !important; flex-shrink: 0; }
         #hand-bar .card { cursor: pointer; }
         .life-zone .card { position: absolute !important; cursor: grab; z-index: 20;}
+        
+        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: grab !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
         .don-badge, .power-badge, .rush-tag { position: absolute; border: 2px solid #000; display: none; align-items: center; justify-content: center; font-weight: 900; pointer-events: none; }
-        .don-badge { bottom: -8px; right: -8px; background: #ffcc00; color: #000; width: 20px; height: 20px; border-radius: 50%; z-index: 41; font-size: 10px;}
-        .power-badge { top: -10px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 2px 4px; border-radius: 4px; font-size: 9px; z-index: 41; }
-        .rush-tag { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f39c12; color: black; padding: 2px; border-radius: 4px; font-size: 10px; z-index: 45; }
+        .don-badge { bottom: -8px; right: -8px; background: #ffcc00; color: #000; width: 24px; height: 24px; border-radius: 50%; z-index: 41; font-size: 11px;}
+        .power-badge { top: -10px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; z-index: 41; }
+        .rush-tag { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f39c12; color: black; padding: 2px; border-radius: 4px; font-size: 12px; z-index: 45; }
 
-        #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 0; height: 110px; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
+        #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 0; height: 130px; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
 
-        button { background: #333; color: white; border: 1px solid #444; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 10px; font-weight: bold; transition: 0.2s; }
+        button { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); }
-        .stat-card { background: #000; padding: 6px; border-radius: 6px; border: 1px solid #222; text-align: center; font-size: 11px; font-weight: bold; }
+        .stat-card { background: #000; padding: 8px; border-radius: 6px; border: 1px solid #222; text-align: center; font-size: 12px; font-weight: bold; }
         
-        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 140px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
-        #context-menu div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #222; font-size: 11px; }
+        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 160px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
+        #context-menu div { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #222; font-size: 11px; }
         #context-menu div:hover { background: var(--op-blue); }
 
-        #home-screen { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px;}
-        .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center;}
-        
-        #inspector { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100000; display: none; padding: 50px; overflow-y: auto; pointer-events: auto;}
-        #zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999999; display: none; align-items: center; justify-content: center; cursor: pointer; }
+        #home-screen, #inspector, #zoom-overlay, #select-overlay { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; }
+        #inspector, #select-overlay { display: none; background: rgba(0,0,0,0.98); padding: 50px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; flex-direction: column;}
+        #zoom-overlay { background: rgba(0,0,0,0.95); z-index: 9999999; display: none; cursor: pointer; }
         #zoom-img { height: 75vh; max-width: 90vw; object-fit: contain; border: 4px solid var(--op-blue); border-radius: 15px; }
         
-        #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.2); z-index: 89999; display: none; pointer-events: none; }
+        .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
+        
         #select-msg { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto;}
         body.select-mode { cursor: crosshair !important; }
         body.select-mode .card { outline: 3px dashed #ffcc00; cursor: crosshair !important; pointer-events: auto !important; }
@@ -78,30 +74,21 @@
 
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
-        <h2 style="margin-top:0; color:var(--op-blue);">OPCG Multiplayer</h2>
-        <div style="display:flex; gap:10px; margin-top:20px;">
+        <h2 style="margin:0; color:var(--op-blue);">OPCG Multiplayer</h2>
+        <div style="display:flex; gap:10px;">
             <button onclick="createLobby()" style="flex:1; padding: 15px; font-size:14px; background:#2ecc71;">CREATE LOBBY</button>
             <button onclick="showJoinLobby()" style="flex:1; padding: 15px; font-size:14px; background:#e67e22;">JOIN LOBBY</button>
         </div>
     </div>
-
     <div class="menu-box" id="menu-join" style="display:none;">
-        <h2 style="margin-top:0; color:#e67e22;">Join Lobby</h2>
-        <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="width:80%; padding:10px; font-size:20px; text-align:center; text-transform:uppercase; margin-bottom:15px; background:#000; color:#fff; border:1px solid #444;">
-        <br>
-        <button onclick="joinLobby()" style="width:80%; background:#e67e22;">JOIN</button>
+        <h2 style="margin:0; color:#e67e22;">Join Lobby</h2>
+        <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="padding:10px; font-size:20px; text-align:center; text-transform:uppercase; background:#000; color:#fff; border:1px solid #444;">
+        <button onclick="joinLobby()" style="background:#e67e22; padding: 15px;">JOIN</button>
     </div>
-
     <div class="menu-box" id="menu-deck" style="display:none;">
-        <h2 style="margin-top:0; color:var(--op-blue);">Lobby Code: <span id="display-room-code" style="color:#e74c3c;">----</span></h2>
+        <h2 style="margin:0; color:var(--op-blue);">Lobby Code: <span id="display-room-code" style="color:#e74c3c;">----</span></h2>
         <p id="lobby-status">Waiting for opponent to join...</p>
-        <hr style="border-color:#333; margin:20px 0;">
-        <div id="deck-list">
-            <div style="padding:10px; background:#222; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                <b>Franky Pro Deck</b> 
-                <button onclick="selectDeck('Franky Pro Deck')" id="btn-select-franky" disabled>SELECT</button>
-            </div>
-        </div>
+        <button onclick="selectDeck('Franky')" id="btn-select-franky" disabled style="padding: 15px;">SELECT FRANKY DECK</button>
     </div>
 </div>
 
@@ -110,18 +97,13 @@
 
 <div id="sidebar">
     <div class="stat-card" style="background:#2c3e50; margin-bottom:5px; color:#fff;">OPP DON!!: <span id="opp-don">0</span></div>
-    
     <div style="display:flex; gap:5px;">
         <div class="stat-card" style="flex:1; cursor:pointer;" onclick="openInspector('deck')">DECK: <span id="deck-count">0</span></div>
         <div class="stat-card" style="flex:1; cursor:pointer;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
     </div>
     <div class="stat-card" style="border-color:#e74c3c; margin-bottom: 5px;">LIFE: <span id="life-count">0</span></div>
-    
     <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px;">+1 LIFE FROM DECK</button>
-    <button onclick="resetOncePerGame()" style="background:#8e44ad; border-color:#fff;">RESET ONCE PER GAME</button>
-    <hr style="width:100%; border:0; border-top:1px solid #333;">
-    
-    <button onclick="endTurn()" style="background:#2980b9; height: 40px;">END TURN</button>
+    <button onclick="endTurn()" style="background:#2980b9; height: 50px; margin-top: 10px;">END TURN</button>
     <div style="display:flex; gap:5px; margin-top:5px;">
         <button onclick="spawnDonAction()" style="flex:1">+ DON!!</button>
         <button onclick="killDon()" style="flex:1; background:#e67e22">- DON!!</button>
@@ -130,30 +112,25 @@
 
 <div id="viewport">
     <div id="opp-board" class="board-section">
+        <div class="opp-hud">Opp Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
         <div id="opp-life-zone" class="slot life-zone">Life</div>
         <div id="opp-leader-zone" class="slot leader-zone">Leader</div>
         <div id="opp-char-zone-front" class="flex-zone char-zone" data-label="Front Line"></div>
-        <div id="opp-stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
-        
         <div id="opp-drop-deck" class="slot drop-deck card-back">Deck</div>
+        <div id="opp-stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
         <div id="opp-drop-trash" class="slot drop-trash">Trash</div>
-        
-        <div id="opp-don-deck" class="slot don-deck card-back">DON!!<br><span id="opp-don-deck-count" style="font-size:14px;">10</span></div>
+        <div id="opp-don-deck" class="slot don-deck">DON!!<br><span id="opp-don-deck-count" style="font-size:18px;">10</span></div>
         <div id="opp-don-zone" class="flex-zone don-zone" data-label="Cost Area"></div>
-        
-        <div class="opp-hud" style="position: absolute; bottom: 10px; left: 10px; background: #c0392b; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; color: #fff; z-index: 50; transform: rotate(180deg);">Opp Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
     </div>
 
     <div id="my-board" class="board-section">
         <div id="life-zone" class="slot life-zone">Life</div>
-        <div id="leader-zone" class="slot leader-zone">Leader</div>
+        <div id="leader-zone" class="slot leader-zone active-zone">Leader</div>
         <div id="char-zone-front" class="flex-zone char-zone" data-label="Front Line"></div>
-        <div id="stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
-        
         <div id="drop-deck" class="slot drop-deck card-back">Deck</div>
+        <div id="stage-zone" class="flex-zone stage-zone" data-label="Stage / Back Line"></div>
         <div id="drop-trash" class="slot drop-trash">Trash</div>
-        
-        <div id="don-deck" class="slot don-deck card-back">DON!!<br><span id="don-deck-count" style="font-size:14px;">10</span></div>
+        <div id="don-deck" class="slot don-deck">DON!!<br><span id="don-deck-count" style="font-size:18px;">10</span></div>
         <div id="don-zone" class="flex-zone don-zone" data-label="Cost Area"></div>
     </div>
 </div>
@@ -162,11 +139,11 @@
 <div id="context-menu"></div>
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <div id="inspector">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+    <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px;">
         <h2 id="insp-title" style="margin:0; color:var(--op-blue);">Inspector</h2>
         <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px;">CLOSE</button>
     </div>
-    <div id="insp-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
+    <div id="insp-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; width: 100%;"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -175,10 +152,10 @@
     const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
-    // FULL CARD DB RESTORED
+    // THE FULL GOLD STANDARD CARD DATABASE
     const CARD_DB = {
-        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Cyborg", "Water Seven"], hasMain: true },
-        "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates", "Cyborg", "Water Seven"], hasOnPlay: true },
+        "https://i.imgur.com/llnj5xT.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
+        "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true },
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", cost: 3, traits: ["Water Seven"], hasOnPlay: true },
         "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", cost: 5, traits: ["Straw Hat Pirates"], hasAttack: true },
         "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", cost: 11, traits: ["Straw Hat Pirates", "Invention"], hasHandAction: true },
@@ -188,11 +165,11 @@
         "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", cost: 4, traits: ["Alabasta"], hasOnPlay: true },
         "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", cost: 8, traits: ["Roger Pirates"], hasOnPlay: true },
         "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", cost: 3, traits: ["Straw Hat Pirates"] },
-        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
-        "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnRest: true },
-        "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
-        "https://i.imgur.com/L3W1rAw.png": { name: "Kurosai Fr-U IV", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
-        "https://i.imgur.com/NAjePQD.png": { name: "Shark Submerge III", type: "Stage", cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasAuto: true },
+        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasOnRest: true },
+        "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasOnRest: true },
+        "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasOnPlay: true },
+        "https://i.imgur.com/L3W1rAw.png": { name: "Kurosai Fr-U IV", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasOnPlay: true },
+        "https://i.imgur.com/NAjePQD.png": { name: "Shark Submerge III", type: "Stage", cost: 5, traits: ["Invention"], hasMain: true, hasAuto: true },
         "https://i.imgur.com/cdHtYcm.png": { name: "Event 1", type: "Event", cost: 0, traits: ["Straw Hat Crew"] },
         "https://i.imgur.com/A8Z5aKe.png": { name: "Event 2", type: "Event", cost: 0, traits: ["Straw Hat Crew"] }
     };
@@ -224,7 +201,7 @@
     let selectConfig = null, SEARCH_ARR = [];
 
     // ==========================================
-    // MULTIPLAYER SOCKET & SYNC LOGIC
+    // SOCKET LOBBY LOGIC
     // ==========================================
     function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; }); }
     function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
@@ -259,10 +236,13 @@
         }, 500);
     });
 
+    // ==========================================
+    // SYNC STATE MACHINE
+    // ==========================================
     function saveState() {
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({
             id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId,
-            rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), power: c.querySelector('.power-badge').innerText, pVis: c.querySelector('.power-badge').style.display, rush: c.querySelector('.rush-tag').style.display
+            rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), power: c.querySelector('.power-badge').innerText, pVis: c.querySelector('.power-badge').style.display, rush: c.querySelector('.rush-tag').style.display, turnPlayed: c.dataset.turnPlayed
         }));
         const activeDonCount = document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)').length;
         
@@ -270,12 +250,12 @@
         refreshStats();
     }
 
-    // Live Mirror Receiving
     socket.on('opponent_board_update', (s) => {
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
+        
         s.field.forEach(d => {
-            // Because HTML structure is identical, we just add "opp-" to the zone ID!
-            const targetZoneId = 'opp-' + d.zone.replace('my-', '');
+            // Re-maps your bottom zones strictly to their top zones 
+            const targetZoneId = d.zone.replace('my-', 'opp-').replace('char-', 'opp-char-').replace('stage-', 'opp-stage-').replace('leader-', 'opp-leader-').replace('don-z', 'opp-don-z').replace('life-', 'opp-life-');
             const z = document.getElementById(targetZoneId);
             
             if(z) {
@@ -283,11 +263,11 @@
                 if(d.rested) c.classList.add('rested'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
                 c.querySelector('.power-badge').innerText = d.power; c.querySelector('.power-badge').style.display = d.pVis; c.querySelector('.rush-tag').style.display = d.rush;
                 z.appendChild(c);
-                if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 15) + 'px'; }
+                if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 25) + 'px'; }
             }
         });
 
-        // Mirror Attachments
+        // Mirror Don Attachments
         document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => {
              const p = document.getElementById(d.dataset.parentId);
              if(p) {
@@ -436,7 +416,7 @@
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
     window.dropToLife = function(c) { const s = prompt("Top or Bottom of Life? (t/b)", "t"); if(!s) return; c.dataset.isLife = "true"; c.classList.add('card-back'); c.style.position = 'absolute'; const z = document.getElementById('life-zone'); if(s.toLowerCase().startsWith("b")) z.prepend(c); else z.appendChild(c); updateLifePositions(); saveState(); }
     function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
-    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
+    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 25) + 'px'; c.style.zIndex = 20 + i; }); }
     
     function organizeDon() {
         const vr = document.getElementById('my-board').getBoundingClientRect();
@@ -461,8 +441,35 @@
     window.detachDon=()=>{ document.querySelectorAll(`[data-parent-id="${rightClickedCard.id}"]`).forEach(d=>delete d.dataset.parentId); updateBadges(rightClickedCard.id); organizeDon(); hideMenu(); saveState(); };
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
     
-    // Selection Engine for Effects
-    function startSelection(mode, max, message, callback) { selectConfig = { mode, max, current: [], callback }; document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; }
+    // Selection & Search Engine
+    window.openSearch = function(val, filterTraits = null) {
+        SEARCH_ARR = DECK_ARR.splice(-val).reverse();
+        const grid = document.getElementById('insp-grid'); grid.innerHTML = '';
+        document.getElementById('insp-title').innerText = filterTraits ? `Searching Top ${SEARCH_ARR.length}` : `Looking at Top ${SEARCH_ARR.length}`;
+        SEARCH_ARR.forEach((url, i) => {
+            const cardTraits = CARD_DB[url]?.traits || []; let canTake = true; if (filterTraits) { canTake = filterTraits.some(t => cardTraits.includes(t)); }
+            const div = document.createElement('div'); div.style.textAlign = 'center';
+            div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake && filterTraits ? '4px solid #2ecc71' : 'none'}"></div>
+                <div style="display:flex; gap:2px; margin-top:5px;">
+                    ${canTake ? `<button onclick="resolveSearch(${i},'hand')" style="flex:1; font-size:10px;">HAND</button>` : ''}
+                    <button onclick="resolveSearch(${i},'bot')" style="flex:1; font-size:10px; background:#333">BOT</button>
+                    <button onclick="resolveSearch(${i},'trash')" style="flex:1; font-size:10px; background:#c0392b">TRASH</button>
+                </div>`;
+            grid.appendChild(div);
+        });
+        document.getElementById('inspector').style.display = 'flex';
+    }
+
+    window.resolveSearch = function(i, type) {
+        const url = SEARCH_ARR.splice(i, 1)[0];
+        if(type === 'hand') createCard(url, 0, 0, {inHand:true}); else if(type === 'trash') TRASH_ARR.push(url); else DECK_ARR.unshift(url);
+        if(!SEARCH_ARR.length) closeInspector(); else { const remaining = document.getElementById('insp-grid').children; remaining[i].style.display = 'none'; }
+        saveState();
+    }
+    
+    window.closeInspector = function() { while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); document.getElementById('inspector').style.display = 'none'; refreshStats(); saveState(); }
+
+    function startSelection(mode, max, message, callback) { selectConfig = { mode, max, current: [], callback }; document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'flex'; document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; }
     window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); selectConfig = null; }
     function handleSelection(card) {
         if(selectConfig.mode === 'rest_stage') { if(card.parentElement.id !== 'stage-zone' || !CARD_DB[card.dataset.url]?.traits?.includes("Invention") || card.classList.contains('rested')) { alert("Select active Invention stage."); return; } }
