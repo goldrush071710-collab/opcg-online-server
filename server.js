@@ -8,9 +8,6 @@ app.use(express.static('public'));
 const rooms = {};
 
 io.on('connection', (socket) => {
-    console.log('Player connected:', socket.id);
-
-    // Create a new room
     socket.on('create_room', (callback) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false };
@@ -19,32 +16,25 @@ io.on('connection', (socket) => {
         callback({ success: true, roomId: roomId });
     });
 
-    // Join an existing room
     socket.on('join_room', (roomId, callback) => {
         roomId = roomId.toUpperCase();
         if (rooms[roomId] && !rooms[roomId].p2) {
             rooms[roomId].p2 = socket.id;
             socket.join(roomId);
             socket.roomId = roomId;
-            
-            // FIX: Tell everyone in the room (Player 1) that Player 2 has arrived
             io.to(roomId).emit('player_joined');
-            
             callback({ success: true });
         } else {
-            callback({ success: false, msg: 'Room is full or does not exist.' });
+            callback({ success: false, msg: 'Room full or invalid.' });
         }
     });
 
-    // Player selects deck and is ready
-    socket.on('deck_selected', (deckName) => {
+    socket.on('deck_selected', () => {
         const room = rooms[socket.roomId];
         if(!room) return;
-
         if (room.p1 === socket.id) room.p1Ready = true;
         if (room.p2 === socket.id) room.p2Ready = true;
 
-        // Start the game if both are ready
         if (room.p1Ready && room.p2Ready) {
             const p1GoesFirst = Math.random() > 0.5;
             io.to(room.p1).emit('game_start', { isFirst: p1GoesFirst });
@@ -52,7 +42,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Sync board movements
+    // Mirror Syncing: Send my update to the other person
     socket.on('board_update', (boardState) => {
         if(socket.roomId) {
             socket.to(socket.roomId).emit('opponent_board_update', boardState);
@@ -67,7 +57,4 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-    console.log(`Server is running!`);
-});
+http.listen(3000, () => console.log("Server Live"));
