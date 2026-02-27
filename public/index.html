@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Sticky Attachments</title>
+    <title>OPCG Master Engine - Click to Attach DON!!</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -45,7 +45,7 @@
         #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         .life-zone .card { position: absolute !important; z-index: 20;}
-        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: grab !important; }
+        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
@@ -198,7 +198,7 @@
     
     let isDevMode = false;
     let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0, isFirst = true, isMyTurn = false;
-    let dragged = null, hovered = null, rightClickedCard = null;
+    let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
     let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
     let SEARCH_ARR = [];
 
@@ -341,7 +341,6 @@
             }
         });
         
-        // OPPONENT DON CASCADING LOGIC
         const parentCountsOpp = {};
         document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => {
             const p = document.getElementById(d.dataset.parentId);
@@ -393,7 +392,15 @@
         }
     }
 
-    window.addEventListener('mousedown', (e) => { if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); });
+    window.addEventListener('mousedown', (e) => { 
+        if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
+        
+        // Clear DON Selection if clicking off-card
+        if (selectedDon && !e.target.closest('.card')) {
+            selectedDon.style.outline = ""; selectedDon = null;
+        }
+    });
+
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
     
     document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
@@ -417,38 +424,90 @@
         else if (isInside(e, handR)) { if(!isDevMode && c.dataset.origZone !== 'hand-bar' && c.dataset.origZone !== 'life-zone') { snapBack(c); } else { toHand(c); } } 
         else if (isInside(e, deckR)) { if(!isDevMode) { snapBack(c); } else { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState(); } } 
         else if (isInside(e, lifeR)) { if(!isDevMode) { snapBack(c); } else { dropToLife(c); } } 
-        else if (c.dataset.isDon === "true") { 
-            const target = Array.from(document.elementsFromPoint(e.clientX, e.clientY)).find(el => el.classList.contains('card') && el !== c && (CARD_DB[el.dataset.url]?.type === 'Character' || CARD_DB[el.dataset.url]?.type === 'Leader')); 
-            if (target && !['hand-bar', 'life-zone'].includes(target.parentElement.id) && !target.id.includes('opp-')) { 
-                c.dataset.parentId = target.id; updateBadges(target.id); 
-            } else {
-                // If dropped in space/don zone, un-link it (For -DON!! effects)
-                if (c.dataset.parentId) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); }
-            }
-            organizeDon(); saveState(); 
-        } 
         else { snapBack(c); } 
     });
 
     function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
 
-    function createCard(url, x, y, opts = {}) { const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`; if (opts.isBack) c.classList.add('card-back'); if (!opts.isOpponent) bindCardEvents(c); else { c.onauxclick = (e) => { if (e.button === 1) { document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; c.oncontextmenu = (e) => { e.preventDefault(); document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; } if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c); return c; }
+    function createCard(url, x, y, opts = {}) { 
+        const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`; if (opts.isBack) c.classList.add('card-back'); 
+        
+        if (!opts.isOpponent) {
+            bindCardEvents(c); 
+        } else { 
+            c.onauxclick = (e) => { 
+                if (e.button === 1) { 
+                    if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return;
+                    document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; 
+                } 
+            }; 
+            c.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return;
+                document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; 
+            }; 
+        } 
+        if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c); return c; 
+    }
     
     function bindCardEvents(c) {
-        c.onmousedown = (e) => { if (e.button !== 0) return; const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && c.dataset.isDon !== "true" && !isDevMode) return; offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; };
-        c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        c.onmousedown = (e) => { 
+            if (e.button !== 0) return; 
+
+            // Click-to-Detach DON (For -DON!! effects)
+            if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) {
+                const oldId = c.dataset.parentId; delete c.dataset.parentId; 
+                updateBadges(oldId); organizeDon(); saveState(); return;
+            }
+
+            // Click-to-Select DON
+            if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) {
+                if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } 
+                else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; }
+                return;
+            }
+
+            // Click Target to Attach DON
+            if (selectedDon && !c.dataset.isDon && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone')) {
+                selectedDon.dataset.parentId = c.id; selectedDon.style.outline = ""; selectedDon = null;
+                updateBadges(c.id); organizeDon(); saveState(); return;
+            }
+
+            if (selectedDon) { selectedDon.style.outline = ""; selectedDon = null; }
+
+            const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; 
+            if(locked.includes(c.parentElement.id) && !isDevMode) return; // Note: DON dragging is disabled since they return early
+            
+            offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; 
+            startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
+        };
+        
+        c.onauxclick = (e) => { 
+            if (e.button === 1) { 
+                e.preventDefault(); 
+                if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return;
+                document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; 
+            } 
+        };
+        
         c.oncontextmenu = (e) => { 
             e.preventDefault(); 
             if(c.dataset.isDon === "true") return; // DON MENUS DISABLED
+
             rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
-            let h = `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`;
+            
+            let h = "";
+            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) {
+                h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`;
+            }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:000">Activate Main</div>`; 
             if (db?.hasAttack && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) { const isSick = (c.dataset.turnPlayed == turnNum) && (c.querySelector('.rush-tag').style.display !== 'flex'); if(!isSick) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:fff">Attack</div>`; else h += `<div style="background:#555; color:#999; cursor:not-allowed;" title="Summoning Sickness">Attack (Sleeping)</div>`; } 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
             menu.innerHTML = h; 
         };
+        
         c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
     }
 
@@ -510,7 +569,6 @@
     function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
     
-    // CASCADING DON VISUAL ENGINE
     function organizeDon() { 
         const vr = document.getElementById('my-board').getBoundingClientRect(); 
         const parentCounts = {};
