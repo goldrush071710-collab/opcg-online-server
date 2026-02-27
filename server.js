@@ -46,12 +46,11 @@ io.on('connection', (socket) => {
         if(socket.roomId) socket.to(socket.roomId).emit('opponent_board_update', boardState);
     });
 
-    // TRUE TURN PASSING RELAY
     socket.on('pass_turn', () => {
         if(socket.roomId) socket.to(socket.roomId).emit('turn_passed');
     });
 
-    // MULTIPLAYER CHAT RELAY
+    // CHAT RELAY LOGIC
     socket.on('chat_msg', (msg) => {
         if(socket.roomId) socket.to(socket.roomId).emit('chat_msg', msg);
     });
