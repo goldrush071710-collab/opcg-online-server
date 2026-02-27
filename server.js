@@ -6,8 +6,11 @@ const io = require('socket.io')(http);
 app.use(express.static('public'));
 
 const rooms = {};
+let waitingPlayer = null; // Holds the ID of a player waiting for a random match
 
 io.on('connection', (socket) => {
+    
+    // Create specific lobby
     socket.on('create_room', (callback) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false };
@@ -16,6 +19,7 @@ io.on('connection', (socket) => {
         callback({ success: true, roomId: roomId });
     });
 
+    // Join specific lobby
     socket.on('join_room', (roomId, callback) => {
         roomId = roomId.toUpperCase();
         if (rooms[roomId] && !rooms[roomId].p2) {
@@ -26,6 +30,28 @@ io.on('connection', (socket) => {
             callback({ success: true });
         } else {
             callback({ success: false, msg: 'Room full or invalid.' });
+        }
+    });
+
+    // NEW: Random Matchmaking
+    socket.on('join_random', (callback) => {
+        if (waitingPlayer && rooms[waitingPlayer.roomId] && !rooms[waitingPlayer.roomId].p2) {
+            // Join the waiting player
+            const roomId = waitingPlayer.roomId;
+            rooms[roomId].p2 = socket.id;
+            socket.join(roomId);
+            socket.roomId = roomId;
+            waitingPlayer = null; // Clear queue
+            io.to(roomId).emit('player_joined');
+            callback({ success: true, roomId: roomId, waiting: false });
+        } else {
+            // Create a room and wait
+            const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+            rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false };
+            socket.join(roomId);
+            socket.roomId = roomId;
+            waitingPlayer = { id: socket.id, roomId: roomId };
+            callback({ success: true, roomId: roomId, waiting: true });
         }
     });
 
@@ -50,12 +76,15 @@ io.on('connection', (socket) => {
         if(socket.roomId) socket.to(socket.roomId).emit('turn_passed');
     });
 
-    // CHAT RELAY LOGIC
     socket.on('chat_msg', (msg) => {
         if(socket.roomId) socket.to(socket.roomId).emit('chat_msg', msg);
     });
 
     socket.on('disconnect', () => {
+        // Clear them from queue if they leave while waiting
+        if (waitingPlayer && waitingPlayer.id === socket.id) {
+            waitingPlayer = null;
+        }
         if(socket.roomId && rooms[socket.roomId]) {
             socket.to(socket.roomId).emit('opponent_disconnected');
             delete rooms[socket.roomId];
