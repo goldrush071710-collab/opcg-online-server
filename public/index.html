@@ -528,4 +528,449 @@
                 showModal("Shark Submerge III: Restand up to 2 DON!!?", "confirm", () => {
                     const restedDons = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"].rested'));
                     if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested');
-                    appendChat("Shark Submerge III: Restood 2 DON!!", "#3498db"); processQueue
+                    appendChat("Shark Submerge III: Restood 2 DON!!", "#3498db"); processQueue(eotQueue);
+                }, () => processQueue(eotQueue));
+            });
+        });
+
+        // General Franky EOT Restand
+        const genFrankys = Array.from(document.querySelectorAll('#char-zone-front .card.rested')).filter(s => CARD_DB[s.dataset.url]?.name === "General Franky");
+        genFrankys.forEach(gf => {
+            eotQueue.push(() => { showModal("Set General Franky as active?", "confirm", () => { gf.classList.remove('rested'); saveState(); processQueue(eotQueue); }, () => processQueue(eotQueue)); });
+        });
+
+        if(!isDevMode && leader && CARD_DB[leader.dataset.url]?.name === "Franky") {
+            const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name);
+            const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III");
+            
+            if(hasExodia && DECK_ARR.length > 0) {
+                eotQueue.push(() => {
+                    const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky");
+                    if(idx !== -1) { showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", () => { document.querySelectorAll('#stage-zone .card').forEach(s=>s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); processQueue(eotQueue); }, () => { processQueue(eotQueue); }); } else { processQueue(eotQueue); }
+                });
+            } else if (DECK_ARR.length >= 5) {
+                eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { openStructuredSearch(5, ["Straw Hat Pirates", "Straw Hat Crew"], null, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); });
+            }
+        }
+        eotQueue.push(() => { executePassTurn(); }); processQueue(eotQueue);
+    }
+
+    function processQueue(q) { if(q.length > 0) { const fn = q.shift(); fn(); } }
+
+    function executePassTurn() {
+        document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; }); updatePowerDisplay();
+        if(!isDevMode) { isMyTurn = false; updateTurnUI(); socket.emit('pass_turn'); } else { organizeDon(); }
+    }
+
+    // --- SELECTION ENGINE ---
+    function startSelection(mode, max, message, callback) { 
+        selectConfig = { mode, max, current: [], callback }; document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; 
+    }
+    window.cancelSelection = function() { 
+        document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); 
+        selectConfig = null; 
+    }
+
+    function handleSelection(card) { 
+        if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Must select your DON!!", "alert"); return; } if(selectConfig.current.includes(card)) return; } 
+        else if(selectConfig.mode === 'hand_stage') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage' || db.cost !== 5 || !db.traits.includes("Invention")) { showModal("Select a 5-cost Invention Stage from hand.", "alert"); return; } }
+        else if(selectConfig.mode === 'hand_trash') { if(card.parentElement.id !== 'hand-bar') { showModal("Select a card from hand to trash.", "alert"); return; } }
+        else if(selectConfig.mode === 'rest_stage') { if(card.parentElement.id !== 'stage-zone' || card.classList.contains('rested') || !CARD_DB[card.dataset.url]?.traits?.includes("Invention")) { showModal("Select an active Invention Stage.", "alert"); return; } }
+        else if(selectConfig.mode === 'give_rush') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'char-zone-front' || !db || (!db.traits.includes("Straw Hat Crew") && !db.traits.includes("Straw Hat Pirates"))) { showModal("Select a Straw Hat Character on your field.", "alert"); return; } }
+        else if(selectConfig.mode === 'play_free_5') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || (!db.traits.includes("Straw Hat Crew") && !db.traits.includes("Straw Hat Pirates"))) { showModal("Select a cost 5 or lower Straw Hat card from hand.", "alert"); return; } }
+
+        selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
+        if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; const cb = selectConfig.callback; window.cancelSelection(); if(cb) cb(completed); } 
+    }
+
+    window.frankyMainEffect = function() {
+        hideMenu(); const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+        if(totalDon < 2) { showModal("Not enough DON!! to return (-2 required).", "alert"); return; }
+        const validStages = Array.from(document.querySelectorAll('#hand-bar .card')).filter(c => { const cdb = CARD_DB[c.dataset.url]; return cdb && cdb.type === 'Stage' && cdb.cost === 5 && cdb.traits.includes("Invention"); });
+        if(validStages.length === 0) { showModal("No 5-cost Invention stages in hand to play!", "alert"); return; }
+
+        returnDonAndCheckSanji(2, () => {
+            startSelection('hand_stage', 1, "Select Stage to play", (stageCards) => { const stage = stageCards[0]; document.getElementById('stage-zone').appendChild(stage); stage.style.position = 'relative'; saveState(); appendChat("Played stage for free!", "#3498db"); });
+        });
+    };
+
+    function restStageAndTrigger(card) {
+        card.classList.add('rested');
+        const sName = CARD_DB[card.dataset.url]?.name;
+        if(sName === "Waver") { spawnDonLocal(true); appendChat("Waver rested: Added 1 rested DON!!", "#3498db"); }
+        if(sName === "Mini Merry") { drawCardAction(); appendChat("Mini Merry rested: Drew 1 card.", "#3498db"); }
+        saveState();
+    }
+
+    // --- COMBAT ENGINE & COUNTER PHASE ---
+    window.simulateAttack = function() { 
+        hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } 
+        const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; 
+        
+        if(db.name === "Chopper") { 
+            drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db");
+            const hasTank = Array.from(document.querySelectorAll('#stage-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V");
+            if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); }
+            updatePowerDisplay(); saveState(); 
+        }
+        if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
+        
+        c.classList.add('rested'); saveState(); combatState = { active: true, attackerId: c.id, step: 'target' };
+        document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f");
+    }
+
+    function drawArrow(attId, defId) {
+        const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return;
+        const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
+        const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
+        const len = Math.hypot(dx - ax, dy - ay); 
+        // With a Top-Right pointing arrow image, we add 45 degrees to Math.atan2.
+        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 45; 
+        
+        const arrow = document.getElementById('combat-arrow');
+        arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = ay + 'px';
+        arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block';
+    }
+
+    document.addEventListener('mousedown', (e) => {
+        // TARGETING PHASE
+        if(combatState.active && combatState.step === 'target') {
+            const target = e.target.closest('.card');
+            if(!target) return;
+            
+            const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested'));
+            
+            if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') {
+                const attCard = document.getElementById(combatState.attackerId);
+                if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') { const tBase = CARD_DB[target.dataset.url]?.power || 0; attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); }
+                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; drawArrow(combatState.attackerId, combatState.defenderId);
+                document.getElementById('attacker-wait-banner').style.display = 'flex';
+                socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
+            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); }
+            return;
+        }
+
+        // BLOCKER TARGET SELECTION PHASE
+        if(combatState.active && combatState.step === 'select_blocker') {
+            const target = e.target.closest('.valid-blocker');
+            if(target) {
+                target.classList.add('rested'); saveState(); combatState.defenderId = target.id;
+                document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
+                socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id});
+                drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); 
+                askCounterPhase();
+            } else if (e.button === 2) {
+                document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
+                askCounterPhase();
+            }
+            return;
+        }
+    });
+
+    socket.on('game_action', (data) => {
+        if(data.type === 'declare_attack') {
+            const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-',''));
+            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
+            if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
+            
+            const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
+            if(blockers.length > 0) {
+                showModal("Opponent is attacking! Use a Blocker?", "confirm", 
+                () => { 
+                    combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode');
+                    blockers.forEach(b => b.classList.add('valid-blocker'));
+                    appendChat("Select a Blocker to redirect the attack (or Right-Click to cancel).", "#3498db");
+                }, 
+                () => { askCounterPhase(); });
+            } else { askCounterPhase(); }
+        }
+        else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); appendChat("Opponent Blocked!", "#e74c3c"); }
+        else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; }
+        else if(data.type === 'counter_declared') {
+            const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
+            const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
+            
+            if(isMyTurn) { // ATTACKER RESOLVES
+                if(aPow >= dPow) {
+                    appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
+                    if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
+                    else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
+                } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
+                clearCombatState();
+            } else { 
+                if(aPow >= dPow) appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
+                else appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
+                clearCombatState();
+            }
+        }
+        else if(data.type === 'resolve_kill') {
+            const targetId = data.target.replace('opp-',''); const myTarget = document.getElementById(targetId);
+            if(myTarget && myTarget.parentElement.id.includes('my-board')) {
+                const db = CARD_DB[myTarget.dataset.url];
+                if(db.name === "General Franky") {
+                    const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+                    if (totalDon >= 3) {
+                        showModal("General Franky would be K.O.'d! Return 3 DON!! to save him?", "confirm", () => {
+                            returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); });
+                        }, () => { trashCard(myTarget); appendChat("Your Character K.O.'d!", "#e74c3c"); });
+                        return;
+                    }
+                }
+                trashCard(myTarget); appendChat("Your Character K.O.'d!", "#e74c3c"); 
+            } else { appendChat("Opponent Character K.O.'d!", "#e74c3c"); }
+        }
+        else if(data.type === 'resolve_life') {
+            if(!isMyTurn) { handleLifeDamage(data.banish); } else { appendChat("Opponent took damage!", "#2ecc71"); }
+        }
+        else if(data.type === 'reveal_card') { appendChat(`Opponent searched and revealed: ${CARD_DB[data.url].name}`, "#3498db"); }
+        else if(data.type === 'request_ko') {
+            const myTarget = document.getElementById(data.target);
+            if(myTarget) {
+                const db = CARD_DB[myTarget.dataset.url];
+                if(db.name === "General Franky") {
+                    const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+                    if (totalDon >= 3) {
+                        showModal("Opponent's effect would K.O. General Franky! Return 3 DON!! to save him?", "confirm", () => {
+                            returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); });
+                        }, () => { trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); });
+                        return;
+                    }
+                }
+                trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); 
+            }
+        }
+        else if (data.type === 'concede') { showModal("Opponent Conceded! YOU WIN!", "alert"); appendChat("Opponent conceded the match.", "#2ecc71"); }
+        else if (data.type === 'game_over') { showModal("Opponent took damage at 0 Life! YOU WIN!", "alert"); appendChat("Opponent reached 0 Life and took damage. YOU WIN!", "#2ecc71"); }
+    });
+
+    function handleLifeDamage(isBanish) {
+        const lifeCards = document.getElementById('life-zone').children;
+        if(lifeCards.length === 0) { socket.emit('game_action', {type: 'game_over'}); showModal("YOU LOSE! You took damage with 0 Life.", "alert"); return; }
+        const c = lifeCards[lifeCards.length-1];
+        if(isBanish) { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); appendChat("Life Banished to Trash!", "#8e44ad"); updateLifePositions(); saveState(); return; } 
+        
+        const db = CARD_DB[c.dataset.url];
+        if(db && db.trigger) {
+            if(db.name === "Unblockable") {
+                showModal("Activate Life Trigger: Unblockable (K.O. Opponent Blocker cost 3 or less)?", "confirm", () => {
+                    TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
+                    startSelection('trigger_ko', 1, "Select Opponent Blocker (Cost 3 or less) to K.O.", (targets) => {
+                        socket.emit('game_action', {type: 'request_ko', target: targets[0].id.replace('opp-', '')}); appendChat("Trigger activated: Requested K.O.!", "#e74c3c"); updateLifePositions(); saveState();
+                    });
+                }, () => putInHand(c));
+            } else { putInHand(c); }
+        } else { putInHand(c); }
+    }
+    
+    function putInHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); appendChat("Took 1 Life to Hand.", "#e74c3c"); updateLifePositions(); saveState(); }
+
+    function updateCounterBanner() {
+        const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId); if(!att || !def) return;
+        const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0);
+        let req = aPow - dPow + 1000; if(req <= 0) req = 0; // Required mathematically
+        document.getElementById('counter-val').innerText = currentCounterTotal; document.getElementById('counter-req').innerText = req;
+    }
+
+    function askCounterPhase() {
+        combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-banner').style.display = 'flex';
+        currentCounterTotal = 0; selectedCounterCards = []; updateCounterBanner();
+    }
+
+    window.confirmCounter = function() {
+        selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); });
+        if(selectedCounterCards.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${selectedCounterCards[selectedCounterCards.length-1].dataset.url}')`;
+        socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal}); clearCombatState(); saveState();
+    }
+    window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); clearCombatState(); }
+
+    // --- STANDARD UI EVENTS ---
+    window.addEventListener('mousedown', (e) => { 
+        if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
+        if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); showModal("Waiting for opponent to resolve counter step.", "alert"); return; }
+        
+        if (selectedDon) { 
+            const targetCard = e.target.closest('.card');
+            if (targetCard && (targetCard.parentElement.id === 'char-zone-front' || targetCard.parentElement.id === 'leader-zone') && !targetCard.dataset.isDon && !targetCard.id.includes('opp-')) {
+                selectedDon.dataset.parentId = targetCard.id; selectedDon.style.outline = ""; 
+                const tId = targetCard.id; selectedDon = null; updateBadges(tId); organizeDon(); saveState(); 
+            } else if (!targetCard || targetCard !== selectedDon) { selectedDon.style.outline = ""; selectedDon = null; }
+        }
+    }, true);
+
+    function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
+    document.getElementById('drop-deck').onclick = () => { if(!isDevMode) { showModal("Cannot manually draw! Game draws for you.", "alert"); return;} drawCardAction(); };
+    
+    window.addEventListener('mousemove', (e) => { 
+        if (!dragged || selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
+        if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
+        if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 5 + (i*5)) + 'px'; don.style.top = (e.clientY - offY + 15 + (i*15)) + 'px'; don.style.zIndex = 15 - i; }); } 
+    });
+
+    window.addEventListener('mouseup', (e) => { 
+        if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return; const c = dragged; dragged = null; 
+        if(!isDragging) { if(c.parentElement.id === 'hand-bar' && !isDevMode) playCardConfirm(c); else if(c.parentElement.id === 'hand-bar' && isDevMode) { window.playCard(true); } return; } 
+        c.style.zIndex = 20; const trashR = document.getElementById('drop-trash').getBoundingClientRect(); const handR = document.getElementById('hand-bar').getBoundingClientRect(); const deckR = document.getElementById('drop-deck').getBoundingClientRect(); const lifeR = document.getElementById('life-zone').getBoundingClientRect(); 
+        
+        if (isInside(e, trashR)) { if(!isDevMode) { snapBack(c); showModal("Cannot manually trash.", "alert"); } else { trashCard(c); } } 
+        else if (isInside(e, handR)) { if(!isDevMode && (c.dataset.origZone === 'drop-trash' || c.dataset.origZone === 'drop-deck')) { snapBack(c); showModal("Cannot manually retrieve.", "alert"); } else { toHand(c); } } 
+        else if (isInside(e, deckR)) { if(!isDevMode) { snapBack(c); } else { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState(); } } 
+        else if (isInside(e, lifeR)) { if(!isDevMode) { snapBack(c); } else { dropToLife(c); } } 
+        else { snapBack(c); } 
+    });
+
+    function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
+    function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
+
+    function createCard(url, x, y, opts = {}) { 
+        const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`; if (opts.isBack) c.classList.add('card-back'); 
+        if (!opts.isOpponent) { bindCardEvents(c); } else { c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; } if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c); return c; 
+    }
+    
+    function bindCardEvents(c) {
+        c.onmousedown = (e) => { 
+            if (e.button !== 0 || combatState.step === 'wait_counter') return; 
+            if (selectConfig) { handleSelection(c); return; }
+
+            if (combatState.step === 'counter' && c.parentElement.id === 'hand-bar') {
+                const db = CARD_DB[c.dataset.url];
+                if (db && db.isCounter && db.type === 'Event') {
+                    if (db.name === "Gum Gum Giant") {
+                        const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
+                        const totalDons = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+                        const handCards = document.querySelectorAll('#hand-bar .card').length;
+                        if(activeDons.length < 1) { showModal("Need 1 active DON!! to play this.", "alert"); return; }
+                        if(totalDons < 3) { showModal("Need 2 DON!! to return.", "alert"); return; } 
+                        if(handCards < 2) { showModal("Need a card to trash.", "alert"); return; } 
+
+                        showModal("Play Gum Gum Giant? (Rest 1 DON, Return 2 DON, Trash 1 Hand, +4000 Power, Draw 2)", "confirm", () => {
+                            activeDons[0].classList.add('rested'); TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
+                            document.getElementById('counter-banner').style.display = 'none'; 
+                            returnDonAndCheckSanji(2, () => {
+                                startSelection('hand_trash', 1, "Select 1 card to trash", (trashed) => {
+                                    TRASH_ARR.push(trashed[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${trashed[0].dataset.url}')`; trashed[0].remove();
+                                    currentCounterTotal += 4000; updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); document.getElementById('counter-banner').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState(); appendChat("Played Gum Gum Giant: +4000, Draw 2!", "#3498db");
+                                });
+                            });
+                        });
+                    }
+                    return;
+                }
+                if (db && db.counter) {
+                    if (selectedCounterCards.includes(c)) { selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= db.counter; } 
+                    else { selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += db.counter; }
+                    updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal});
+                } return;
+            }
+
+            if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); e.stopPropagation(); return; }
+            if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { 
+                if (selectedDon === c) { /* Handled in background click */ } 
+                else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } 
+                e.stopPropagation(); return; 
+            }
+            
+            const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && !isDevMode) return; 
+            offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
+        };
+        
+        c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        
+        c.oncontextmenu = (e) => { 
+            e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            
+            let h = ""; if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`; }
+            if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
+            
+            let canAttack = false;
+            if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') {
+                if(!c.classList.contains('rested') && (isMyTurn || isDevMode)) {
+                    if(db.type === 'Leader' && myTurnCount === 1) { canAttack = false; } 
+                    else if(db.type === 'Character' && c.dataset.turnPlayed == myTurnCount && c.dataset.hasRush !== "true") { canAttack = false; } 
+                    else { canAttack = true; }
+                }
+            }
+            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`;
+            else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Cannot Attack)</div>`;
+
+            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+            if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (DON!! -2)</div>`; 
+            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
+            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            menu.innerHTML = h; 
+        };
+        c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
+    }
+
+    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
+    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
+
+    function playCardConfirm(c) { if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const db = CARD_DB[c.dataset.url]; if(!db) return; showModal(`Play ${db.name} for ${db.cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(); }); }
+    window.playCard = function(isFree = false) { const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; hideMenu(); if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); if(activeDons.length < db.cost) { showModal(`Need ${db.cost} active DON!!`, "alert"); return; } } executePlay(c, db, isFree); }
+    function executePlay(c, db, isFree) { 
+        if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); } 
+        c.classList.remove('card-back'); c.dataset.isLife = "false"; c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; c.dataset.turnPlayed = myTurnCount; 
+        if(db.type === 'Event') { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } } 
+        else if(db.type === 'Stage') { document.getElementById('stage-zone').appendChild(c); } else { const fz = document.getElementById('char-zone-front'); const bz = document.getElementById('stage-zone'); if(fz.children.length < 5) fz.appendChild(c); else bz.appendChild(c); } 
+        saveState(); setTimeout(() => triggerOnPlay(c, db), 100); 
+    }
+
+    document.addEventListener('mousedown', (e) => {
+        if(combatState.active && combatState.step === 'unblockable_target') {
+            const t = e.target.closest('#my-board .card');
+            if(t && (t.parentElement.id === 'char-zone-front' || t.parentElement.id === 'leader-zone')) { t.dataset.unblockable = "true"; document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Card is now Unblockable!", "#8e44ad"); saveState(); }
+        }
+    });
+
+    function triggerOnPlay(cardEl, db) {
+        const hasLogic = ["Franky (Character)", "Franky Family", "Nami", "Sanji & Pudding", "Bon Clay", "Gol D. Roger", "Brachio Tank V", "Kurosai Fr-U IV"].includes(db.name);
+        if (!hasLogic) return; 
+        showModal(`Activate On Play effect of ${db.name}?`, "confirm", () => {
+            if(db.name === "Franky Family") { startSelection('hand_trash', 1, "Select 1 card from hand to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); spawnDonLocal(true); saveState(); appendChat("Trashed 1, added 1 rested DON!!", "#3498db"); }); }
+            if(db.name === "Franky (Character)") { startSelection('rest_stage', 1, "Select Invention Stage to Rest", (cards) => { restStageAndTrigger(cards[0]); }); }
+            if(db.name === "Nami") { openStructuredSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"], "Nami"); }
+            if(db.name === "Sanji & Pudding") { if((10 - DON_DECK_COUNT) <= OPP_DON_TOTAL) drawCardAction(); }
+            if(db.name === "Bon Clay") { spawnDonLocal(false); saveState(); }
+            if(db.name === "Gol D. Roger") { if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length >= 10 || OPP_DON_TOTAL >= 10) { window.rogerBuffActive = true; window.rogerBuffExpiresTurn = turnNum + 2; updatePowerDisplay(); saveState(); appendChat("Gol D. Roger played: +2000 to Leader until End of Opponent's Turn!", "#f39c12");} }
+            if(db.name === "Brachio Tank V") { startSelection('give_rush', 1, "Select Character to give Rush", (cards) => { cards[0].dataset.hasRush = "true"; cards[0].querySelector('.rush-tag').style.display = 'flex'; saveState(); appendChat("Gave Rush!", "#f1c40f"); }); }
+            if(db.name === "Kurosai Fr-U IV") { startSelection('play_free_5', 1, "Select cost 5 or lower SHC/SHP to play", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
+        });
+    }
+
+    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card').forEach(s => s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
+    window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
+    
+    window.inspectDeck = function() { if(!isDevMode) { showModal("Cannot view deck in Online Mode!", "alert"); return; } openInspector('deck'); };
+    window.openInspector = function(mode) { const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; list.forEach((url, i) => { const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; if(isDevMode) { img.style.cursor='pointer'; img.onclick = () => { if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1); createCard(url, 0, 0, {inHand: true}); closeInspector(); saveState(); }; } grid.appendChild(img); }); document.getElementById('inspector').style.display = 'flex'; }
+    window.closeInspector = function() { if(SEARCH_ARR.length > 0) { resolveStructuredSearch(-1, true); } else { document.getElementById('inspector').style.display = 'none'; refreshStats(); } }
+
+    window.openStructuredSearch = function(val, filterTraits, excludeName = null, callback = null) {
+        SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target (The rest auto-bottom)`;
+        SEARCH_ARR.forEach((url, i) => { const cardTraits = CARD_DB[url]?.traits || []; let canTake = false; if (filterTraits) { canTake = filterTraits.some(t => cardTraits.includes(t)); if(excludeName && CARD_DB[url]?.name === excludeName) canTake = false; } const div = document.createElement('div'); div.style.textAlign = 'center'; div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'};" onclick="${canTake ? `resolveStructuredSearch(${i})` : ''}"></div>`; grid.appendChild(div); });
+        const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('inspector').style.display = 'flex'; window.tempSearchCallback = callback;
+    }
+    window.resolveStructuredSearch = function(index, isEndOfTurn = false) { 
+        if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); appendChat(`You searched and grabbed: ${CARD_DB[url].name}`, "#2ecc71"); } 
+        while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); document.getElementById('inspector').style.display = 'none'; saveState(); 
+        if(isEndOfTurn) { executePassTurn(); } else if(window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null;} 
+    }
+
+    function restCard(cardEl) { cardEl.classList.toggle('rested'); saveState(); }
+    window.moveToTrash = function(c) { trashCard(c); hideMenu(); }
+    function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
+    function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
+    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
+    function organizeDon() { const vr = document.getElementById('my-board').getBoundingClientRect(); const parentCounts = {}; document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => { if(d.dataset.parentId) { const p = document.getElementById(d.dataset.parentId); if(p) { parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; const idx = parentCounts[d.dataset.parentId] - 1; const r = p.getBoundingClientRect(); d.style.position='absolute'; d.style.left=(r.left-vr.left + 5 + (idx*5))+'px'; d.style.top=(r.top-vr.top + 15 + (idx*15))+'px'; d.style.zIndex = 15 - idx; d.style.opacity="1"; } } else { document.getElementById('don-zone').appendChild(d); d.style.opacity = "1"; d.style.position="relative"; d.style.left="0"; d.style.top="0"; d.style.zIndex="20"; } }); }
+    function spawnDonLocal(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); organizeDon(); } }
+    window.spawnDonAction = function() { spawnDonLocal(false); saveState(); };
+    window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; saveState(); } };
+    window.drawCardAction = function() { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); saveState(); };
+    window.deckToLife = function() { if(DECK_ARR.length) { const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); updateLifePositions(); saveState(); } };
+    function refreshStats() { document.getElementById('deck-count').innerText=DECK_ARR.length; document.getElementById('trash-count').innerText=TRASH_ARR.length; document.getElementById('life-count').innerText=document.querySelectorAll('#life-zone .card').length; document.getElementById('don-deck-count').innerText=DON_DECK_COUNT; }
+    function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
+    window.setPower=(v)=>{ const c = rightClickedCard; c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + v); hideMenu(); saveState(); };
+    function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+</script>
+</body>
+</html>
