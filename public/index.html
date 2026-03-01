@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Final Polish</title>
+    <title>OPCG Master Engine - Dynamic Combat Arena</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -52,9 +52,9 @@
 
         .power-badge, .don-badge, .rush-tag { display: none !important; }
 
-        #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 300px; height: 15vh; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 99999; overflow-x: auto; }
+        #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 300px; height: 15vh; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
 
-        #chat-container { position: absolute; bottom: 0; right: 0; width: 300px; height: 15vh; background: #111; border-top: 2px solid var(--op-blue); border-left: 2px solid #333; display: flex; flex-direction: column; z-index: 99999;}
+        #chat-container { position: absolute; bottom: 0; right: 0; width: 300px; height: 15vh; background: #111; border-top: 2px solid var(--op-blue); border-left: 2px solid #333; display: flex; flex-direction: column; z-index: 85;}
         #chat-messages { flex: 1; overflow-y: auto; padding: 5px; font-size: 12px; color: #ccc; }
         #chat-form { display: flex; height: 30px; }
         #chat-input { flex: 1; background: #000; border: 1px solid #444; color: #fff; padding: 0 5px; font-size: 12px;}
@@ -74,21 +74,15 @@
         #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px;}
         #custom-modal-input { width:80%; padding:10px; margin-bottom:20px; text-align:center; background:#000; color:#fff; border:1px solid #444; font-size: 16px;}
 
-        #home-screen, #zoom-overlay { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; }
-        
-        /* INSPECTOR FIX - STOPS AT 15VH TO REVEAL HAND */
-        #inspector { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 15vh; background: rgba(0,0,0,0.98); padding: 50px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; flex-direction: column; z-index: 99998;}
-        
+        #home-screen, #inspector, #zoom-overlay { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; }
+        #inspector { display: none; background: rgba(0,0,0,0.98); padding: 50px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; flex-direction: column;}
         #zoom-overlay { background: rgba(0,0,0,0.95); z-index: 9999999; display: none; cursor: pointer; }
         #zoom-img { height: 80vh; max-width: 90vw; object-fit: contain; border: 4px solid var(--op-blue); border-radius: 15px; }
         
         .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
         #turn-indicator { position:fixed; top:15px; left:50%; transform:translateX(-50%); padding:10px 30px; font-weight:900; font-size:18px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
 
-        /* COMBAT ARROW */
-        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
-        
-        /* COMBAT MODES */
+        /* STRICT TARGET HIGHLIGHTS */
         body.combat-target-mode { cursor: crosshair !important; }
         body.combat-target-mode #opp-board .card { pointer-events: none !important; }
         body.combat-target-mode #opp-leader-zone .card, 
@@ -117,10 +111,27 @@
         body.select-mode .card { cursor: crosshair !important; pointer-events: auto !important; }
         body.select-mode .card:hover { outline: 3px dashed #ffcc00; }
 
-        /* COUNTER UI */
-        #counter-banner { display:none; position:fixed; bottom:20vh; left:50%; transform:translateX(-50%); background:#111; border:2px solid #3498db; padding:15px 30px; border-radius:10px; z-index:90000; align-items:center; gap:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8);}
+        /* THE DYNAMIC COMBAT ARENA */
+        #combat-arena {
+            position: fixed; top: 10vh; left: 50%; transform: translateX(-50%);
+            width: 80vw; max-width: 800px; height: 32vh;
+            background: linear-gradient(135deg, rgba(20,20,20,0.98), rgba(60,10,10,0.98));
+            border: 4px solid #e74c3c; border-radius: 20px; z-index: 90000;
+            display: none; align-items: center; justify-content: space-between;
+            padding: 20px 50px; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            color: white; box-sizing: border-box;
+        }
+        .arena-side { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 150px;}
+        .arena-img { width: 120px; height: 168px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.2); background-size: 100% 100%;}
+        .arena-power { font-size: 32px; font-weight: 900; background: #000; padding: 5px 20px; border-radius: 10px; border: 2px solid #ffcc00; color: #ffcc00; text-align: center; width: 100%; box-sizing: border-box;}
+        .arena-center { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; }
+        .arena-center h1 { font-size: 60px; margin: 0; color: #e74c3c; text-shadow: 2px 2px 0 #000, 0 0 20px #e74c3c; font-style: italic;}
+        .arena-status { font-size: 22px; margin-top: 10px; color: #34dbdb; font-weight: bold;}
+        .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; }
+
+        /* COUNTER CONTROLS */
+        #counter-controls { display:none; position:fixed; bottom:16vh; left:50%; transform:translateX(-50%); background:#111; border:2px solid #3498db; padding:15px 30px; border-radius:10px; z-index:90000; align-items:center; gap:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8);}
         body.counter-mode .card { cursor: crosshair !important; }
-        #attacker-wait-banner { display:none; position:fixed; top:20vh; left:50%; transform:translateX(-50%); background:#111; border:2px solid #e74c3c; padding:15px 30px; border-radius:10px; z-index:90000; align-items:center; gap:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8); color:white; font-size: 18px; font-weight: bold;}
 
         /* DECK BUILDER UI */
         #deck-builder-screen { display:none; position:fixed; inset:0; background:#080808; z-index:999999; flex-direction:row; color:#fff;}
@@ -137,25 +148,32 @@
 <body>
 
 <div id="sync-overlay">WAITING FOR OPPONENT...</div>
-<div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
+
+<div id="combat-arena">
+    <div class="arena-side">
+        <div class="arena-img" id="arena-att-img"></div>
+        <div class="arena-power" id="arena-att-pow">0</div>
+    </div>
+    <div class="arena-center">
+        <h1>VS</h1>
+        <div class="arena-status" id="arena-status">Waiting for Blocks...</div>
+        <div class="arena-math" id="arena-math"></div>
+    </div>
+    <div class="arena-side">
+        <div class="arena-img" id="arena-def-img"></div>
+        <div class="arena-power" id="arena-def-pow">0</div>
+    </div>
+</div>
+
+<div id="counter-controls">
+    <div style="color:white; font-weight:bold;">Select Counter Cards from Hand</div>
+    <button onclick="confirmCounter()" style="background:#2ecc71; padding:10px 20px;">CONFIRM DEFENSE</button>
+    <button onclick="takeHit()" style="background:#e74c3c; padding:10px 20px;">TAKE HIT (0)</button>
+</div>
 
 <div id="select-overlay"></div>
 <div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
-
-<div id="attacker-wait-banner">
-    <div>Waiting for Opponent's Block/Counter Phase...<br><span style="font-size:14px; color:#ccc;">Opponent has played: <b style="color:#2ecc71;">+<span id="attacker-counter-val">0</span></b></span></div>
-</div>
-
-<div id="counter-banner">
-    <div>
-        <b style="color:#3498db; font-size:18px;">COUNTER PHASE</b><br>
-        Required to defend: <b style="color:#e74c3c; font-size:16px;">+<span id="counter-req">0</span></b><br>
-        Your Counter: <b style="color:#2ecc71; font-size:16px;">+<span id="counter-val">0</span></b>
-    </div>
-    <button onclick="confirmCounter()" style="background:#2ecc71; padding:10px 20px;">CONFIRM</button>
-    <button onclick="takeHit()" style="background:#e74c3c; padding:10px 20px;">TAKE HIT (0)</button>
-</div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal-box">
@@ -300,7 +318,6 @@
     window.rogerBuffActive = false;
     window.rogerBuffExpiresTurn = 0;
 
-    // --- FULL DATABASE ---
     const CARD_DB = {
         "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
@@ -375,24 +392,7 @@
 
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
 
-    function clearCombatState() {
-        document.getElementById('combat-arrow').style.display = 'none';
-        document.body.classList.remove('combat-target-mode');
-        document.body.classList.remove('bon-clay-mode');
-        document.body.classList.remove('blocker-target-mode');
-        document.body.classList.remove('counter-mode');
-        document.getElementById('counter-banner').style.display = 'none';
-        document.getElementById('attacker-wait-banner').style.display = 'none';
-        combatState = { active: false, attackerId: null, defenderId: null, step: null };
-        document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); });
-    }
-    
-    window.concedeGame = function() {
-        showModal("Are you sure you want to concede?", "confirm", () => {
-            socket.emit('game_action', {type: 'concede'});
-            showModal("You Conceded. GAME OVER.", "alert");
-        });
-    }
+    window.concedeGame = function() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert"); }); }
 
     // --- GAME SETUP ---
     function startDevMode() { 
@@ -589,14 +589,62 @@
         if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; const cb = selectConfig.callback; window.cancelSelection(); if(cb) cb(completed); } 
     }
 
-    // --- COMBAT ENGINE & COUNTER PHASE ---
+    // --- DYNAMIC COMBAT ARENA ENGINE ---
+    function openArena(attId, defId, statusMsg) {
+        const attCard = document.getElementById(attId);
+        const defCard = document.getElementById(defId);
+        if(!attCard || !defCard) return;
+
+        document.getElementById('arena-att-img').style.backgroundImage = `url('${attCard.dataset.url}')`;
+        document.getElementById('arena-def-img').style.backgroundImage = `url('${defCard.dataset.url}')`;
+
+        let aPow = parseInt(attCard.dataset.currentPower || 0);
+        let dPow = parseInt(defCard.dataset.currentPower || 0);
+
+        document.getElementById('arena-att-pow').innerText = aPow;
+        document.getElementById('arena-def-pow').innerText = dPow;
+
+        document.getElementById('arena-status').innerText = statusMsg;
+        document.getElementById('arena-status').style.color = "#34dbdb";
+        
+        let req = aPow - dPow + 1000;
+        if(req <= 0) req = 0;
+        document.getElementById('arena-math').innerText = `Defender needs +${req} to survive`;
+
+        document.getElementById('combat-arena').style.display = 'flex';
+    }
+
+    function updateArenaCounter(counterVal) {
+        const defCard = document.getElementById(combatState.defenderId);
+        let dPow = parseInt(defCard.dataset.currentPower || 0) + counterVal;
+        document.getElementById('arena-def-pow').innerText = dPow;
+
+        const attCard = document.getElementById(combatState.attackerId);
+        let aPow = parseInt(attCard.dataset.currentPower || 0);
+
+        let req = aPow - (parseInt(defCard.dataset.currentPower || 0)) + 1000 - counterVal;
+        if(req <= 0) document.getElementById('arena-math').innerText = "DEFENSE SUCCESSFUL";
+        else document.getElementById('arena-math').innerText = `Needs +${req} more`;
+    }
+
+    function clearCombatState() {
+        document.getElementById('combat-arena').style.display = 'none';
+        document.body.classList.remove('combat-target-mode');
+        document.body.classList.remove('bon-clay-mode');
+        document.body.classList.remove('blocker-target-mode');
+        document.body.classList.remove('counter-mode');
+        document.getElementById('counter-controls').style.display = 'none';
+        document.getElementById('attacker-wait-banner').style.display = 'none';
+        combatState = { active: false, attackerId: null, defenderId: null, step: null };
+        document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); });
+    }
+
     window.simulateAttack = function() { 
         hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } 
         const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; 
         
         c.classList.add('rested'); saveState(); 
 
-        // BON CLAY POWER COPY LOGIC
         if(db.name === "Bon Clay") {
             combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' };
             document.body.classList.add('bon-clay-mode');
@@ -616,27 +664,12 @@
         document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f");
     }
 
-    function drawArrow(attId, defId) {
-        const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return;
-        const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
-        const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
-        const len = Math.hypot(dx - ax, dy - ay); 
-        // Image is an arrow pointing Top-Right (-45deg). Adding 225 ensures it points from Attacker to Defender accurately.
-        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; 
-        
-        const arrow = document.getElementById('combat-arrow');
-        arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px';
-        arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block';
-    }
-
     document.addEventListener('mousedown', (e) => {
-        // BON CLAY COPY PHASE
         if(combatState.active && combatState.step === 'bon_clay_copy') {
             const target = e.target.closest('#opp-char-zone-front .card');
             if(target) {
                 const tBase = CARD_DB[target.dataset.url]?.power || 0;
                 const attCard = document.getElementById(combatState.attackerId);
-                // Bon clay is base 1000. To match tBase, we add (tBase - 1000) as temp power.
                 attCard.dataset.tempPower = Math.max(0, tBase - 1000); 
                 updatePowerDisplay(); saveState();
                 
@@ -650,7 +683,6 @@
             return;
         }
 
-        // TARGETING PHASE
         if(combatState.active && combatState.step === 'target') {
             const target = e.target.closest('.card');
             if(!target) return;
@@ -658,21 +690,23 @@
             const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested'));
             
             if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') {
-                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; drawArrow(combatState.attackerId, combatState.defenderId);
-                document.getElementById('attacker-wait-banner').style.display = 'flex';
-                socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
+                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; 
+                
+                openArena(combatState.attackerId, combatState.defenderId, "Waiting for Blocks/Counters...");
+                socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); 
+                appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
             } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); }
             return;
         }
 
-        // BLOCKER TARGET SELECTION PHASE
         if(combatState.active && combatState.step === 'select_blocker') {
             const target = e.target.closest('.valid-blocker');
             if(target) {
                 target.classList.add('rested'); saveState(); combatState.defenderId = target.id;
                 document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
+                
                 socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id});
-                drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); 
+                openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase...");
                 askCounterPhase();
             } else if (e.button === 2) {
                 document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
@@ -685,7 +719,9 @@
     socket.on('game_action', (data) => {
         if(data.type === 'declare_attack') {
             const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-',''));
-            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
+            combatState = { active: true, attackerId: att.id, defenderId: def.id };
+            openArena(att.id, def.id, "Waiting for Blocks...");
+
             if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
             
             const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
@@ -694,29 +730,46 @@
                 () => { 
                     combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode');
                     blockers.forEach(b => b.classList.add('valid-blocker'));
-                    appendChat("Select a Blocker to redirect the attack (or Right-Click to cancel).", "#3498db");
+                    appendChat("Select a Blocker to redirect the attack (or Right-Click to skip).", "#3498db");
                 }, 
                 () => { askCounterPhase(); });
             } else { askCounterPhase(); }
         }
-        else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); appendChat("Opponent Blocked!", "#e74c3c"); }
-        else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; }
+        else if(data.type === 'block_declared') { 
+            combatState.defenderId = data.newDef; 
+            openArena(combatState.attackerId, combatState.defenderId, "Opponent Blocked! Counter Phase...");
+            appendChat("Opponent Blocked!", "#e74c3c"); 
+        }
+        else if(data.type === 'update_counter') { 
+            updateArenaCounter(data.counterValue);
+        }
         else if(data.type === 'counter_declared') {
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
             const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
             
             if(isMyTurn) { 
                 if(aPow >= dPow) {
-                    appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
-                    if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
-                    else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
-                } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
-                clearCombatState();
+                    document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c";
+                    setTimeout(() => {
+                        appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
+                        if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
+                        else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
+                        clearCombatState();
+                    }, 2500);
+                } else { 
+                    document.getElementById('arena-status').innerText = "ATTACK FAILED!"; document.getElementById('arena-status').style.color = "#2ecc71";
+                    setTimeout(() => { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); clearCombatState(); }, 2500);
+                }
             } else { 
-                if(aPow >= dPow) appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
-                else appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
-                clearCombatState();
+                if(aPow >= dPow) {
+                    document.getElementById('arena-status').innerText = "DEFENSE BROKEN!"; document.getElementById('arena-status').style.color = "#e74c3c";
+                    setTimeout(() => { appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); clearCombatState(); }, 2500);
+                } else {
+                    document.getElementById('arena-status').innerText = "DEFENSE HELD!"; document.getElementById('arena-status').style.color = "#2ecc71";
+                    setTimeout(() => { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); clearCombatState(); }, 2500);
+                }
             }
+            document.body.classList.remove('counter-mode'); document.getElementById('counter-controls').style.display = 'none';
         }
         else if(data.type === 'resolve_kill') {
             const targetId = data.target.replace('opp-',''); const myTarget = document.getElementById(targetId);
@@ -779,38 +832,31 @@
     
     function putInHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); appendChat("Took 1 Life to Hand.", "#e74c3c"); updateLifePositions(); saveState(); }
 
-    function updateCounterBanner() {
-        const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId); if(!att || !def) return;
-        const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0);
-        let req = aPow - dPow + 1000; if(req <= 0) req = 0; 
-        document.getElementById('counter-val').innerText = currentCounterTotal; document.getElementById('counter-req').innerText = req;
-    }
-
     function askCounterPhase() {
-        combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-banner').style.display = 'flex';
-        currentCounterTotal = 0; selectedCounterCards = []; updateCounterBanner();
+        combatState.step = 'counter'; document.body.classList.add('counter-mode'); 
+        document.getElementById('counter-controls').style.display = 'flex';
+        document.getElementById('arena-status').innerText = "Counter Phase";
+        currentCounterTotal = 0; selectedCounterCards = []; 
     }
 
     window.confirmCounter = function() {
         selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); });
         if(selectedCounterCards.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${selectedCounterCards[selectedCounterCards.length-1].dataset.url}')`;
-        socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal}); clearCombatState(); saveState();
+        socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal}); document.getElementById('counter-controls').style.display = 'none'; saveState();
     }
-    window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); clearCombatState(); }
+    window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); document.getElementById('counter-controls').style.display = 'none'; }
 
     // --- STANDARD UI EVENTS ---
     window.addEventListener('mousedown', (e) => { 
         if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
+        if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } 
         
-        if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } // SILENT BLOCK
-        
+        // CLICK TO DESELECT DON
         if (selectedDon) { 
             const targetCard = e.target.closest('.card');
             if (targetCard && (targetCard.parentElement.id === 'char-zone-front' || targetCard.parentElement.id === 'leader-zone') && !targetCard.dataset.isDon && !targetCard.id.includes('opp-')) {
-                // Handled in card's mousedown
-            } else if (!targetCard || targetCard !== selectedDon) {
-                selectedDon.style.outline = ""; selectedDon = null; 
-            }
+                // Handled in card click
+            } else if (!targetCard || targetCard !== selectedDon) { selectedDon.style.outline = ""; selectedDon = null; }
         }
     }, true);
 
@@ -861,11 +907,11 @@
 
                         showModal("Play Gum Gum Giant? (Rest 1 DON, Return 2 DON, Trash 1 Hand, +4000 Power, Draw 2)", "confirm", () => {
                             activeDons[0].classList.add('rested'); TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
-                            document.getElementById('counter-banner').style.display = 'none'; 
+                            document.getElementById('counter-controls').style.display = 'none'; 
                             returnDonAndCheckSanji(2, () => {
                                 startSelection('hand_trash', 1, "Select 1 card to trash", (trashed) => {
                                     TRASH_ARR.push(trashed[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${trashed[0].dataset.url}')`; trashed[0].remove();
-                                    currentCounterTotal += 4000; updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); document.getElementById('counter-banner').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState(); appendChat("Played Gum Gum Giant: +4000, Draw 2!", "#3498db");
+                                    currentCounterTotal += 4000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); document.getElementById('counter-controls').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState(); appendChat("Played Gum Gum Giant: +4000, Draw 2!", "#3498db");
                                 });
                             });
                         });
@@ -875,16 +921,19 @@
                 if (db && db.counter) {
                     if (selectedCounterCards.includes(c)) { selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= db.counter; } 
                     else { selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += db.counter; }
-                    updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal});
+                    updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal});
                 } return;
             }
 
+            // ATTACH DON
             if (selectedDon && !c.dataset.isDon && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.id.includes('opp-')) { 
                 selectedDon.dataset.parentId = c.id; selectedDon.style.outline = ""; const tId = c.id; selectedDon = null; updateBadges(tId); organizeDon(); saveState(); e.stopPropagation(); return; 
             }
+            // DETACH DON
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); e.stopPropagation(); return; }
+            // SELECT DON
             if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { 
-                if (selectedDon === c) { /* Global click listener clears outline */ } 
+                if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } 
                 else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } 
                 e.stopPropagation(); return; 
             }
