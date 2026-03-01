@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Combat Engine</title>
+    <title>OPCG Master Engine - Combat & Leader Mains</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -48,10 +48,8 @@
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
-        .don-badge, .power-badge, .rush-tag { position: absolute; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: 900; pointer-events: none; }
-        .don-badge { bottom: -8px; right: -8px; background: #ffcc00; color: #000; width: 2.5vh; height: 2.5vh; border-radius: 50%; z-index: 41; font-size: 1.2vh; display:none;}
-        .power-badge { top: -10px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-size: 1.2vh; z-index: 41; display:none;}
-        .rush-tag { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f39c12; color: black; padding: 2px; border-radius: 4px; font-size: 1.1vh; z-index: 45; display:none;}
+        /* Power Badges Hidden visually but kept in DOM for reference if needed */
+        .power-badge, .don-badge, .rush-tag { display: none !important; }
 
         #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 300px; height: 15vh; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
 
@@ -66,7 +64,7 @@
         button:disabled { background: #555 !important; color: #999; cursor: not-allowed; }
         .stat-card { background: #000; padding: 1vh; border-radius: 6px; border: 1px solid #222; text-align: center; font-size: 1.2vh; font-weight: bold; cursor: pointer; }
         
-        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 140px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
+        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 150px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
         #context-menu div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #222; font-size: 1.2vh; }
         #context-menu div:hover { background: var(--op-blue); }
 
@@ -86,16 +84,25 @@
         /* COMBAT ARROW OVERLAY */
         #combat-arrow { position: absolute; z-index: 9999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/hpl2nhZ.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
         
-        /* COMBAT SELECTION MODE */
         body.combat-target-mode { cursor: crosshair !important; }
         body.combat-target-mode #opp-board .card { cursor: crosshair !important; pointer-events: auto !important; }
         body.combat-target-mode #opp-board .card:hover { outline: 4px solid #e74c3c; }
+
+        /* SELECTION OVERLAY */
+        #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.15); z-index: 89999; display: none; pointer-events: none; }
+        #select-msg { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
+        body.select-mode { cursor: crosshair !important; }
+        body.select-mode .card { cursor: crosshair !important; pointer-events: auto !important; }
+        body.select-mode .card:hover { outline: 3px dashed #ffcc00; }
     </style>
 </head>
 <body>
 
 <div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
+
+<div id="select-overlay"></div>
+<div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal-box">
@@ -204,24 +211,23 @@
     const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
-    let isDevMode = false, isMyTurn = false, isFirst = true;
+    let isDevMode = false, isMyTurn = false, isFirst = true, totalTurns = 0;
     let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
     let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
     let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
     let SEARCH_ARR = [];
-    
-    // COMBAT STATE
+    let selectConfig = null;
     let combatState = { active: false, attackerId: null, defenderId: null, step: null };
 
-    // --- FULL STAT & RULE DATABASE ---
+    // --- FULL DATABASE ---
     const CARD_DB = {
         "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Character)", type: "Character", cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", cost: 3, traits: ["Water Seven"], hasOnPlay: true, power: 4000, counter: 1000, blocker: true },
-        "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", cost: 5, traits: ["Straw Hat Pirates"], hasAttack: true, power: 5000, counter: 2000 },
+        "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", cost: 5, traits: ["Straw Hat Pirates"], power: 5000, counter: 2000 },
         "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", cost: 11, traits: ["Straw Hat Pirates", "Invention"], hasHandAction: true, power: 13000, counter: 0, blocker: true, banish: true },
         "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", cost: 1, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 2000, counter: 1000 },
-        "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", cost: 3, traits: ["Straw Hat Crew"], hasAttack: true, power: 4000, counter: 1000 },
+        "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", cost: 3, traits: ["Straw Hat Crew"], power: 4000, counter: 1000 },
         "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", cost: 5, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 7000, counter: 0 },
         "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", cost: 4, traits: ["Alabasta"], hasOnPlay: true, power: 1000, counter: 0 },
         "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", cost: 8, traits: ["Roger Pirates"], hasOnPlay: true, power: 10000, counter: 0 },
@@ -265,9 +271,10 @@
             inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c";
             newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); };
             newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); };
-        } else if(type === 'custom') {
-            inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = defaultVal; newB1.style.background = "#3498db";
-            newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); };
+        } else if(type === 'prompt') {
+            inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c";
+            newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); };
+            newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); };
         }
     }
 
@@ -282,7 +289,7 @@
     }
 
     // --- GAME SETUP ---
-    function startDevMode() { isDevMode = true; document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[deckArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); }
+    function startDevMode() { isDevMode = true; totalTurns = 2; isMyTurn = true; document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[deckArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); }
     function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; }); }
     function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
     function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Connected! Select deck."; document.getElementById('btn-select-franky').disabled = false; } else { showModal("Invalid or full room.", "alert"); } }); }
@@ -293,6 +300,7 @@
 
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false;
+        totalTurns = 1; // Game start
         DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); 
         const leaderLife = CARD_DB[deckArray[0]]?.life || 5;
         for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
@@ -310,17 +318,14 @@
                 let base = db.power;
                 let attachedDon = document.querySelectorAll(`[data-parent-id="${c.id}"]`).length;
                 let temp = parseInt(c.dataset.tempPower || 0);
-                let total = base + (attachedDon * 1000) + temp;
-                
-                const pBadge = c.querySelector('.power-badge');
-                if(pBadge) { pBadge.innerText = total; pBadge.style.display = 'flex'; }
+                c.dataset.currentPower = base + (attachedDon * 1000) + temp;
             }
         });
     }
 
     // --- SYNC ENGINE ---
     function saveState() {
-        if(isDevMode) return;
+        if(isDevMode) { updatePowerDisplay(); return; }
         updatePowerDisplay();
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({
             id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: c.querySelector('.rush-tag').style.display, turnPlayed: c.dataset.turnPlayed
@@ -349,7 +354,6 @@
                 parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1;
                 const r = p.getBoundingClientRect(); const vr = document.getElementById('opp-board').getBoundingClientRect();
                 d.style.position = 'absolute'; d.style.left = (r.left - vr.left + 5 + (idx * 5)) + 'px'; d.style.top = (r.top - vr.top + 15 + (idx * 15)) + 'px'; d.style.zIndex = 15 - idx; d.style.opacity = "1"; 
-                const b = p.querySelector('.don-badge'); const count = document.querySelectorAll(`[data-parent-id="${p.id}"]`).length; b.innerText = count; b.style.display = count > 0 ? 'flex' : 'none'; 
             }
         });
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; 
@@ -358,15 +362,10 @@
 
     // --- TURN PHASES & END OF TURN ---
     socket.on('turn_passed', () => {
-        isMyTurn = true; turnNum++; updateTurnUI();
-        
-        // REFRESH PHASE
+        isMyTurn = true; turnNum++; totalTurns++; updateTurnUI();
         document.querySelectorAll('#my-board .card').forEach(c => { 
-            c.classList.remove('rested'); 
-            delete c.dataset.tempPower; delete c.dataset.unblockable;
+            c.classList.remove('rested'); delete c.dataset.tempPower; delete c.dataset.unblockable;
             if(c.dataset.isDon === "true") { delete c.dataset.parentId; c.style.outline=""; }
-            if(c.querySelector('.don-badge')) c.querySelector('.don-badge').style.display = 'none'; 
-            if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none'; 
         });
         organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
         showModal("It's your turn! (Draw & Refresh phases executed)", "alert");
@@ -374,33 +373,22 @@
     
     window.endTurn = function() { 
         if(!isDevMode && !isMyTurn) return; 
-        // End of Turn Effects Queue
         let eotQueue = [];
         const leader = document.querySelector('#leader-zone .card');
         
         if(!isDevMode && leader && CARD_DB[leader.dataset.url]?.name === "Franky") {
-            // Check EXODIA Condition
             const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name);
             const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III");
             
             if(hasExodia && DECK_ARR.length > 0) {
                 eotQueue.push(() => {
                     const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky");
-                    if(idx !== -1) {
-                        showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", 
-                        () => { document.querySelectorAll('#stage-zone .card').forEach(s=>s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); processQueue(eotQueue); }, 
-                        () => { processQueue(eotQueue); });
-                    } else { processQueue(eotQueue); }
+                    if(idx !== -1) { showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", () => { document.querySelectorAll('#stage-zone .card').forEach(s=>s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); processQueue(eotQueue); }, () => { processQueue(eotQueue); }); } else { processQueue(eotQueue); }
                 });
             } else if (DECK_ARR.length >= 5) {
-                eotQueue.push(() => {
-                    showModal("Activate Franky Leader end-of-turn search?", "confirm", 
-                    () => { openStructuredSearch(5, ["Straw Hat Pirates", "Straw Hat Crew"], null, () => { processQueue(eotQueue); }); }, 
-                    () => { processQueue(eotQueue); });
-                });
+                eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { openStructuredSearch(5, ["Straw Hat Pirates", "Straw Hat Crew"], null, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); });
             }
         }
-        
         eotQueue.push(() => { executePassTurn(); });
         processQueue(eotQueue);
     }
@@ -408,27 +396,70 @@
     function processQueue(q) { if(q.length > 0) { const fn = q.shift(); fn(); } }
 
     function executePassTurn() {
-        // Clear my temp buffs
         document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; });
         updatePowerDisplay();
-
-        if(!isDevMode) { isMyTurn = false; updateTurnUI(); socket.emit('pass_turn'); }
-        else { organizeDon(); }
+        if(!isDevMode) { isMyTurn = false; updateTurnUI(); socket.emit('pass_turn'); } else { organizeDon(); }
     }
+
+    // --- SELECTION ENGINE FOR DON!! -2 ---
+    function startSelection(mode, max, message, callback) { 
+        selectConfig = { mode, max, current: [], callback }; 
+        document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; 
+        document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; 
+    }
+    
+    window.cancelSelection = function() { 
+        document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; 
+        document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); 
+        selectConfig = null; 
+    }
+
+    function handleSelection(card) { 
+        if(selectConfig.mode === 'don_minus') {
+            if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Must select your DON!!", "alert"); return; }
+            if(selectConfig.current.includes(card)) return; // Prevent double click
+        } else if(selectConfig.mode === 'hand_stage') {
+            const db = CARD_DB[card.dataset.url];
+            if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage' || db.cost !== 5 || !db.traits.includes("Invention")) { showModal("Select a 5-cost Invention Stage from hand.", "alert"); return; }
+        }
+
+        selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; 
+        document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
+        
+        if(selectConfig.current.length >= selectConfig.max) { 
+            const completed = [...selectConfig.current]; window.cancelSelection(); 
+            if(selectConfig.callback) selectConfig.callback(completed); 
+        } 
+    }
+
+    window.frankyMainEffect = function() {
+        hideMenu();
+        const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+        if(totalDon < 2) { showModal("Not enough DON!! to return (-2 required).", "alert"); return; }
+        
+        const validStages = Array.from(document.querySelectorAll('#hand-bar .card')).filter(c => { const cdb = CARD_DB[c.dataset.url]; return cdb && cdb.type === 'Stage' && cdb.cost === 5 && cdb.traits.includes("Invention"); });
+        if(validStages.length === 0) { showModal("No 5-cost Invention stages in hand to play!", "alert"); return; }
+
+        startSelection('don_minus', 2, "Select 2 DON!! to return to deck", (selectedDons) => {
+            selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; });
+            organizeDon(); saveState();
+            
+            startSelection('hand_stage', 1, "Select 5-cost Invention Stage to play", (stageCards) => {
+                const stage = stageCards[0]; document.getElementById('stage-zone').appendChild(stage); saveState();
+                appendChat("Franky Leader Effect: Played stage for free!", "#3498db");
+            });
+        });
+    };
 
     // --- COMBAT ENGINE ---
     window.simulateAttack = function() { 
         hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } 
         const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; 
         
-        // Chopper Attack Buff
         if(db.name === "Chopper") { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); }
-        // Zoro Attack Buff
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
         
         c.classList.add('rested'); saveState();
-        
-        // Enter Targeting Mode
         combatState = { active: true, attackerId: c.id, step: 'target' };
         document.body.classList.add('combat-target-mode');
         appendChat("Select a target to attack!", "#f1c40f");
@@ -440,22 +471,18 @@
         const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
         const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2;
         const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
-        
-        const len = Math.hypot(dx - ax, dy - ay);
-        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI;
+        const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI;
         
         const arrow = document.getElementById('combat-arrow');
         arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 30) + 'px';
         arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block';
     }
 
-    // Target Click Listener
     document.addEventListener('mousedown', (e) => {
         if(combatState.active && combatState.step === 'target') {
             const target = e.target.closest('#opp-board .card');
             if(target && (target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')))) {
                 
-                // Bon Clay Copy Effect
                 const attCard = document.getElementById(combatState.attackerId);
                 if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') {
                     const tBase = CARD_DB[target.dataset.url]?.power || 0;
@@ -468,31 +495,24 @@
                 socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId });
                 appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
             } else if (e.button === 2) {
-                // Cancel attack targeting on right click
                 document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Attack canceled.", "#ccc");
             }
         }
     });
 
-    // RECEIVE GAME ACTIONS
     socket.on('game_action', (data) => {
         if(data.type === 'declare_attack') {
             const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-',''));
-            drawArrow(att.id, def.id);
-            combatState = { active: true, attackerId: att.id, defenderId: def.id };
+            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
             
-            // Check if unblockable
             if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
 
-            // Check Blockers
             const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
             if(blockers.length > 0) {
                 showModal("Opponent is attacking! Use a Blocker?", "confirm", 
                 () => { 
-                    // Select Blocker (Simplified: just auto-rests first blocker for now to save space, ideal is a select prompt)
                     const b = blockers[0]; b.classList.add('rested'); saveState();
-                    combatState.defenderId = b.id;
-                    socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+b.id});
+                    combatState.defenderId = b.id; socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+b.id});
                     drawArrow(att.id, b.id); askCounterPhase();
                 }, 
                 () => { askCounterPhase(); });
@@ -504,21 +524,15 @@
         }
         else if(data.type === 'counter_declared') {
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
-            const aPow = parseInt(att.querySelector('.power-badge').innerText);
-            const dPow = parseInt(def.querySelector('.power-badge').innerText) + data.counterValue;
+            const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
             
             document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
             
             if(aPow >= dPow) {
                 appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
-                if(def.parentElement.id.includes('char-zone')) {
-                    socket.emit('game_action', {type: 'resolve_kill', target: def.id});
-                } else if(def.parentElement.id.includes('leader-zone')) {
-                    socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false});
-                }
-            } else {
-                appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
-            }
+                if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
+                else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
+            } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
         }
         else if(data.type === 'resolve_kill') {
             const target = document.getElementById(data.target.replace('opp-',''));
@@ -537,17 +551,14 @@
 
     function askCounterPhase() {
         const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
-        showModal(`Counter Step. Attacker Power: ${att.querySelector('.power-badge').innerText}. Your Power: ${def.querySelector('.power-badge').innerText}. Enter counter value to use (or 0):`, "prompt", 
+        showModal(`Counter Step. Attacker: ${att.dataset.currentPower}. Your Power: ${def.dataset.currentPower}. Enter counter value (or 0):`, "prompt", 
         (val) => {
             const cVal = parseInt(val) || 0;
             if(cVal > 0) { appendChat(`You countered for +${cVal}! (Manually trash cards from hand).`, "#3498db"); }
             socket.emit('game_action', {type: 'counter_declared', counterValue: cVal});
             document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
         }, 
-        () => {
-            socket.emit('game_action', {type: 'counter_declared', counterValue: 0});
-            document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
-        }, "0");
+        () => { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false; }, "0");
     }
 
     // --- STANDARD UI EVENTS ---
@@ -558,15 +569,11 @@
 
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
     document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
-    document.getElementById('drop-deck').oncontextmenu = (e) => { e.preventDefault(); if(!isDevMode) return; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; menu.innerHTML = `<div onclick="drawCardAction(); hideMenu();">Draw 1 Card</div>`; };
-
+    
     window.addEventListener('mousemove', (e) => { 
-        if (!dragged) return; 
+        if (!dragged || selectConfig) return; 
         if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
-        if(isDragging) { 
-            dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; 
-            document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 5 + (i*5)) + 'px'; don.style.top = (e.clientY - offY + 15 + (i*15)) + 'px'; don.style.zIndex = 15 - i; }); 
-        } 
+        if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 5 + (i*5)) + 'px'; don.style.top = (e.clientY - offY + 15 + (i*15)) + 'px'; don.style.zIndex = 15 - i; }); } 
     });
 
     window.addEventListener('mouseup', (e) => { 
@@ -584,13 +591,15 @@
     function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
 
-    function createCard(url, x, y, opts = {}) { const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`; if (opts.isBack) c.classList.add('card-back'); 
+    function createCard(url, x, y, opts = {}) { 
+        const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; c.innerHTML = `<div class="don-badge">0</div><div class="power-badge">+0</div><div class="rush-tag">RUSH</div>`; if (opts.isBack) c.classList.add('card-back'); 
         if (!opts.isOpponent) { bindCardEvents(c); } else { c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; } if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c); return c; 
     }
     
     function bindCardEvents(c) {
         c.onmousedown = (e) => { 
             if (e.button !== 0) return; 
+            if (selectConfig) { handleSelection(c); return; }
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); return; }
             if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } return; }
             if (selectedDon && !c.dataset.isDon && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone')) { selectedDon.dataset.parentId = c.id; selectedDon.style.outline = ""; selectedDon = null; updateBadges(c.id); organizeDon(); saveState(); return; }
@@ -600,11 +609,27 @@
         };
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
         c.oncontextmenu = (e) => { 
-            e.preventDefault(); if(c.dataset.isDon === "true") return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            e.preventDefault(); if(selectConfig || c.dataset.isDon === "true") return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            
             let h = ""; if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
-            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:000">Activate Main</div>`; 
-            if (db?.hasAttack && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) { const isSick = (c.dataset.turnPlayed == turnNum) && (c.querySelector('.rush-tag').style.display !== 'flex'); if(!isSick) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:fff">Attack</div>`; else h += `<div style="background:#555; color:#999; cursor:not-allowed;" title="Summoning Sickness">Attack (Sleeping)</div>`; } 
+            
+            // UNIVERSAL ATTACK LOGIC
+            let canAttack = false;
+            if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') {
+                if(!c.classList.contains('rested') && (isMyTurn || isDevMode)) {
+                    if(db.type === 'Leader' && totalTurns === 1) { canAttack = false; } 
+                    else if(db.type === 'Character' && c.dataset.turnPlayed == turnNum && !c.querySelector('.rush-tag').style.display) { canAttack = false; } 
+                    else { canAttack = true; }
+                }
+            }
+            
+            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`;
+            else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Cannot Attack)</div>`;
+
+            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; 
+            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (DON!! -2)</div>`; 
+            
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
             menu.innerHTML = h; 
         };
@@ -616,20 +641,15 @@
     function executePlay(c, db, isFree) { 
         if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); } 
         c.classList.remove('card-back'); c.dataset.isLife = "false"; c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; c.dataset.turnPlayed = turnNum; 
-        
-        if(db.type === 'Event') {
-            TRASH_ARR.push(c.dataset.url); c.remove();
-            if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); }
-        } else if(db.type === 'Stage') { document.getElementById('stage-zone').appendChild(c); } else { const fz = document.getElementById('char-zone-front'); const bz = document.getElementById('stage-zone'); if(fz.children.length < 5) fz.appendChild(c); else bz.appendChild(c); } 
+        if(db.type === 'Event') { TRASH_ARR.push(c.dataset.url); c.remove(); if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } } 
+        else if(db.type === 'Stage') { document.getElementById('stage-zone').appendChild(c); } else { const fz = document.getElementById('char-zone-front'); const bz = document.getElementById('stage-zone'); if(fz.children.length < 5) fz.appendChild(c); else bz.appendChild(c); } 
         saveState(); setTimeout(() => triggerOnPlay(c, db), 100); 
     }
 
     document.addEventListener('mousedown', (e) => {
         if(combatState.active && combatState.step === 'unblockable_target') {
             const t = e.target.closest('#my-board .card');
-            if(t && (t.parentElement.id === 'char-zone-front' || t.parentElement.id === 'leader-zone')) {
-                t.dataset.unblockable = "true"; document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Card is now Unblockable!", "#8e44ad"); saveState();
-            }
+            if(t && (t.parentElement.id === 'char-zone-front' || t.parentElement.id === 'leader-zone')) { t.dataset.unblockable = "true"; document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Card is now Unblockable!", "#8e44ad"); saveState(); }
         }
     });
 
@@ -660,8 +680,6 @@
 
     function restCard(cardEl) { cardEl.classList.toggle('rested'); saveState(); }
     window.moveToTrash = function(c) { deleteCardData(c); TRASH_ARR.push(c.dataset.url); c.remove(); saveState(); hideMenu(); }
-    window.flipLife = function() { rightClickedCard.classList.toggle('card-back'); hideMenu(); saveState(); };
-    window.takeLife = function() { toHand(rightClickedCard); hideMenu(); };
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
     function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
