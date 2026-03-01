@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Combat & Leader Mains</title>
+    <title>OPCG Master Engine - Deck Builder & Counter System</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -31,7 +31,7 @@
         .char-zone { grid-column: 3; grid-row: 1; border-color: #2ecc71; }
         .stage-zone { grid-column: 3; grid-row: 2; border-color: #9b59b6; width: 100%; }
         .drop-deck { grid-column: 4; grid-row: 1; background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg'); background-size: 100% 100%; border-color: #666; color: white; width: var(--card-w); height: var(--card-h);}
-        .drop-trash { grid-column: 4; grid-row: 2; width: var(--card-w); height: var(--card-h); border-color: #7f8c8d; z-index: 50; }
+        .drop-trash { grid-column: 4; grid-row: 2; width: var(--card-w); height: var(--card-h); border-color: #7f8c8d; z-index: 50; background-size: 100% 100%;}
         .don-deck { grid-column: 1; grid-row: 3; border-color: #ffcc00; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; color: white; width: var(--card-w); height: var(--card-h);}
         .don-zone { grid-column: 2 / 4; grid-row: 3; border-color: #ffcc00; max-width: 60%; }
 
@@ -48,7 +48,6 @@
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
 
-        /* Power Badges Hidden visually but kept in DOM for reference if needed */
         .power-badge, .don-badge, .rush-tag { display: none !important; }
 
         #hand-bar { position: absolute; bottom: 0; left: var(--side-w); right: 300px; height: 15vh; background: rgba(10,10,10,0.98); border-top: 2px solid var(--op-blue); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 80; overflow-x: auto; }
@@ -81,19 +80,30 @@
         .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
         #turn-indicator { position:fixed; top:15px; left:50%; transform:translateX(-50%); padding:10px 30px; font-weight:900; font-size:18px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
 
-        /* COMBAT ARROW OVERLAY */
         #combat-arrow { position: absolute; z-index: 9999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/hpl2nhZ.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
         
         body.combat-target-mode { cursor: crosshair !important; }
         body.combat-target-mode #opp-board .card { cursor: crosshair !important; pointer-events: auto !important; }
         body.combat-target-mode #opp-board .card:hover { outline: 4px solid #e74c3c; }
 
-        /* SELECTION OVERLAY */
         #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.15); z-index: 89999; display: none; pointer-events: none; }
         #select-msg { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
         body.select-mode { cursor: crosshair !important; }
         body.select-mode .card { cursor: crosshair !important; pointer-events: auto !important; }
         body.select-mode .card:hover { outline: 3px dashed #ffcc00; }
+
+        /* COUNTER UI */
+        #counter-banner { display:none; position:fixed; bottom:20vh; left:50%; transform:translateX(-50%); background:#111; border:2px solid #3498db; padding:15px 30px; border-radius:10px; z-index:90000; align-items:center; gap:20px; box-shadow:0 10px 30px rgba(0,0,0,0.8);}
+        body.counter-mode .card { cursor: crosshair !important; }
+
+        /* DECK BUILDER UI */
+        #deck-builder-screen { display:none; position:fixed; inset:0; background:#080808; z-index:999999; flex-direction:row; color:#fff;}
+        .db-card-pool { flex: 2; padding: 20px; overflow-y: auto; border-right: 2px solid #333; display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start;}
+        .db-sidebar { flex: 1; padding: 20px; background: #111; display: flex; flex-direction: column; gap: 10px; }
+        .db-card-item { width: 80px; height: 112px; background-size: 100% 100%; border-radius: 6px; cursor: pointer; transition: 0.1s; border: 2px solid transparent;}
+        .db-card-item:hover { border-color: var(--op-blue); transform: scale(1.05); }
+        .db-list-item { display: flex; justify-content: space-between; padding: 5px; background: #222; border-radius: 4px; font-size: 12px; cursor: pointer;}
+        .db-list-item:hover { background: #c0392b; }
     </style>
 </head>
 <body>
@@ -103,6 +113,12 @@
 
 <div id="select-overlay"></div>
 <div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
+
+<div id="counter-banner">
+    <div><b style="color:#3498db; font-size:18px;">COUNTER PHASE</b><br>Click cards in hand to counter. Total: <b style="color:#2ecc71; font-size:16px;">+<span id="counter-val">0</span></b></div>
+    <button onclick="confirmCounter()" style="background:#2ecc71; padding:10px 20px;">CONFIRM</button>
+    <button onclick="takeHit()" style="background:#e74c3c; padding:10px 20px;">TAKE HIT (0)</button>
+</div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal-box">
@@ -117,12 +133,13 @@
 
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
-        <h2 style="margin:0; color:var(--op-blue);">OPCG Combat Engine</h2>
+        <h2 style="margin:0; color:var(--op-blue);">OPCG Engine</h2>
         <div style="display:flex; gap:10px;">
             <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">HOST LOBBY</button>
             <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">JOIN LOBBY</button>
         </div>
         <button onclick="randomMatch()" style="background:#3498db; padding: 15px;">RANDOM MATCH</button>
+        <button onclick="openDeckBuilder()" style="background:#f39c12; padding: 15px;">DECK BUILDER</button>
         <hr style="border-color:#333; width:100%;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:15px;">DEV MODE (SINGLE PLAYER)</button>
     </div>
@@ -137,7 +154,25 @@
             <button onclick="copyCode()" style="margin-left:15px; background:#3498db; padding:5px 10px;">COPY</button>
         </h2>
         <p id="lobby-status">Waiting for opponent to join...</p>
-        <button onclick="selectDeck('Franky')" id="btn-select-franky" disabled style="padding: 15px;">SELECT FRANKY DECK</button>
+        <div id="lobby-deck-list" style="max-height: 150px; overflow-y:auto; border:1px solid #333; padding:10px; text-align:left;"></div>
+        <button onclick="confirmSelectDeck()" id="btn-select-deck" disabled style="padding: 15px; margin-top:10px;">READY</button>
+    </div>
+</div>
+
+<div id="deck-builder-screen">
+    <div class="db-card-pool" id="db-pool"></div>
+    <div class="db-sidebar">
+        <h2 style="margin:0; color:var(--op-blue);">Deck Builder</h2>
+        <input type="text" id="db-name" placeholder="Deck Name" style="padding:10px; background:#000; color:#fff; border:1px solid #444;">
+        <div style="background:#222; padding:10px; border-radius:6px;"><b>Leader:</b> <span id="db-leader" style="color:#e74c3c;">None</span></div>
+        <div><b>Main Deck (<span id="db-count">0</span>/50)</b></div>
+        <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid #333; padding:5px; display:flex; flex-direction:column; gap:5px;"></div>
+        <div style="display:flex; gap:5px;">
+            <button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:15px;">SAVE</button>
+            <button onclick="importDeck()" style="flex:1; background:#8e44ad; padding:15px;">IMPORT</button>
+            <button onclick="exportDeck()" style="flex:1; background:#3498db; padding:15px;">EXPORT</button>
+        </div>
+        <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:15px;">EXIT TO MENU</button>
     </div>
 </div>
 
@@ -215,9 +250,13 @@
     let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
     let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
     let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
-    let SEARCH_ARR = [];
-    let selectConfig = null;
+    let SEARCH_ARR = [], selectConfig = null;
     let combatState = { active: false, attackerId: null, defenderId: null, step: null };
+    let currentCounterTotal = 0, selectedCounterCards = [];
+    
+    let savedDecks = JSON.parse(localStorage.getItem('opcg_decks') || "[]");
+    let editingDeck = { name: "", leader: null, main: {} };
+    let activeLobbyDeckUrlArray = [];
 
     // --- FULL DATABASE ---
     const CARD_DB = {
@@ -241,70 +280,141 @@
         "https://i.imgur.com/A8Z5aKe.png": { name: "Unblockable", type: "Event", cost: 1, traits: ["Straw Hat Crew"] }
     };
 
-    const deckArray = [
-        "https://i.imgur.com/TwmysAX.png", 
-        ...Array(4).fill("https://i.imgur.com/2lEVHJP.png"), ...Array(4).fill("https://i.imgur.com/f6TtmW9.png"),
-        ...Array(4).fill("https://i.imgur.com/bzg3Xpr.png"), ...Array(2).fill("https://i.imgur.com/zmZCFVB.png"),
-        ...Array(4).fill("https://i.imgur.com/WCFtQ4V.png"), ...Array(3).fill("https://i.imgur.com/5LAj93m.png"),
-        ...Array(4).fill("https://i.imgur.com/XzXandk.png"), ...Array(4).fill("https://i.imgur.com/l16quan.png"),
-        ...Array(3).fill("https://i.imgur.com/gAedzn3.png"), ...Array(2).fill("https://i.imgur.com/egPJ3rM.png"),
-        ...Array(2).fill("https://i.imgur.com/KdMSz8v.png"), ...Array(2).fill("https://i.imgur.com/oULaM8n.png"),
-        ...Array(2).fill("https://i.imgur.com/YRa5DDx.png"), ...Array(2).fill("https://i.imgur.com/L3W1rAw.png"),
-        ...Array(2).fill("https://i.imgur.com/NAjePQD.png"), ...Array(3).fill("https://i.imgur.com/cdHtYcm.png"),
-        ...Array(3).fill("https://i.imgur.com/A8Z5aKe.png")
-    ];
+    // --- DECK BUILDER LOGIC ---
+    function openDeckBuilder() {
+        document.getElementById('home-screen').style.display = 'none';
+        document.getElementById('deck-builder-screen').style.display = 'flex';
+        editingDeck = { name: "New Deck", leader: null, main: {} };
+        document.getElementById('db-name').value = "";
+        
+        const pool = document.getElementById('db-pool'); pool.innerHTML = '';
+        Object.keys(CARD_DB).forEach(url => {
+            const div = document.createElement('div'); div.className = 'db-card-item'; div.style.backgroundImage = `url('${url}')`;
+            div.onclick = () => addToDeck(url);
+            pool.appendChild(div);
+        });
+        renderDeckList();
+    }
+    
+    function addToDeck(url) {
+        const db = CARD_DB[url];
+        if(db.type === 'Leader') { editingDeck.leader = url; } 
+        else {
+            let count = editingDeck.main[url] || 0;
+            let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0);
+            if(count < 4 && total < 50) editingDeck.main[url] = count + 1;
+        }
+        renderDeckList();
+    }
+
+    function removeFrmDeck(url) {
+        if(editingDeck.main[url]) {
+            editingDeck.main[url]--;
+            if(editingDeck.main[url] <= 0) delete editingDeck.main[url];
+        }
+        renderDeckList();
+    }
+
+    function renderDeckList() {
+        document.getElementById('db-leader').innerText = editingDeck.leader ? CARD_DB[editingDeck.leader].name : "None";
+        let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0);
+        document.getElementById('db-count').innerText = total;
+        
+        const list = document.getElementById('db-list'); list.innerHTML = '';
+        Object.keys(editingDeck.main).forEach(url => {
+            const div = document.createElement('div'); div.className = 'db-list-item';
+            div.innerHTML = `<span>${CARD_DB[url].name}</span> <span>x${editingDeck.main[url]}</span>`;
+            div.onclick = () => removeFrmDeck(url);
+            list.appendChild(div);
+        });
+    }
+
+    function saveDeck() {
+        editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck";
+        let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0);
+        if(!editingDeck.leader || total !== 50) { showModal("Deck must have 1 Leader and exactly 50 cards.", "alert"); return; }
+        
+        savedDecks.push(JSON.parse(JSON.stringify(editingDeck)));
+        localStorage.setItem('opcg_decks', JSON.stringify(savedDecks));
+        showModal("Deck Saved!", "alert");
+    }
+
+    function closeDeckBuilder() { document.getElementById('deck-builder-screen').style.display = 'none'; document.getElementById('home-screen').style.display = 'flex'; }
+    
+    function exportDeck() {
+        editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck";
+        const str = btoa(JSON.stringify(editingDeck));
+        navigator.clipboard.writeText(str).then(() => showModal("Deck string copied to clipboard!", "alert"));
+    }
+
+    function importDeck() {
+        showModal("Paste deck string:", "prompt", (val) => {
+            try { editingDeck = JSON.parse(atob(val)); document.getElementById('db-name').value = editingDeck.name; renderDeckList(); } 
+            catch(e) { showModal("Invalid deck string.", "alert"); }
+        });
+    }
+
+    function populateLobbyDecks() {
+        const list = document.getElementById('lobby-deck-list'); list.innerHTML = '';
+        if(savedDecks.length === 0) { list.innerHTML = "<span style='color:#e74c3c'>No decks saved. Go to Deck Builder first!</span>"; return; }
+        savedDecks.forEach((d, i) => {
+            const div = document.createElement('div'); div.style.padding = "5px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #444";
+            div.innerText = d.name;
+            div.onclick = () => { 
+                Array.from(list.children).forEach(c => c.style.background = "transparent"); div.style.background = "var(--op-blue)";
+                activeLobbyDeckUrlArray = [d.leader];
+                Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) activeLobbyDeckUrlArray.push(url); });
+                document.getElementById('btn-select-deck').disabled = false;
+            };
+            list.appendChild(div);
+        });
+    }
 
     // --- UTILS & UI ---
     function showModal(msg, type, onConfirm, onCancel, defaultVal = "") {
-        const over = document.getElementById('custom-modal-overlay');
-        document.getElementById('custom-modal-msg').innerText = msg;
+        const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerText = msg;
         const inp = document.getElementById('custom-modal-input');
         const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2');
-        over.style.display = 'flex';
-        const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1);
-        const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2);
+        over.style.display = 'flex'; const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2);
         
-        if(type === 'alert') {
-            inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db";
-            newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); };
-        } else if(type === 'confirm') {
-            inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c";
-            newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); };
-            newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); };
-        } else if(type === 'prompt') {
-            inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c";
-            newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); };
-            newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); };
-        }
+        if(type === 'alert') { inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; } 
+        else if(type === 'confirm') { inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
+        else if(type === 'prompt') { inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; }
     }
 
     function sendChat(e) { e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg) return; appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = ''; }
     socket.on('chat_msg', (msg) => { appendChat("Opp: " + msg, "#e74c3c"); });
     function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
 
-    function updateTurnUI() {
-        if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block';
-        if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } 
-        else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; }
-    }
+    function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
 
     // --- GAME SETUP ---
-    function startDevMode() { isDevMode = true; totalTurns = 2; isMyTurn = true; document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[deckArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); }
-    function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; }); }
+    function startDevMode() { 
+        if(savedDecks.length === 0) { showModal("Make a deck first!", "alert"); return; }
+        isDevMode = true; totalTurns = 2; isMyTurn = true; 
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
+        const d = savedDecks[0]; let arr = []; Object.keys(d.main).forEach(u => { for(let k=0; k<d.main[u]; k++) arr.push(u); });
+        DECK_ARR = arr; shuffleArray(DECK_ARR); createCard(d.leader, 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[d.leader]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); 
+    }
+
+    function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; populateLobbyDecks(); }); }
     function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
-    function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Connected! Select deck."; document.getElementById('btn-select-franky').disabled = false; } else { showModal("Invalid or full room.", "alert"); } }); }
-    function randomMatch() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Select deck."; document.getElementById('btn-select-franky').disabled = false; } }); }
+    function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); populateLobbyDecks(); } else { showModal("Invalid or full room.", "alert"); } }); }
+    function randomMatch() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; populateLobbyDecks(); if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Select deck."; } }); }
     function copyCode() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=>showModal("Code copied!", "alert")); }
-    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Select your deck."; document.getElementById('btn-select-franky').disabled = false; });
-    function selectDeck(deckName) { document.getElementById('btn-select-franky').innerText = "READY"; document.getElementById('btn-select-franky').disabled = true; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', deckName); }
+    
+    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Select your deck."; });
+    function confirmSelectDeck() { document.getElementById('btn-select-deck').innerText = "READY"; document.getElementById('btn-select-deck').disabled = true; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }
 
     socket.on('game_start', (data) => {
-        document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false;
-        totalTurns = 1; // Game start
-        DECK_ARR = deckArray.slice(1); shuffleArray(DECK_ARR); createCard(deckArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[deckArray[0]]?.life || 5;
+        document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false; totalTurns = 1; 
+        
+        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5;
         for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
         for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); refreshStats();
+        
         setTimeout(() => { showModal("Mulligan? (Return hand, shuffle, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); finishSetup(isFirst); }, () => { finishSetup(isFirst); }); }, 500);
     });
 
@@ -325,8 +435,7 @@
 
     // --- SYNC ENGINE ---
     function saveState() {
-        if(isDevMode) { updatePowerDisplay(); return; }
-        updatePowerDisplay();
+        if(isDevMode) { updatePowerDisplay(); return; } updatePowerDisplay();
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({
             id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: c.querySelector('.rush-tag').style.display, turnPlayed: c.dataset.turnPlayed
         }));
@@ -346,7 +455,6 @@
                 if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 15) + 'px'; }
             }
         });
-        
         const parentCountsOpp = {};
         document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => {
             const p = document.getElementById(d.dataset.parentId);
@@ -367,14 +475,14 @@
             c.classList.remove('rested'); delete c.dataset.tempPower; delete c.dataset.unblockable;
             if(c.dataset.isDon === "true") { delete c.dataset.parentId; c.style.outline=""; }
         });
-        organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
-        showModal("It's your turn! (Draw & Refresh phases executed)", "alert");
+        showModal("It's your turn! Click OK to draw and refresh DON!!", "alert", () => {
+            drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); organizeDon(); saveState();
+        });
     });
     
     window.endTurn = function() { 
         if(!isDevMode && !isMyTurn) return; 
-        let eotQueue = [];
-        const leader = document.querySelector('#leader-zone .card');
+        let eotQueue = []; const leader = document.querySelector('#leader-zone .card');
         
         if(!isDevMode && leader && CARD_DB[leader.dataset.url]?.name === "Franky") {
             const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name);
@@ -389,69 +497,45 @@
                 eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { openStructuredSearch(5, ["Straw Hat Pirates", "Straw Hat Crew"], null, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); });
             }
         }
-        eotQueue.push(() => { executePassTurn(); });
-        processQueue(eotQueue);
+        eotQueue.push(() => { executePassTurn(); }); processQueue(eotQueue);
     }
 
     function processQueue(q) { if(q.length > 0) { const fn = q.shift(); fn(); } }
 
     function executePassTurn() {
-        document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; });
-        updatePowerDisplay();
+        document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; }); updatePowerDisplay();
         if(!isDevMode) { isMyTurn = false; updateTurnUI(); socket.emit('pass_turn'); } else { organizeDon(); }
     }
 
     // --- SELECTION ENGINE FOR DON!! -2 ---
     function startSelection(mode, max, message, callback) { 
-        selectConfig = { mode, max, current: [], callback }; 
-        document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; 
-        document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; 
+        selectConfig = { mode, max, current: [], callback }; document.body.classList.add('select-mode'); document.getElementById('select-overlay').style.display = 'block'; document.getElementById('select-msg').style.display = 'flex'; document.getElementById('select-text').innerText = message + ` (0/${max})`; 
     }
-    
-    window.cancelSelection = function() { 
-        document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; 
-        document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); 
-        selectConfig = null; 
-    }
+    window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); selectConfig = null; }
 
     function handleSelection(card) { 
-        if(selectConfig.mode === 'don_minus') {
-            if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Must select your DON!!", "alert"); return; }
-            if(selectConfig.current.includes(card)) return; // Prevent double click
-        } else if(selectConfig.mode === 'hand_stage') {
-            const db = CARD_DB[card.dataset.url];
-            if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage' || db.cost !== 5 || !db.traits.includes("Invention")) { showModal("Select a 5-cost Invention Stage from hand.", "alert"); return; }
-        }
+        if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Must select your DON!!", "alert"); return; } if(selectConfig.current.includes(card)) return; } 
+        else if(selectConfig.mode === 'hand_stage') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage' || db.cost !== 5 || !db.traits.includes("Invention")) { showModal("Select a 5-cost Invention Stage from hand.", "alert"); return; } }
 
-        selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; 
-        document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
-        
-        if(selectConfig.current.length >= selectConfig.max) { 
-            const completed = [...selectConfig.current]; window.cancelSelection(); 
-            if(selectConfig.callback) selectConfig.callback(completed); 
-        } 
+        selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
+        if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; window.cancelSelection(); if(selectConfig.callback) selectConfig.callback(completed); } 
     }
 
     window.frankyMainEffect = function() {
-        hideMenu();
-        const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+        hideMenu(); const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
         if(totalDon < 2) { showModal("Not enough DON!! to return (-2 required).", "alert"); return; }
-        
         const validStages = Array.from(document.querySelectorAll('#hand-bar .card')).filter(c => { const cdb = CARD_DB[c.dataset.url]; return cdb && cdb.type === 'Stage' && cdb.cost === 5 && cdb.traits.includes("Invention"); });
         if(validStages.length === 0) { showModal("No 5-cost Invention stages in hand to play!", "alert"); return; }
 
-        startSelection('don_minus', 2, "Select 2 DON!! to return to deck", (selectedDons) => {
-            selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; });
-            organizeDon(); saveState();
-            
-            startSelection('hand_stage', 1, "Select 5-cost Invention Stage to play", (stageCards) => {
-                const stage = stageCards[0]; document.getElementById('stage-zone').appendChild(stage); saveState();
-                appendChat("Franky Leader Effect: Played stage for free!", "#3498db");
-            });
+        startSelection('don_minus', 2, "Select 2 DON!! to return", (selectedDons) => {
+            selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; }); organizeDon(); saveState();
+            setTimeout(() => {
+                startSelection('hand_stage', 1, "Select Stage to play", (stageCards) => { const stage = stageCards[0]; document.getElementById('stage-zone').appendChild(stage); saveState(); appendChat("Played stage for free!", "#3498db"); });
+            }, 100);
         });
     };
 
-    // --- COMBAT ENGINE ---
+    // --- COMBAT ENGINE & COUNTER PHASE ---
     window.simulateAttack = function() { 
         hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } 
         const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; 
@@ -459,19 +543,17 @@
         if(db.name === "Chopper") { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); }
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
         
-        c.classList.add('rested'); saveState();
-        combatState = { active: true, attackerId: c.id, step: 'target' };
-        document.body.classList.add('combat-target-mode');
-        appendChat("Select a target to attack!", "#f1c40f");
+        c.classList.add('rested'); saveState(); combatState = { active: true, attackerId: c.id, step: 'target' };
+        document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f");
     }
 
     function drawArrow(attId, defId) {
-        const a = document.getElementById(attId); const d = document.getElementById(defId);
-        if(!a || !d) return;
+        const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return;
         const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
-        const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2;
-        const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
-        const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI;
+        const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
+        const len = Math.hypot(dx - ax, dy - ay); 
+        // Fixed Arrow Rotation Math
+        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 180; 
         
         const arrow = document.getElementById('combat-arrow');
         arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 30) + 'px';
@@ -482,21 +564,11 @@
         if(combatState.active && combatState.step === 'target') {
             const target = e.target.closest('#opp-board .card');
             if(target && (target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')))) {
-                
                 const attCard = document.getElementById(combatState.attackerId);
-                if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') {
-                    const tBase = CARD_DB[target.dataset.url]?.power || 0;
-                    attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState();
-                }
-
-                document.body.classList.remove('combat-target-mode');
-                combatState.defenderId = target.id; combatState.step = 'wait';
-                drawArrow(combatState.attackerId, combatState.defenderId);
-                socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId });
-                appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
-            } else if (e.button === 2) {
-                document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Attack canceled.", "#ccc");
-            }
+                if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') { const tBase = CARD_DB[target.dataset.url]?.power || 0; attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); }
+                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait'; drawArrow(combatState.attackerId, combatState.defenderId);
+                socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
+            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); combatState.active = false; appendChat("Attack canceled.", "#ccc"); }
         }
     });
 
@@ -504,28 +576,18 @@
         if(data.type === 'declare_attack') {
             const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-',''));
             drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
-            
             if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
-
             const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
             if(blockers.length > 0) {
                 showModal("Opponent is attacking! Use a Blocker?", "confirm", 
-                () => { 
-                    const b = blockers[0]; b.classList.add('rested'); saveState();
-                    combatState.defenderId = b.id; socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+b.id});
-                    drawArrow(att.id, b.id); askCounterPhase();
-                }, 
+                () => { const b = blockers[0]; b.classList.add('rested'); saveState(); combatState.defenderId = b.id; socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+b.id}); drawArrow(att.id, b.id); askCounterPhase(); }, 
                 () => { askCounterPhase(); });
             } else { askCounterPhase(); }
         }
-        else if(data.type === 'block_declared') {
-            combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId);
-            appendChat("Opponent Blocked!", "#e74c3c");
-        }
+        else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); appendChat("Opponent Blocked!", "#e74c3c"); }
         else if(data.type === 'counter_declared') {
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
             const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
-            
             document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
             
             if(aPow >= dPow) {
@@ -536,13 +598,13 @@
         }
         else if(data.type === 'resolve_kill') {
             const target = document.getElementById(data.target.replace('opp-',''));
-            if(target) { TRASH_ARR.push(target.dataset.url); target.remove(); saveState(); appendChat("Character K.O.'d!", "#e74c3c");}
+            if(target) { TRASH_ARR.push(target.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${target.dataset.url}')`; target.remove(); saveState(); appendChat("Character K.O.'d!", "#e74c3c");}
         }
         else if(data.type === 'resolve_life') {
             const lifeCards = document.getElementById('life-zone').children;
             if(lifeCards.length > 0) {
                 const c = lifeCards[lifeCards.length-1];
-                if(data.banish) { TRASH_ARR.push(c.dataset.url); c.remove(); appendChat("Life Banished to Trash!", "#8e44ad"); } 
+                if(data.banish) { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); appendChat("Life Banished to Trash!", "#8e44ad"); } 
                 else { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); appendChat("Took 1 Life to Hand.", "#e74c3c"); }
                 saveState();
             }
@@ -550,16 +612,21 @@
     });
 
     function askCounterPhase() {
-        const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
-        showModal(`Counter Step. Attacker: ${att.dataset.currentPower}. Your Power: ${def.dataset.currentPower}. Enter counter value (or 0):`, "prompt", 
-        (val) => {
-            const cVal = parseInt(val) || 0;
-            if(cVal > 0) { appendChat(`You countered for +${cVal}! (Manually trash cards from hand).`, "#3498db"); }
-            socket.emit('game_action', {type: 'counter_declared', counterValue: cVal});
-            document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
-        }, 
-        () => { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false; }, "0");
+        combatState.step = 'counter'; document.body.classList.add('counter-mode');
+        document.getElementById('counter-banner').style.display = 'flex';
+        currentCounterTotal = 0; selectedCounterCards = []; document.getElementById('counter-val').innerText = '0';
     }
+
+    window.confirmCounter = function() {
+        selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); });
+        if(selectedCounterCards.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${selectedCounterCards[selectedCounterCards.length-1].dataset.url}')`;
+        socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal});
+        resetCounterUI(); saveState();
+    }
+    
+    window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); resetCounterUI(); }
+    
+    function resetCounterUI() { document.body.classList.remove('counter-mode'); document.getElementById('counter-banner').style.display = 'none'; document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false; document.querySelectorAll('.card').forEach(c=>c.style.outline=""); }
 
     // --- STANDARD UI EVENTS ---
     window.addEventListener('mousedown', (e) => { 
@@ -571,17 +638,17 @@
     document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
     
     window.addEventListener('mousemove', (e) => { 
-        if (!dragged || selectConfig) return; 
+        if (!dragged || selectConfig || combatState.step === 'counter') return; 
         if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
         if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.left = (e.clientX - offX - 250 + 5 + (i*5)) + 'px'; don.style.top = (e.clientY - offY + 15 + (i*15)) + 'px'; don.style.zIndex = 15 - i; }); } 
     });
 
     window.addEventListener('mouseup', (e) => { 
-        if (!dragged) return; const c = dragged; dragged = null; 
+        if (!dragged || combatState.step === 'counter') return; const c = dragged; dragged = null; 
         if(!isDragging) { if(c.parentElement.id === 'hand-bar') playCardConfirm(c); return; } 
         c.style.zIndex = 20; const trashR = document.getElementById('drop-trash').getBoundingClientRect(); const handR = document.getElementById('hand-bar').getBoundingClientRect(); const deckR = document.getElementById('drop-deck').getBoundingClientRect(); const lifeR = document.getElementById('life-zone').getBoundingClientRect(); 
         
-        if (isInside(e, trashR)) { if(!isDevMode && c.parentElement.id === 'hand-bar') { snapBack(c); showModal("Cannot manually trash from hand in Online Mode.", "alert"); } else { moveToTrash(c); } } 
+        if (isInside(e, trashR)) { if(!isDevMode) { snapBack(c); showModal("Cannot manually trash.", "alert"); } else { moveToTrash(c); } } 
         else if (isInside(e, handR)) { if(!isDevMode && c.dataset.origZone !== 'hand-bar' && c.dataset.origZone !== 'life-zone') { snapBack(c); } else { toHand(c); } } 
         else if (isInside(e, deckR)) { if(!isDevMode) { snapBack(c); } else { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState(); } } 
         else if (isInside(e, lifeR)) { if(!isDevMode) { snapBack(c); } else { dropToLife(c); } } 
@@ -599,6 +666,16 @@
     function bindCardEvents(c) {
         c.onmousedown = (e) => { 
             if (e.button !== 0) return; 
+            
+            if (combatState.step === 'counter' && c.parentElement.id === 'hand-bar') {
+                const db = CARD_DB[c.dataset.url];
+                if (db && db.counter) {
+                    if (selectedCounterCards.includes(c)) { selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= db.counter; } 
+                    else { selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += db.counter; }
+                    document.getElementById('counter-val').innerText = currentCounterTotal;
+                } return;
+            }
+
             if (selectConfig) { handleSelection(c); return; }
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); return; }
             if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } return; }
@@ -609,27 +686,24 @@
         };
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
         c.oncontextmenu = (e) => { 
-            e.preventDefault(); if(selectConfig || c.dataset.isDon === "true") return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
             let h = ""; if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect Card</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
-            // UNIVERSAL ATTACK LOGIC
             let canAttack = false;
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') {
                 if(!c.classList.contains('rested') && (isMyTurn || isDevMode)) {
-                    if(db.type === 'Leader' && totalTurns === 1) { canAttack = false; } 
+                    if(db.type === 'Leader' && totalTurns <= 2) { canAttack = false; } 
                     else if(db.type === 'Character' && c.dataset.turnPlayed == turnNum && !c.querySelector('.rush-tag').style.display) { canAttack = false; } 
                     else { canAttack = true; }
                 }
             }
-            
             if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`;
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Cannot Attack)</div>`;
 
-            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; 
+            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky") h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; 
             if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (DON!! -2)</div>`; 
-            
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
             menu.innerHTML = h; 
         };
@@ -641,7 +715,7 @@
     function executePlay(c, db, isFree) { 
         if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); } 
         c.classList.remove('card-back'); c.dataset.isLife = "false"; c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; c.dataset.turnPlayed = turnNum; 
-        if(db.type === 'Event') { TRASH_ARR.push(c.dataset.url); c.remove(); if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } } 
+        if(db.type === 'Event') { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } } 
         else if(db.type === 'Stage') { document.getElementById('stage-zone').appendChild(c); } else { const fz = document.getElementById('char-zone-front'); const bz = document.getElementById('stage-zone'); if(fz.children.length < 5) fz.appendChild(c); else bz.appendChild(c); } 
         saveState(); setTimeout(() => triggerOnPlay(c, db), 100); 
     }
@@ -673,13 +747,12 @@
     window.openStructuredSearch = function(val, filterTraits, excludeName = null, callback = null) {
         SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target (The rest auto-bottom)`;
         SEARCH_ARR.forEach((url, i) => { const cardTraits = CARD_DB[url]?.traits || []; let canTake = false; if (filterTraits) { canTake = filterTraits.some(t => cardTraits.includes(t)); if(excludeName && CARD_DB[url]?.name === excludeName) canTake = false; } const div = document.createElement('div'); div.style.textAlign = 'center'; div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'};" onclick="${canTake ? `resolveStructuredSearch(${i})` : ''}"></div>`; grid.appendChild(div); });
-        const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('inspector').style.display = 'flex';
-        window.tempSearchCallback = callback;
+        const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('inspector').style.display = 'flex'; window.tempSearchCallback = callback;
     }
     window.resolveStructuredSearch = function(index) { if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); } while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); document.getElementById('inspector').style.display = 'none'; saveState(); if(window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null;} }
 
     function restCard(cardEl) { cardEl.classList.toggle('rested'); saveState(); }
-    window.moveToTrash = function(c) { deleteCardData(c); TRASH_ARR.push(c.dataset.url); c.remove(); saveState(); hideMenu(); }
+    window.moveToTrash = function(c) { deleteCardData(c); TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); saveState(); hideMenu(); }
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); deleteCardData(c); updateLifePositions(); saveState(); }
     function deleteCardData(c) { document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
