@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Blockers & True Targeting</title>
+    <title>OPCG Master Engine - Spot-On Combat Polish</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -82,16 +82,25 @@
         .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
         #turn-indicator { position:fixed; top:15px; left:50%; transform:translateX(-50%); padding:10px 30px; font-weight:900; font-size:18px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
 
-        /* COMBAT ARROW (Fixed Position for perfect alignment) */
-        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
+        /* COMBAT ARROW (Fixed dimensions, scaled via 100% 100%, rotated perfectly) */
+        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
         
-        /* COMBAT TARGET HIGHLIGHTS */
+        /* STRICT TARGET HIGHLIGHTS - ONLY LEADERS AND RESTED CHARS */
         body.combat-target-mode { cursor: crosshair !important; }
-        body.combat-target-mode #opp-board .card { cursor: crosshair !important; pointer-events: auto !important; outline: 4px solid #e74c3c; box-shadow: 0 0 20px 5px #e74c3c !important;}
-        
-        /* BLOCKER TARGET HIGHLIGHTS */
+        body.combat-target-mode #opp-board .card { pointer-events: none !important; }
+        body.combat-target-mode #opp-leader-zone .card, 
+        body.combat-target-mode #opp-char-zone-front .card.rested {
+            pointer-events: auto !important; cursor: crosshair !important;
+            outline: 4px solid #e74c3c !important; box-shadow: 0 0 20px 5px #e74c3c !important;
+        }
+
+        /* STRICT BLOCKER HIGHLIGHTS */
         body.blocker-target-mode { cursor: crosshair !important; }
-        body.blocker-target-mode .valid-blocker { cursor: pointer !important; pointer-events: auto !important; outline: 4px solid #3498db !important; box-shadow: 0 0 20px 5px #3498db !important;}
+        body.blocker-target-mode #my-board .card { pointer-events: none !important; }
+        body.blocker-target-mode #char-zone-front .valid-blocker {
+            pointer-events: auto !important; cursor: pointer !important;
+            outline: 4px solid #3498db !important; box-shadow: 0 0 20px 5px #3498db !important;
+        }
 
         #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.15); z-index: 89999; display: none; pointer-events: none; }
         #select-msg { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
@@ -541,21 +550,24 @@
         const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
         const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
         const len = Math.hypot(dx - ax, dy - ay); 
-        // Standard Math.atan2 correctly draws from Attacker to Defender with a standard right-facing image.
         const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI; 
         
         const arrow = document.getElementById('combat-arrow');
         arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; 
-        // translateY(-50%) perfectly centers the line origin.
-        arrow.style.top = ay + 'px'; arrow.style.transform = `translateY(-50%) rotate(${angle}deg)`; arrow.style.display = 'block';
+        arrow.style.top = (ay - 15) + 'px'; // Center the 30px height perfectly
+        arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block';
     }
 
     document.addEventListener('mousedown', (e) => {
-        // ATTACK TARGET SELECTION
+        // TARGETING PHASE
         if(combatState.active && combatState.step === 'target') {
-            const target = e.target.closest('#opp-board .card');
-            // Allow targeting Leaders or ANY characters (rules request)
-            if(target && (target.parentElement.id === 'opp-leader-zone' || target.parentElement.id === 'opp-char-zone-front')) {
+            const target = e.target.closest('.card');
+            if(!target) return;
+            
+            // STRICT Valid target check (Opponent Leader OR Rested Opponent Character)
+            const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested'));
+            
+            if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') {
                 const attCard = document.getElementById(combatState.attackerId);
                 if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') { const tBase = CARD_DB[target.dataset.url]?.power || 0; attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); }
                 document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; drawArrow(combatState.attackerId, combatState.defenderId);
@@ -565,7 +577,7 @@
             return;
         }
 
-        // MANUAL BLOCKER SELECTION
+        // BLOCKER TARGET SELECTION PHASE
         if(combatState.active && combatState.step === 'select_blocker') {
             const target = e.target.closest('.valid-blocker');
             if(target) {
@@ -587,8 +599,9 @@
             const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-',''));
             drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
             if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
-            const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
             
+            // Check Blockers on MY board
+            const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
             if(blockers.length > 0) {
                 showModal("Opponent is attacking! Use a Blocker?", "confirm", 
                 () => { 
@@ -605,14 +618,15 @@
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
             const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
             
-            if(isMyTurn) { // ONLY THE ATTACKER RESOLVES MATH
+            // Attacker calculates result to prevent double execution bug
+            if(isMyTurn) {
                 if(aPow >= dPow) {
                     appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
                     if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
                     else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
                 } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
                 clearCombatState();
-            } else { // DEFENDER JUST HEARS THE OUTCOME
+            } else {
                 if(aPow >= dPow) appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
                 else appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
                 clearCombatState();
@@ -635,6 +649,12 @@
             } else { appendChat("Opponent took damage!", "#2ecc71"); }
         }
         else if(data.type === 'reveal_card') { appendChat(`Opponent searched and revealed: ${CARD_DB[data.url].name}`, "#3498db"); }
+        else if(data.type === 'request_ko') {
+            showModal(`Opponent is requesting to K.O. your ${CARD_DB[document.getElementById(data.target).dataset.url].name}. Allow?`, "confirm", () => {
+                const myTarget = document.getElementById(data.target);
+                if(myTarget) { TRASH_ARR.push(myTarget.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${myTarget.dataset.url}')`; myTarget.remove(); saveState(); appendChat("Character K.O.'d!", "#e74c3c"); }
+            });
+        }
     });
 
     function updateCounterBanner() {
@@ -660,10 +680,9 @@
     // --- STANDARD UI EVENTS ---
     window.addEventListener('mousedown', (e) => { 
         if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
-        
         if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); showModal("Waiting for opponent to resolve counter step.", "alert"); return; }
         
-        // CLICK TO DESELECT DON FIX
+        // CLICK ANYWHERE TO DESELECT DON
         if (selectedDon) { 
             const targetCard = e.target.closest('.card');
             if (targetCard && (targetCard.parentElement.id === 'char-zone-front' || targetCard.parentElement.id === 'leader-zone') && !targetCard.dataset.isDon && !targetCard.id.includes('opp-')) {
@@ -743,10 +762,9 @@
                 } return;
             }
 
-            // CLICK TO ATTACH DON
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); e.stopPropagation(); return; }
             if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { 
-                if (selectedDon === c) { /* global handles deselect */ } 
+                if (selectedDon === c) { /* Global click listener clears outline */ } 
                 else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } 
                 e.stopPropagation(); return; 
             }
@@ -754,7 +772,9 @@
             const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && !isDevMode) return; 
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
+        
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
@@ -776,12 +796,20 @@
             if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (DON!! -2)</div>`; 
             if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            
+            // UNIVERSAL K.O. REQUEST (For opponent's active cards)
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) {
+                h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`;
+            }
+
             menu.innerHTML = h; 
         };
         c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
     }
 
     window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); }
+
+    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
 
     function playCardConfirm(c) { if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const db = CARD_DB[c.dataset.url]; if(!db) return; showModal(`Play ${db.name} for ${db.cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(); }); }
     window.playCard = function(isFree = false) { const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; hideMenu(); if(!isFree) { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); if(activeDons.length < db.cost) { showModal(`Need ${db.cost} active DON!!`, "alert"); return; } } executePlay(c, db, isFree); }
