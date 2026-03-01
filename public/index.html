@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Live Counter Sync</title>
+    <title>OPCG Master Engine - Blockers & True Targeting</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -26,7 +26,6 @@
         .flex-zone { display: flex; gap: 6px; padding: 6px; justify-content: flex-start; align-items: center; border: 2px dashed rgba(255,255,255,0.3); border-radius: 8px; position: relative; flex-wrap: wrap; min-height: calc(var(--card-h) + 10px); }
         .flex-zone::after { content: attr(data-label); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.1); font-size: 2vh; font-weight: bold; text-transform: uppercase; z-index: 0; pointer-events: none; }
 
-        /* FIXED: CHAR ZONE AND STAGE ZONE SIZES FLUSH */
         .char-zone, .stage-zone { width: 100%; box-sizing: border-box; }
         .char-zone { grid-column: 3; grid-row: 1; border-color: #2ecc71; }
         .stage-zone { grid-column: 3; grid-row: 2; border-color: #9b59b6; }
@@ -66,7 +65,7 @@
         button:disabled { background: #555 !important; color: #999; cursor: not-allowed; }
         .stat-card { background: #000; padding: 1vh; border-radius: 6px; border: 1px solid #222; text-align: center; font-size: 1.2vh; font-weight: bold; cursor: pointer; }
         
-        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 150px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
+        #context-menu { position: absolute; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 999999; border-radius: 4px; width: 180px; box-shadow: 0 10px 20px rgba(0,0,0,0.8); overflow: hidden;}
         #context-menu div { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #222; font-size: 1.2vh; font-weight: bold;}
         #context-menu div:hover { background: var(--op-blue); }
 
@@ -83,16 +82,16 @@
         .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
         #turn-indicator { position:fixed; top:15px; left:50%; transform:translateX(-50%); padding:10px 30px; font-weight:900; font-size:18px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
 
-        /* COMBAT ARROW (UPDATED FOR NEW IMAGE & ROTATION) */
-        #combat-arrow { position: fixed; z-index: 99999; transform-origin: bottom left; display: none; background-image: url('https://i.imgur.com/T3lw9HW.png'); background-size: 100% 100%; height: 80px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
+        /* COMBAT ARROW (Fixed Position for perfect alignment) */
+        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
         
-        /* TARGETING GLOW - ONLY HIGHLIGHTS VALID TARGETS (LEADERS AND RESTED CHARACTERS) */
+        /* COMBAT TARGET HIGHLIGHTS */
         body.combat-target-mode { cursor: crosshair !important; }
-        body.combat-target-mode #opp-leader-zone .card, 
-        body.combat-target-mode #opp-char-zone-front .card.rested {
-            cursor: crosshair !important; pointer-events: auto !important;
-            outline: 4px solid #e74c3c; box-shadow: 0 0 20px 5px #e74c3c !important;
-        }
+        body.combat-target-mode #opp-board .card { cursor: crosshair !important; pointer-events: auto !important; outline: 4px solid #e74c3c; box-shadow: 0 0 20px 5px #e74c3c !important;}
+        
+        /* BLOCKER TARGET HIGHLIGHTS */
+        body.blocker-target-mode { cursor: crosshair !important; }
+        body.blocker-target-mode .valid-blocker { cursor: pointer !important; pointer-events: auto !important; outline: 4px solid #3498db !important; box-shadow: 0 0 20px 5px #3498db !important;}
 
         #select-overlay { position: fixed; inset: 0; background: rgba(200,0,0,0.15); z-index: 89999; display: none; pointer-events: none; }
         #select-msg { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5);}
@@ -129,7 +128,7 @@
 <div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
 
 <div id="attacker-wait-banner">
-    <div>Waiting for Opponent's Counter Step...<br><span style="font-size:14px; color:#ccc;">Opponent has played: <b style="color:#2ecc71;">+<span id="attacker-counter-val">0</span></b></span></div>
+    <div>Waiting for Opponent's Block/Counter Phase...<br><span style="font-size:14px; color:#ccc;">Opponent has played: <b style="color:#2ecc71;">+<span id="attacker-counter-val">0</span></b></span></div>
 </div>
 
 <div id="counter-banner">
@@ -358,11 +357,12 @@
     function clearCombatState() {
         document.getElementById('combat-arrow').style.display = 'none';
         document.body.classList.remove('combat-target-mode');
+        document.body.classList.remove('blocker-target-mode');
         document.body.classList.remove('counter-mode');
         document.getElementById('counter-banner').style.display = 'none';
         document.getElementById('attacker-wait-banner').style.display = 'none';
         combatState = { active: false, attackerId: null, defenderId: null, step: null };
-        document.querySelectorAll('.card').forEach(c => c.style.outline = "");
+        document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); });
     }
 
     // --- GAME SETUP ---
@@ -541,24 +541,44 @@
         const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
         const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
         const len = Math.hypot(dx - ax, dy - ay); 
-        // Rotation math specifically adjusted for Top-Right facing arrow image:
-        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 45; 
+        // Standard Math.atan2 correctly draws from Attacker to Defender with a standard right-facing image.
+        const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI; 
         
         const arrow = document.getElementById('combat-arrow');
-        arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = ay + 'px';
-        arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block';
+        arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; 
+        // translateY(-50%) perfectly centers the line origin.
+        arrow.style.top = ay + 'px'; arrow.style.transform = `translateY(-50%) rotate(${angle}deg)`; arrow.style.display = 'block';
     }
 
     document.addEventListener('mousedown', (e) => {
+        // ATTACK TARGET SELECTION
         if(combatState.active && combatState.step === 'target') {
             const target = e.target.closest('#opp-board .card');
-            if(target && (target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')))) {
+            // Allow targeting Leaders or ANY characters (rules request)
+            if(target && (target.parentElement.id === 'opp-leader-zone' || target.parentElement.id === 'opp-char-zone-front')) {
                 const attCard = document.getElementById(combatState.attackerId);
                 if(CARD_DB[attCard.dataset.url]?.name === "Bon Clay" && target.parentElement.id === 'opp-char-zone-front') { const tBase = CARD_DB[target.dataset.url]?.power || 0; attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); }
                 document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; drawArrow(combatState.attackerId, combatState.defenderId);
                 document.getElementById('attacker-wait-banner').style.display = 'flex';
                 socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); appendChat("Attack Declared! Waiting for opponent...", "#f1c40f");
-            } else if (e.button === 2) { clearCombatState(); appendChat("Attack canceled.", "#ccc"); }
+            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); }
+            return;
+        }
+
+        // MANUAL BLOCKER SELECTION
+        if(combatState.active && combatState.step === 'select_blocker') {
+            const target = e.target.closest('.valid-blocker');
+            if(target) {
+                target.classList.add('rested'); saveState(); combatState.defenderId = target.id;
+                document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
+                socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id});
+                drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); 
+                askCounterPhase();
+            } else if (e.button === 2) {
+                document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker'));
+                askCounterPhase();
+            }
+            return;
         }
     });
 
@@ -568,30 +588,31 @@
             drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id };
             if(att.dataset.unblockable === "true") { askCounterPhase(); return; }
             const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.blocker);
+            
             if(blockers.length > 0) {
                 showModal("Opponent is attacking! Use a Blocker?", "confirm", 
-                () => { const b = blockers[0]; b.classList.add('rested'); saveState(); combatState.defenderId = b.id; socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+b.id}); drawArrow(att.id, b.id); askCounterPhase(); }, 
+                () => { 
+                    combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode');
+                    blockers.forEach(b => b.classList.add('valid-blocker'));
+                    appendChat("Select a Blocker to redirect the attack (or Right-Click to cancel).", "#3498db");
+                }, 
                 () => { askCounterPhase(); });
             } else { askCounterPhase(); }
         }
         else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); appendChat("Opponent Blocked!", "#e74c3c"); }
-        else if(data.type === 'update_counter') {
-            const el = document.getElementById('attacker-counter-val');
-            if(el) el.innerText = data.counterValue;
-        }
+        else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; }
         else if(data.type === 'counter_declared') {
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
             const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
             
-            // Attacker calculates result to prevent double execution bug
-            if(isMyTurn) {
+            if(isMyTurn) { // ONLY THE ATTACKER RESOLVES MATH
                 if(aPow >= dPow) {
                     appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
                     if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
                     else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
                 } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
                 clearCombatState();
-            } else {
+            } else { // DEFENDER JUST HEARS THE OUTCOME
                 if(aPow >= dPow) appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
                 else appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
                 clearCombatState();
@@ -639,12 +660,23 @@
     // --- STANDARD UI EVENTS ---
     window.addEventListener('mousedown', (e) => { 
         if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
-        if (selectedDon && !e.target.closest('.card')) { selectedDon.style.outline = ""; selectedDon = null; }
+        
         if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); showModal("Waiting for opponent to resolve counter step.", "alert"); return; }
-    });
+        
+        // CLICK TO DESELECT DON FIX
+        if (selectedDon) { 
+            const targetCard = e.target.closest('.card');
+            if (targetCard && (targetCard.parentElement.id === 'char-zone-front' || targetCard.parentElement.id === 'leader-zone') && !targetCard.dataset.isDon && !targetCard.id.includes('opp-')) {
+                selectedDon.dataset.parentId = targetCard.id; selectedDon.style.outline = ""; 
+                const tId = targetCard.id; selectedDon = null; updateBadges(tId); organizeDon(); saveState(); 
+            } else if (!targetCard || targetCard !== selectedDon) {
+                selectedDon.style.outline = ""; selectedDon = null; 
+            }
+        }
+    }, true);
 
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
-    document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
+    document.getElementById('drop-deck').onclick = () => { if(!isDevMode) { showModal("Cannot manually draw! Game draws for you.", "alert"); return;} drawCardAction(); };
     
     window.addEventListener('mousemove', (e) => { 
         if (!dragged || selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
@@ -677,7 +709,6 @@
             if (e.button !== 0 || combatState.step === 'wait_counter') return; 
             if (selectConfig) { handleSelection(c); return; }
 
-            // GUM GUM GIANT / COUNTER PHASE LOGIC
             if (combatState.step === 'counter' && c.parentElement.id === 'hand-bar') {
                 const db = CARD_DB[c.dataset.url];
                 if (db && db.isCounter && db.type === 'Event') {
@@ -690,14 +721,14 @@
                         if(handCards < 2) { showModal("Need a card to trash.", "alert"); return; } 
 
                         showModal("Play Gum Gum Giant? (Rest 1 DON, Return 2 DON, Trash 1 Hand, +4000 Power, Draw 2)", "confirm", () => {
-                            activeDons[0].classList.add('rested'); TRASH_ARR.push(c.dataset.url); c.remove();
+                            activeDons[0].classList.add('rested'); TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
                             document.getElementById('counter-banner').style.display = 'none'; 
                             startSelection('don_minus', 2, "Select 2 DON!! to return", (selectedDons) => {
                                 selectedDons.forEach(d => { if(d.dataset.parentId) updateBadges(d.dataset.parentId); d.remove(); DON_DECK_COUNT++; }); organizeDon();
                                 setTimeout(() => {
                                     startSelection('hand_trash', 1, "Select 1 card to trash", (trashed) => {
                                         TRASH_ARR.push(trashed[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${trashed[0].dataset.url}')`; trashed[0].remove();
-                                        currentCounterTotal += 4000; updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); document.getElementById('counter-banner').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState();
+                                        currentCounterTotal += 4000; updateCounterBanner(); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); document.getElementById('counter-banner').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState(); appendChat("Played Gum Gum Giant: +4000, Draw 2!", "#3498db");
                                     });
                                 }, 100);
                             });
@@ -712,10 +743,13 @@
                 } return;
             }
 
-            if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); return; }
-            if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } return; }
-            if (selectedDon && !c.dataset.isDon && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone')) { selectedDon.dataset.parentId = c.id; selectedDon.style.outline = ""; selectedDon = null; updateBadges(c.id); organizeDon(); saveState(); return; }
-            if (selectedDon) { selectedDon.style.outline = ""; selectedDon = null; }
+            // CLICK TO ATTACH DON
+            if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); e.stopPropagation(); return; }
+            if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { 
+                if (selectedDon === c) { /* global handles deselect */ } 
+                else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } 
+                e.stopPropagation(); return; 
+            }
             
             const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && !isDevMode) return; 
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
@@ -783,11 +817,7 @@
     
     window.inspectDeck = function() { if(!isDevMode) { showModal("Cannot view deck in Online Mode!", "alert"); return; } openInspector('deck'); };
     window.openInspector = function(mode) { const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; list.forEach((url, i) => { const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; if(isDevMode) { img.style.cursor='pointer'; img.onclick = () => { if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1); createCard(url, 0, 0, {inHand: true}); closeInspector(); saveState(); }; } grid.appendChild(img); }); document.getElementById('inspector').style.display = 'flex'; }
-    
-    window.closeInspector = function() { 
-        if(SEARCH_ARR.length > 0) { resolveStructuredSearch(-1, true); } 
-        else { document.getElementById('inspector').style.display = 'none'; refreshStats(); }
-    }
+    window.closeInspector = function() { if(SEARCH_ARR.length > 0) { resolveStructuredSearch(-1, true); } else { document.getElementById('inspector').style.display = 'none'; refreshStats(); } }
 
     window.openStructuredSearch = function(val, filterTraits, excludeName = null, callback = null) {
         SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target (The rest auto-bottom)`;
