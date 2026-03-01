@@ -11,7 +11,7 @@ let waitingPlayer = null;
 io.on('connection', (socket) => {
     socket.on('create_room', (callback) => {
         const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-        rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false };
+        rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false, p1Mulligan: false, p2Mulligan: false };
         socket.join(roomId);
         socket.roomId = roomId;
         callback({ success: true, roomId: roomId });
@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
             callback({ success: true, roomId: roomId, waiting: false });
         } else {
             const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false };
+            rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false, p1Mulligan: false, p2Mulligan: false };
             socket.join(roomId);
             socket.roomId = roomId;
             waitingPlayer = { id: socket.id, roomId: roomId };
@@ -62,6 +62,19 @@ io.on('connection', (socket) => {
         }
     });
 
+    // MULLIGAN SYNC
+    socket.on('mulligan_done', () => {
+        const room = rooms[socket.roomId];
+        if(!room) return;
+        if (room.p1 === socket.id) room.p1Mulligan = true;
+        if (room.p2 === socket.id) room.p2Mulligan = true;
+
+        if (room.p1Mulligan && room.p2Mulligan) {
+            io.to(room.p1).emit('begin_game');
+            io.to(room.p2).emit('begin_game');
+        }
+    });
+
     socket.on('board_update', (boardState) => {
         if(socket.roomId) socket.to(socket.roomId).emit('opponent_board_update', boardState);
     });
@@ -74,7 +87,6 @@ io.on('connection', (socket) => {
         if(socket.roomId) socket.to(socket.roomId).emit('chat_msg', msg);
     });
 
-    // NEW: COMBAT & ABILITY RELAY
     socket.on('game_action', (data) => {
         if(socket.roomId) socket.to(socket.roomId).emit('game_action', data);
     });
