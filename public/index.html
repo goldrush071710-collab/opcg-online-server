@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Strict Rule Sync</title>
+    <title>OPCG Master Engine - Ultimate Combat Sync</title>
     <style>
         :root { 
             --card-h: 9.5vh; --card-w: calc(var(--card-h) * 0.71); 
@@ -80,7 +80,7 @@
         .menu-box { background:#1a1a1a; padding:30px; border-radius:12px; border:1px solid #333; width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px;}
         #turn-indicator { position:fixed; top:15px; left:50%; transform:translateX(-50%); padding:10px 30px; font-weight:900; font-size:18px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
 
-        #combat-arrow { position: absolute; z-index: 9999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/hpl2nhZ.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
+        #combat-arrow { position: absolute; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/hpl2nhZ.png'); background-size: 100% 100%; height: 60px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
         
         body.combat-target-mode { cursor: crosshair !important; }
         body.combat-target-mode #opp-board .card { cursor: crosshair !important; pointer-events: auto !important; }
@@ -116,7 +116,11 @@
 <div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:1px solid #fff;">CANCEL</button></div>
 
 <div id="counter-banner">
-    <div><b style="color:#3498db; font-size:18px;">COUNTER PHASE</b><br>Click cards in hand to counter. Total: <b style="color:#2ecc71; font-size:16px;">+<span id="counter-val">0</span></b></div>
+    <div>
+        <b style="color:#3498db; font-size:18px;">COUNTER PHASE</b><br>
+        Required to defend: <b style="color:#e74c3c; font-size:16px;">+<span id="counter-req">0</span></b><br>
+        Your Counter: <b style="color:#2ecc71; font-size:16px;">+<span id="counter-val">0</span></b>
+    </div>
     <button onclick="confirmCounter()" style="background:#2ecc71; padding:10px 20px;">CONFIRM</button>
     <button onclick="takeHit()" style="background:#e74c3c; padding:10px 20px;">TAKE HIT (0)</button>
 </div>
@@ -134,7 +138,7 @@
 
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
-        <h2 style="margin:0; color:var(--op-blue);">OPCG Engine</h2>
+        <h2 style="margin:0; color:var(--op-blue);">OPCG Combat Engine</h2>
         <div style="display:flex; gap:10px;">
             <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">HOST LOBBY</button>
             <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">JOIN LOBBY</button>
@@ -237,7 +241,7 @@
 <div id="inspector">
     <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px;">
         <h2 id="insp-title" style="margin:0; color:var(--op-blue);">Inspector</h2>
-        <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px;">CLOSE</button>
+        <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px;">CLOSE / END</button>
     </div>
     <div id="insp-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; width: 100%;"></div>
 </div>
@@ -248,7 +252,7 @@
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
     let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
-    let DECK_ARR = [], TRASH_ARR = [], DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
+    let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
     let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
     let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
     let SEARCH_ARR = [], selectConfig = null;
@@ -482,6 +486,7 @@
         const validStages = Array.from(document.querySelectorAll('#hand-bar .card')).filter(c => { const cdb = CARD_DB[c.dataset.url]; return cdb && cdb.type === 'Stage' && cdb.cost === 5 && cdb.traits.includes("Invention"); });
         if(validStages.length === 0) { showModal("No 5-cost Invention stages in hand to play!", "alert"); return; }
 
+        // Start DON selection. Because we moved selectConfig check to the top of onmousedown, DON clicking works perfectly now.
         startSelection('don_minus', 2, "Select 2 DON!! to return", (selectedDons) => {
             selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; }); organizeDon(); saveState();
             setTimeout(() => {
@@ -507,6 +512,7 @@
         const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect();
         const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2;
         const len = Math.hypot(dx - ax, dy - ay); 
+        // Image faces left natively. +180 rotates it to point correctly from attacker to defender.
         const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 180; 
         
         const arrow = document.getElementById('combat-arrow');
@@ -542,32 +548,53 @@
         else if(data.type === 'counter_declared') {
             const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
             const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + data.counterValue;
+            
             document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
             
-            if(aPow >= dPow) {
-                appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
-                if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
-                else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
-            } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
+            // Attacker resolves the math to prevent double execution loop
+            if(isMyTurn) {
+                if(aPow >= dPow) {
+                    appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
+                    if(def.parentElement.id.includes('char-zone')) { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } 
+                    else if(def.parentElement.id.includes('leader-zone')) { socket.emit('game_action', {type: 'resolve_life', banish: CARD_DB[att.dataset.url]?.banish || false}); }
+                } else { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); }
+            } else {
+                if(aPow >= dPow) appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71");
+                else appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c");
+            }
         }
         else if(data.type === 'resolve_kill') {
-            const target = document.getElementById(data.target.replace('opp-',''));
-            if(target) { TRASH_ARR.push(target.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${target.dataset.url}')`; target.remove(); saveState(); appendChat("Character K.O.'d!", "#e74c3c");}
+            document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
+            const targetId = data.target.replace('opp-',''); const myTarget = document.getElementById(targetId);
+            if(myTarget && myTarget.parentElement.id.includes('my-board')) { TRASH_ARR.push(myTarget.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${myTarget.dataset.url}')`; myTarget.remove(); saveState(); appendChat("Your Character K.O.'d!", "#e74c3c"); }
+            else { appendChat("Opponent Character K.O.'d!", "#e74c3c"); }
         }
         else if(data.type === 'resolve_life') {
-            const lifeCards = document.getElementById('life-zone').children;
-            if(lifeCards.length > 0) {
-                const c = lifeCards[lifeCards.length-1];
-                if(data.banish) { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); appendChat("Life Banished to Trash!", "#8e44ad"); } 
-                else { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); appendChat("Took 1 Life to Hand.", "#e74c3c"); }
-                saveState();
-            }
+            document.getElementById('combat-arrow').style.display = 'none'; combatState.active = false;
+            if(!isMyTurn) { // Defender takes the hit
+                const lifeCards = document.getElementById('life-zone').children;
+                if(lifeCards.length > 0) {
+                    const c = lifeCards[lifeCards.length-1];
+                    if(data.banish) { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); appendChat("Life Banished to Trash!", "#8e44ad"); } 
+                    else { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); appendChat("Took 1 Life to Hand.", "#e74c3c"); }
+                    updateLifePositions(); saveState();
+                } else { showModal("YOU LOSE!", "alert"); }
+            } else { appendChat("Opponent took damage!", "#2ecc71"); }
         }
     });
 
+    function updateCounterBanner() {
+        const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId);
+        if(!att || !def) return;
+        const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0);
+        let req = aPow - dPow + 1000; // You need +1000 over a tie to beat them. Wait, OPCG rules: if tie, attacker wins. So defender MUST be higher.
+        if(req <= 0) req = 0;
+        document.getElementById('counter-val').innerText = currentCounterTotal; document.getElementById('counter-req').innerText = req;
+    }
+
     function askCounterPhase() {
         combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-banner').style.display = 'flex';
-        currentCounterTotal = 0; selectedCounterCards = []; document.getElementById('counter-val').innerText = '0';
+        currentCounterTotal = 0; selectedCounterCards = []; updateCounterBanner();
     }
 
     window.confirmCounter = function() {
@@ -586,7 +613,7 @@
     });
 
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
-    document.getElementById('drop-deck').onclick = () => { if(!isDevMode) { showModal("Cannot manually draw! Game draws for you.", "alert"); return;} drawCardAction(); };
+    document.getElementById('drop-deck').onclick = () => { if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return;} drawCardAction(); };
     
     window.addEventListener('mousemove', (e) => { 
         if (!dragged || selectConfig || combatState.step === 'counter') return; 
@@ -600,7 +627,7 @@
         c.style.zIndex = 20; const trashR = document.getElementById('drop-trash').getBoundingClientRect(); const handR = document.getElementById('hand-bar').getBoundingClientRect(); const deckR = document.getElementById('drop-deck').getBoundingClientRect(); const lifeR = document.getElementById('life-zone').getBoundingClientRect(); 
         
         if (isInside(e, trashR)) { if(!isDevMode) { snapBack(c); showModal("Cannot manually trash.", "alert"); } else { moveToTrash(c); } } 
-        else if (isInside(e, handR)) { if(!isDevMode && (c.dataset.origZone === 'drop-trash' || c.dataset.origZone === 'drop-deck')) { snapBack(c); showModal("Cannot manually retrieve from trash or deck.", "alert"); } else { toHand(c); } } 
+        else if (isInside(e, handR)) { if(!isDevMode && c.dataset.origZone !== 'hand-bar' && c.dataset.origZone !== 'life-zone') { snapBack(c); } else { toHand(c); } } 
         else if (isInside(e, deckR)) { if(!isDevMode) { snapBack(c); } else { DECK_ARR.unshift(c.dataset.url); deleteCardData(c); c.remove(); saveState(); } } 
         else if (isInside(e, lifeR)) { if(!isDevMode) { snapBack(c); } else { dropToLife(c); } } 
         else { snapBack(c); } 
@@ -617,25 +644,58 @@
     function bindCardEvents(c) {
         c.onmousedown = (e) => { 
             if (e.button !== 0) return; 
-            
+
+            // PRIORITY 1: Active Selection Engine (DON -2, Trashing, etc)
+            if (selectConfig) { handleSelection(c); return; }
+
+            // PRIORITY 2: Counter Phase Event logic (Gum Gum Giant & Counter Trait)
             if (combatState.step === 'counter' && c.parentElement.id === 'hand-bar') {
                 const db = CARD_DB[c.dataset.url];
+                if (db && db.isCounter && db.type === 'Event') {
+                    if (db.name === "Gum Gum Giant") {
+                        const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
+                        const totalDons = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+                        const handCards = document.querySelectorAll('#hand-bar .card').length;
+                        if(activeDons.length < 1) { showModal("Need 1 active DON!! to play this.", "alert"); return; }
+                        if(totalDons < 3) { showModal("Need 2 DON!! to return.", "alert"); return; } 
+                        if(handCards < 2) { showModal("Need a card to trash.", "alert"); return; } 
+
+                        showModal("Play Gum Gum Giant? (Rest 1 DON, Return 2 DON, Trash 1 Hand, +4000 Power, Draw 2)", "confirm", () => {
+                            activeDons[0].classList.add('rested'); TRASH_ARR.push(c.dataset.url); c.remove();
+                            document.getElementById('counter-banner').style.display = 'none'; 
+                            startSelection('don_minus', 2, "Select 2 DON!! to return", (selectedDons) => {
+                                selectedDons.forEach(d => { if(d.dataset.parentId) updateBadges(d.dataset.parentId); d.remove(); DON_DECK_COUNT++; }); organizeDon();
+                                setTimeout(() => {
+                                    startSelection('hand_trash', 1, "Select 1 card to trash", (trashedCards) => {
+                                        TRASH_ARR.push(trashedCards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${trashedCards[0].dataset.url}')`; trashedCards[0].remove();
+                                        currentCounterTotal += 4000; updateCounterBanner(); document.getElementById('counter-banner').style.display = 'flex'; drawCardAction(); drawCardAction(); saveState();
+                                    });
+                                }, 100);
+                            });
+                        });
+                    }
+                    return;
+                }
                 if (db && db.counter) {
                     if (selectedCounterCards.includes(c)) { selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= db.counter; } 
                     else { selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += db.counter; }
-                    document.getElementById('counter-val').innerText = currentCounterTotal;
+                    updateCounterBanner();
                 } return;
             }
 
-            if (selectConfig) { handleSelection(c); return; }
+            // PRIORITY 3: Normal DON Attaching Mechanics
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { const oldId = c.dataset.parentId; delete c.dataset.parentId; updateBadges(oldId); organizeDon(); saveState(); return; }
             if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { if (selectedDon === c) { selectedDon.style.outline = ""; selectedDon = null; } else { if (selectedDon) selectedDon.style.outline = ""; selectedDon = c; c.style.outline = "3px solid #ffcc00"; } return; }
             if (selectedDon && !c.dataset.isDon && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone')) { selectedDon.dataset.parentId = c.id; selectedDon.style.outline = ""; selectedDon = null; updateBadges(c.id); organizeDon(); saveState(); return; }
             if (selectedDon) { selectedDon.style.outline = ""; selectedDon = null; }
+            
+            // PRIORITY 4: Dragging Board Lock
             const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; if(locked.includes(c.parentElement.id) && !isDevMode) return; 
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
+        
         c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
@@ -645,7 +705,7 @@
             let canAttack = false;
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') {
                 if(!c.classList.contains('rested') && (isMyTurn || isDevMode)) {
-                    if(db.type === 'Leader' && myTurnCount === 1) { canAttack = false; } 
+                    if(db.type === 'Leader' && myTurnCount === 1) { canAttack = false; } // TURN 1 RULE
                     else if(db.type === 'Character' && c.dataset.turnPlayed == myTurnCount && !c.querySelector('.rush-tag').style.display) { canAttack = false; } 
                     else { canAttack = true; }
                 }
@@ -695,7 +755,11 @@
     
     window.inspectDeck = function() { if(!isDevMode) { showModal("Cannot view deck in Online Mode!", "alert"); return; } openInspector('deck'); };
     window.openInspector = function(mode) { const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; list.forEach((url, i) => { const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; if(isDevMode) { img.style.cursor='pointer'; img.onclick = () => { if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1); createCard(url, 0, 0, {inHand: true}); closeInspector(); saveState(); }; } grid.appendChild(img); }); document.getElementById('inspector').style.display = 'flex'; }
-    window.closeInspector = function() { document.getElementById('inspector').style.display = 'none'; refreshStats(); }
+    
+    window.closeInspector = function() { 
+        if(SEARCH_ARR.length > 0) { resolveStructuredSearch(-1); } // Auto-bottom if you just close it
+        else { document.getElementById('inspector').style.display = 'none'; refreshStats(); }
+    }
 
     window.openStructuredSearch = function(val, filterTraits, excludeName = null, callback = null) {
         SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target (The rest auto-bottom)`;
