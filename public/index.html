@@ -152,6 +152,17 @@
 <div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
 
+<div id="visual-decklist-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:9999999; flex-direction:column; padding: 30px; overflow-y:auto; box-sizing: border-box;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; background: #111; padding: 15px; border-radius: 10px; border: 2px solid var(--op-blue);">
+        <h1 id="visual-decklist-title" style="color:#fff; margin:0;">Deck Name</h1>
+        <div style="display:flex; gap:10px;">
+            <button id="btn-copy-deck-text" style="background:#3498db; padding:10px 20px; font-size:16px; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer;">COPY TEXT LIST</button>
+            <button onclick="document.getElementById('visual-decklist-overlay').style.display='none'" style="background:#e74c3c; padding:10px 20px; font-size:16px; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer;">CLOSE</button>
+        </div>
+    </div>
+    <div id="visual-decklist-content" style="display:flex; flex-direction:column; gap:20px;"></div>
+</div>
+
 <div id="combat-arena">
     <div class="arena-side">
         <div class="arena-img" id="arena-att-img"></div>
@@ -238,7 +249,6 @@
         <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid #333; padding:5px; display:flex; flex-direction:column; gap:5px;"></div>
         <div style="display:flex; gap:5px;">
             <button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:15px;">SAVE DECK</button>
-            <button onclick="exportTextList()" style="flex:1; background:#3498db; padding:15px;">COPY TEXT</button>
         </div>
         <button onclick="importDeck()" style="background:#8e44ad; padding:15px;">IMPORT STRING</button>
         <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:15px;">EXIT TO MENU</button>
@@ -381,23 +391,114 @@
     function addToDeck(url) { const db = CARD_DB[url]; if(db.type === 'Leader') { editingDeck.leader = url; updateDeckBuilderPool(); } else { if(!editingDeck.leader) { showModal("Select a Leader first!", "alert"); return; } let count = editingDeck.main[url] || 0; let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); if(count < 4 && total < 50) editingDeck.main[url] = count + 1; } renderDeckList(); }
     function removeFrmDeck(url) { if(editingDeck.main[url]) { editingDeck.main[url]--; if(editingDeck.main[url] <= 0) delete editingDeck.main[url]; } renderDeckList(); }
     function renderDeckList() { const ld = document.getElementById('db-leader'); const ldots = document.getElementById('db-leader-colors'); ldots.innerHTML = ''; if(editingDeck.leader) { ld.innerText = CARD_DB[editingDeck.leader].name; CARD_DB[editingDeck.leader].color.forEach(c => { const d = document.createElement('div'); d.className='color-dot'; d.style.background=getColorCode(c); ldots.appendChild(d); }); } else { ld.innerText = "None"; } let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); document.getElementById('db-count').innerText = total; const list = document.getElementById('db-list'); list.innerHTML = ''; Object.keys(editingDeck.main).forEach(url => { const div = document.createElement('div'); div.className = 'db-list-item'; div.innerHTML = `<span>${CARD_DB[url].name}</span> <span>x${editingDeck.main[url]}</span>`; div.onclick = () => removeFrmDeck(url); list.appendChild(div); }); }
+    
     function saveDeck() { 
         editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck"; 
         let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); 
         if(!editingDeck.leader || total !== 50) { showModal("Deck must have 1 Leader and exactly 50 cards.", "alert"); return; } 
         
-        if (editingDeckIndex === -1) {
-            savedDecks.push(JSON.parse(JSON.stringify(editingDeck))); 
-        } else {
-            savedDecks[editingDeckIndex] = JSON.parse(JSON.stringify(editingDeck));
-        }
+        if (editingDeckIndex === -1) { savedDecks.push(JSON.parse(JSON.stringify(editingDeck))); } 
+        else { savedDecks[editingDeckIndex] = JSON.parse(JSON.stringify(editingDeck)); }
+        
         localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); 
         renderHomeDecks();
         showModal("Deck Saved!", "alert", () => closeDeckBuilder()); 
     }
     function closeDeckBuilder() { document.getElementById('deck-builder-screen').style.display = 'none'; document.getElementById('home-screen').style.display = 'flex'; renderHomeDecks(); }
-    function exportTextList() { navigator.clipboard.writeText(btoa(JSON.stringify(editingDeck))).then(() => showModal("Deck String copied!", "alert")); }
     function importDeck() { showModal("Paste deck string:", "prompt", (val) => { try { editingDeck = JSON.parse(atob(val)); document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool(); } catch(e) { showModal("Invalid string.", "alert"); } }); }
+
+    // --- MAIN MENU DECK MANAGEMENT ---
+    function renderHomeDecks() {
+        const list = document.getElementById('home-deck-list');
+        list.innerHTML = '';
+        if (savedDecks.length === 0) { list.innerHTML = "<span style='color:#777; font-style:italic;'>No decks saved. Create one!</span>"; return; }
+        savedDecks.forEach((d, i) => {
+            const div = document.createElement('div');
+            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
+            div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "#222";
+            div.style.border = "1px solid #444"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
+
+            const nameSpan = document.createElement('span'); nameSpan.innerText = d.name; nameSpan.style.fontWeight = "bold"; nameSpan.style.flex = "1";
+            nameSpan.onclick = () => { activeDeckIndex = i; renderHomeDecks(); };
+
+            const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
+
+            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px";
+            editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
+
+            const listBtn = document.createElement('button'); listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad";
+            listBtn.onclick = (e) => { e.stopPropagation(); showVisualDecklist(i); };
+
+            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c";
+            delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
+
+            btnContainer.appendChild(editBtn); btnContainer.appendChild(listBtn); btnContainer.appendChild(delBtn);
+            div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
+        });
+        
+        if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
+    }
+
+    function editSavedDeck(index) {
+        editingDeckIndex = index; editingDeck = JSON.parse(JSON.stringify(savedDecks[index]));
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex';
+        document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool();
+    }
+
+    // VISUAL DECKLIST VIEWER
+    function showVisualDecklist(index) {
+        const d = savedDecks[index];
+        document.getElementById('visual-decklist-title').innerText = d.name;
+        const cont = document.getElementById('visual-decklist-content');
+        cont.innerHTML = '';
+        
+        const leaderArr = [d.leader];
+        const chars = []; const events = []; const stages = [];
+        let total = 0;
+        
+        Object.keys(d.main).forEach(url => {
+            total += d.main[url];
+            if(CARD_DB[url]?.type === 'Character') chars.push({url, count: d.main[url]});
+            else if(CARD_DB[url]?.type === 'Event') events.push({url, count: d.main[url]});
+            else if(CARD_DB[url]?.type === 'Stage') stages.push({url, count: d.main[url]});
+        });
+
+        const createSection = (title, items) => {
+            if(items.length === 0) return;
+            const sec = document.createElement('div');
+            sec.innerHTML = `<h2 style="color:var(--op-blue); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h2>`;
+            const grid = document.createElement('div');
+            grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '15px';
+            items.forEach(item => {
+                const url = item.url || item; const count = item.count || 1;
+                const wrap = document.createElement('div');
+                wrap.style.position = 'relative'; wrap.style.width = '120px'; wrap.style.height = '168px';
+                wrap.style.backgroundImage = `url('${url}')`; wrap.style.backgroundSize = '100% 100%'; wrap.style.borderRadius = '8px';
+                wrap.style.cursor = 'pointer';
+                wrap.onclick = () => { document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; };
+                if(title !== 'Leader') {
+                    wrap.innerHTML = `<div style="position:absolute; bottom:-10px; right:-10px; background:#e74c3c; color:#fff; padding:5px 10px; border-radius:50%; font-weight:bold; border:2px solid #fff; font-size:16px;">x${count}</div>`;
+                }
+                grid.appendChild(wrap);
+            });
+            sec.appendChild(grid); cont.appendChild(sec);
+        };
+
+        createSection('Leader', leaderArr);
+        createSection('Characters', chars);
+        createSection('Events', events);
+        createSection('Stages', stages);
+
+        document.getElementById('btn-copy-deck-text').onclick = () => {
+            let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown'}\n\n`; 
+            Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name} x${d.main[url]}\n`; });
+            text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => showModal("Decklist copied to clipboard!", "alert"));
+        };
+
+        document.getElementById('visual-decklist-overlay').style.display = 'flex';
+    }
+
+    window.onload = () => { renderHomeDecks(); };
 
     // --- LOBBY LOGIC ---
     function prepActiveDeck() {
@@ -465,67 +566,11 @@
     function clearCombatState() { document.getElementById('combat-arrow').style.display = 'none'; document.getElementById('combat-arena').style.display = 'none'; document.body.classList.remove('combat-target-mode', 'bon-clay-mode', 'blocker-target-mode', 'counter-mode'); document.getElementById('counter-controls').style.display = 'none'; combatState = { active: false, attackerId: null, defenderId: null, step: null }; document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); }); }
     window.concedeGame = function() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
 
-    // --- MAIN MENU DECK MANAGEMENT ---
-    function renderHomeDecks() {
-        const list = document.getElementById('home-deck-list');
-        list.innerHTML = '';
-        if (savedDecks.length === 0) {
-            list.innerHTML = "<span style='color:#777; font-style:italic;'>No decks saved. Create one!</span>";
-            return;
-        }
-        savedDecks.forEach((d, i) => {
-            const div = document.createElement('div');
-            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
-            div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "#222";
-            div.style.border = "1px solid #444"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
-
-            const nameSpan = document.createElement('span'); nameSpan.innerText = d.name; nameSpan.style.fontWeight = "bold"; nameSpan.style.flex = "1";
-            nameSpan.onclick = () => { activeDeckIndex = i; renderHomeDecks(); };
-
-            const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
-
-            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px";
-            editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
-
-            const copyBtn = document.createElement('button'); copyBtn.innerText = "LIST"; copyBtn.style.padding = "5px"; copyBtn.style.fontSize = "10px"; copyBtn.style.background = "#8e44ad";
-            copyBtn.onclick = (e) => { e.stopPropagation(); copyDeckTextList(i); };
-
-            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c";
-            delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
-
-            btnContainer.appendChild(editBtn); btnContainer.appendChild(copyBtn); btnContainer.appendChild(delBtn);
-            div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
-        });
-        
-        if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
-    }
-
-    function editSavedDeck(index) {
-        editingDeckIndex = index; editingDeck = JSON.parse(JSON.stringify(savedDecks[index]));
-        document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex';
-        document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool();
-    }
-
-    function copyDeckTextList(index) {
-        const d = savedDecks[index]; let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown'}\n\n`; let total = 0;
-        Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name} x${d.main[url]}\n`; total += d.main[url]; });
-        text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => showModal("Decklist copied to clipboard!", "alert"));
-    }
-
-    window.onload = () => { renderHomeDecks(); };
-
     // --- CARD CREATION & EVENTS ---
     function createCard(url, x, y, opts = {}) { 
         const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; 
         
-        c.innerHTML = `
-            <div class="don-badge">0</div>
-            <div class="power-badge hidden">+0</div>
-            <div class="keyword-tags">
-                <div class="kw-tag rush-tag">RUSH</div>
-                <div class="kw-tag banish-tag">BANISH</div>
-                <div class="kw-tag double-attack-tag">DOUBLE ATK</div>
-            </div>`; 
+        c.innerHTML = `<div class="don-badge">0</div><div class="power-badge hidden">+0</div><div class="keyword-tags"><div class="kw-tag rush-tag">RUSH</div><div class="kw-tag banish-tag">BANISH</div><div class="kw-tag double-attack-tag">DOUBLE ATK</div></div>`; 
             
         if (opts.isBack) c.classList.add('card-back'); 
         
@@ -570,6 +615,7 @@
             if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
+            // ACTION LOCK LOGIC
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
                 if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -585,7 +631,6 @@
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Summon Sickness)</div>`;
             }
 
-            // ACTIVATE MAINS
             if (!c.classList.contains('frozen')) {
                 if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
                 if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
@@ -595,7 +640,6 @@
                 if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
             }
 
-            // Franky bypasses freeze because it does not rest him!
             if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
 
             if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
@@ -725,7 +769,7 @@
     window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); if (selectConfig && selectConfig.onCancel) selectConfig.onCancel(); selectConfig = null; }
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
-        else if(selectConfig.mode === 'stussy_freeze') { if(!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone')) { showModal("Select Opponent Character or Leader", "alert"); return; } }
+        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
@@ -756,10 +800,7 @@
         const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Action Locked!", "alert"); return; } 
         const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); saveState(); 
         
-        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { 
-            socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id});
-            appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); 
-        }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
+        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
         
         if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
         if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
@@ -802,19 +843,13 @@
         else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; updateArenaCounter(data.counterValue); }
         else if(data.type === 'counter_declared') { executeCombatResolution(data.counterValue); }
         else if(data.type === 'resolve_kill') { const myTarget = document.getElementById(data.target.replace('opp-','')); if(myTarget) { const db = CARD_DB[myTarget.dataset.url]; if(db.name === "General Franky") { const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (totalDon >= 3) { showModal("General Franky would be K.O.'d! Return 3 DON!! to save him?", "confirm", () => { returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); }); }, () => { trashCard(myTarget); appendChat("Your Character K.O.'d!", "#e74c3c"); }); return; } } trashCard(myTarget); appendChat("K.O.'d!", "#e74c3c"); } }
-        else if(data.type === 'resolve_life') { 
-            let attId = combatState.attackerId; if(attId && !attId.startsWith('opp-')) attId = 'opp-' + attId; 
-            if(!isMyTurn) handleLifeDamage(data.banish, data.double); else appendChat("Opponent took damage!", "#2ecc71"); 
-        }
+        else if(data.type === 'resolve_life') { let attId = combatState.attackerId; if(attId && !attId.startsWith('opp-')) attId = 'opp-' + attId; if(!isMyTurn) handleLifeDamage(data.banish, data.double); else appendChat("Opponent took damage!", "#2ecc71"); }
         else if(data.type === 'reveal_card') { appendChat(`Opponent revealed: ${CARD_DB[data.url]?.name}`, "#3498db"); }
         else if(data.type === 'request_ko') { const myTarget = document.getElementById(data.target); if(myTarget) { const db = CARD_DB[myTarget.dataset.url]; if(db.name === "General Franky") { const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (totalDon >= 3) { showModal("Opponent's effect would K.O. General Franky! Return 3 DON!! to save him?", "confirm", () => { returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); }); }, () => { trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); }); return; } } trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); } }
         else if(data.type === 'apply_status') { 
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
-                if(data.status === 'freeze') { 
-                    myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; 
-                    appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); 
-                } 
+                if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); } 
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 saveState(); 
@@ -908,6 +943,7 @@
         else if(db.name === "Hattori") { document.getElementById('char-zone-front').appendChild(c); c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Trigger: Select Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori Trigger: Gave Lucci +2000!", "#2ecc71"); }, () => { appendChat("Hattori trigger placed but buff cancelled.", "#ccc"); }); } 
         else if(db.name === "Spandam") { const leaderCard = document.querySelector('#leader-zone .card'); if (leaderCard && CARD_DB[leaderCard.dataset.url]?.name === "Stussy") { drawCardAction(); appendChat("Spandam Trigger: Drew 1 card.", "#f1c40f"); } putInHand(c); }
         else if(db.name === "S-Snake") { startSelection('hand_trash', 1, "Trash 1 card to play S-Snake", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat("S-Snake played via Trigger!", "#f1c40f"); setTimeout(()=>triggerOnPlay(c,db), 100); }, () => { putInHand(c); }); }
+        else if(db.name === "Atlas") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); saveState(); appendChat("Atlas Trigger: Trashed to activate On Play!", "#f1c40f"); triggerOnPlay(c, db); }
         else { putInHand(c); } 
     }
 
