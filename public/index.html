@@ -383,7 +383,7 @@
         "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
         "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
     };
-    // --- DECK BUILDER LOGIC ---
+   // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f"}; return map[c] || "#fff"; }
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
     function clearLeader() { editingDeck.leader = null; renderDeckList(); updateDeckBuilderPool(); }
@@ -621,10 +621,10 @@
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
-            // CONTEXT MENU FIX: Using onmousedown to prevent the "vanishing button" bug
+            // CONTEXT MENU FIX: Switched to ONCLICK to prevent conflict with Mousedown listeners
             let h = ""; 
-            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onmousedown="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
-            if(isDevMode) { h += `<div onmousedown="setPower(1000)">+1000 Power</div><div onmousedown="setPower(0)">Reset Power</div>`; }
+            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
+            if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
@@ -635,29 +635,26 @@
                 } 
             }
             
-            if(canAttack) h += `<div onmousedown="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
+            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
                 if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Summon Sickness)</div>`;
             }
 
             if (!c.classList.contains('frozen')) {
-                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onmousedown="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-                if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onmousedown="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-                if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onmousedown="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onmousedown="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onmousedown="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onmousedown="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+                if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                if (db?.name === "Stussy" && db.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
+                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
+                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
             }
 
-            // Franky bypasses freeze because it does not rest him!
-            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onmousedown="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
+            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
 
-            // ONLY inside Hand
-            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onmousedown="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
-            
-            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onmousedown="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
-            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onmousedown="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
+            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
 
             menu.innerHTML = h; 
         }; c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
@@ -674,7 +671,6 @@
             
             let isOppCard = c.id.startsWith('opp-');
             let zone = c.parentElement.id;
-            // SCOPE FIX: Tags only show on the field!
             let onField = zone === 'char-zone-front' || zone === 'leader-zone' || zone === 'opp-char-zone-front' || zone === 'opp-leader-zone';
 
             const rushT = c.querySelector('.rush-tag'); const banishT = c.querySelector('.banish-tag'); const doubleT = c.querySelector('.double-attack-tag'); const blockerT = c.querySelector('.blocker-tag');
@@ -683,7 +679,6 @@
             if(banishT) banishT.style.display = (onField && (db.banish || c.dataset.banish === "true")) ? 'block' : 'none';
             if(doubleT) doubleT.style.display = (onField && (db.doubleAttack || c.dataset.doubleAttack === "true")) ? 'block' : 'none';
 
-            // DYNAMIC BLOCKER TAG
             let hasBlocker = db.blocker;
             if(db.name === "Rob Lucci (Y)") { const lifeZ = isOppCard ? 'opp-life-zone' : 'life-zone'; if(document.getElementById(lifeZ) && document.getElementById(lifeZ).children.length <= 1) hasBlocker = true; }
             if(db.name === "Monkey D. Luffy" && c.dataset.luffyBuff === "true") hasBlocker = true;
@@ -796,6 +791,7 @@
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
         else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front') { showModal("Select a Character", "alert"); return; } }
+        else if(selectConfig.mode === 'seraphim_freeze') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
@@ -818,6 +814,30 @@
         if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; const cb = selectConfig.callback; window.cancelSelection(); if(cb) cb(completed); } 
     }
 
+    // --- CONTEXT MENU ABILITIES ---
+    window.stussyLeaderFlip = function() { 
+        hideMenu(); 
+        const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
+        const top = lifeCards[lifeCards.length-1]; 
+        if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } 
+        startSelection('stussy_freeze', 1, "Freeze 1 Character", (cards) => { 
+            top.classList.remove('card-back'); 
+            cards[0].classList.add('frozen');
+            cards[0].dataset.frozenUntil = myTurnCount + 2; 
+            if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id});
+            saveState(); 
+            appendChat("Stussy flipped life & froze target!", "#34dbdb"); 
+        }); 
+    }
+    window.lucciYellowMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
+    window.kakuMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
+    window.hattoriMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { rightClickedCard.classList.remove('rested'); saveState(); }); }
+    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card').forEach(s => s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
+    window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
+    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
+    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
+    window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
+
     // --- COMBAT SYSTEM ---
     function sSnakeEffect(c) { const top = document.getElementById('life-zone').lastElementChild; if(top && top.classList.contains('card-back')) { showModal("S-Snake: Turn top Life face-up to give Opponent -2000 power?", "confirm", () => { top.classList.remove('card-back'); saveState(); startSelection('ssnake_minus', 1, "Select Opp Character to give -2000", (cards) => { cards[0].dataset.tempPower = parseInt(cards[0].dataset.tempPower||0) - 2000; updatePowerDisplay(); saveState(); appendChat("S-Snake gave -2000 power!", "#f1c40f"); }); }); } }
     function execAttackPhase(c) { combatState = { active: true, attackerId: c.id, step: 'target' }; document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f"); }
@@ -826,7 +846,7 @@
         const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Action Locked!", "alert"); return; } 
         const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); saveState(); 
         
-        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
+        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
         
         if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
         if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
@@ -876,7 +896,6 @@
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
                 if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); } 
-                else if(data.status === 'freeze_rest') { myTarget.classList.add('rested'); myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Rested and Action Locked (Frozen) by opponent!", "#34dbdb"); } 
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 saveState(); 
@@ -965,8 +984,8 @@
         else if(db.name === "Rob Lucci (Y)" || db.name === "Kaku") { document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat(`Triggered ${db.name}!`, "#f1c40f"); } 
         else if(db.name === "Maha") { document.getElementById('hand-bar').appendChild(c); drawCardAction(); saveState(); appendChat("Maha Trigger: Draw 1", "#f1c40f"); } 
         else if(db.name === "Lilith") { document.getElementById('hand-bar').appendChild(c); openStructuredSearch(4, null, "Lilith", true); } 
-        else if(db.name === "Seraphim") { document.getElementById('hand-bar').appendChild(c); startSelection('doflamingo_lock', 1, "Select 6c or less to Freeze", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Seraphim Trigger Freeze!", "#34dbdb"); }); } 
-        else if(db.name === "Rob Lucci (G)") { document.getElementById('hand-bar').appendChild(c); startSelection('lucci_g_rest_trigger', 1, "Select 3c or less to Rest", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); saveState(); }); } 
+        else if(db.name === "Seraphim") { document.getElementById('hand-bar').appendChild(c); startSelection('seraphim_freeze', 1, "Select 6c or less to Freeze", (cards)=>{ cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Seraphim Trigger Freeze!", "#34dbdb"); }); } 
+        else if(db.name === "Rob Lucci (G)") { document.getElementById('hand-bar').appendChild(c); startSelection('lucci_g_rest_trigger', 1, "Select 3c or less to Rest", (cards)=>{ cards[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); saveState(); appendChat("Lucci Trigger rested a Character!", "#f1c40f"); }); } 
         else if(db.name === "Hattori") { document.getElementById('char-zone-front').appendChild(c); c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Trigger: Select Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori Trigger: Gave Lucci +2000!", "#2ecc71"); }, () => { appendChat("Hattori trigger placed but buff cancelled.", "#ccc"); }); } 
         else if(db.name === "Spandam") { const leaderCard = document.querySelector('#leader-zone .card'); if (leaderCard && CARD_DB[leaderCard.dataset.url]?.name === "Stussy") { drawCardAction(); appendChat("Spandam Trigger: Drew 1 card.", "#f1c40f"); } putInHand(c); }
         else if(db.name === "S-Snake") { startSelection('hand_trash', 1, "Trash 1 card to play S-Snake", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat("S-Snake played via Trigger!", "#f1c40f"); setTimeout(()=>triggerOnPlay(c,db), 100); }, () => { putInHand(c); }); }
@@ -1015,10 +1034,10 @@
         if(db.name === "Maha") { const top = document.getElementById('life-zone').lastElementChild; if(top) { top.classList.remove('card-back'); document.getElementById('zoom-img').src = top.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Maha: Put Life on Top (YES) or Bottom (NO)?", "confirm", () => { top.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha left card on Top of Life.", "#f1c40f"); saveState(); }, () => { top.classList.add('card-back'); document.getElementById('life-zone').prepend(top); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha moved card to Bottom of Life.", "#f1c40f"); saveState(); }); } }
         if(db.name === "Lilith") { openStructuredSearch(4, null, "Lilith", true); }
         if(db.name === "Atlas") { openStructuredSearch(4, null, null, false, true); }
-        if(db.name === "Rob Lucci (G)") { startSelection('lucci_g_rest', 1, "Rest 1 Character", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); const top = document.getElementById('life-zone').lastElementChild; if(top && !top.classList.contains('card-back')) { socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: cards[0].id}); appendChat("Lucci rested and froze!", "#2ecc71"); } saveState(); }); }
-        if(db.name === "Doflamingo") { startSelection('doflamingo_lock', 3, "Freeze 3 Rested", (cards)=>{ cards.forEach(card => { socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: card.id}); }); saveState(); appendChat("Doflamingo Locked!", "#2ecc71"); }); }
+        if(db.name === "Rob Lucci (G)") { startSelection('lucci_g_rest', 1, "Rest 1 Character", (cards)=>{ cards[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); const top = document.getElementById('life-zone').lastElementChild; if(top && !top.classList.contains('card-back')) { cards[0].classList.add('no-restand'); cards[0].dataset.noRestand = "true"; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: cards[0].id}); appendChat("Lucci rested and locked!", "#2ecc71"); } else { appendChat("Lucci rested a Character!", "#2ecc71"); } saveState(); }); }
+        if(db.name === "Doflamingo") { startSelection('doflamingo_lock', 3, "Freeze 3 Rested", (cards)=>{ cards.forEach(card => { card.classList.add('no-restand'); card.dataset.noRestand = "true"; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: card.id}); }); saveState(); appendChat("Doflamingo Locked!", "#2ecc71"); }); }
         if(db.name === "Stussy (Char)") { startSelection('play_trigger_5', 1, "Play 5c Trigger from hand", (cards)=>{ rightClickedCard = cards[0]; window.playCard(true); }); }
-        if(db.name === "Monkey D. Luffy") { startSelection('hand_trash', 1, "Trash 1 for +2k Leader & Blocker", (cards)=>{ TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); c.dataset.luffyBuff = "true"; saveState(); appendChat("Luffy gave +2k & Blocker!", "#f1c40f"); }); }
+        if(db.name === "Monkey D. Luffy") { startSelection('hand_trash', 1, "Trash 1 for +2k Leader & Blocker", (cards)=>{ TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); c.dataset.luffyBuff = "true"; updatePowerDisplay(); saveState(); appendChat("Luffy gave +2k & Blocker!", "#f1c40f"); }); }
         if(db.name === "Seraphim") { const lifeCount = document.getElementById('life-zone').children.length; if(lifeCount >= 2) { startSelection('hand_trigger', 1, "Select Trigger to stack on Life", (cards)=>{ const top = cards[0]; top.classList.remove('card-back'); top.style.position = 'absolute'; document.getElementById('life-zone').appendChild(top); updateLifePositions(); saveState(); appendChat("Seraphim stacked a Trigger on Life!", "#f1c40f"); }); } }
         if(db.name === "Dracule Mihawk (8c)") { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')).slice(0, 4); restedDons.forEach(d => d.classList.remove('rested')); window.locked7Plus = true; appendChat("Mihawk rested 4 DON!! and locked 7+ cost plays.", "#2ecc71"); saveState(); }
         if(db.name === "Spandam") { startSelection('play_lucci_free', 1, "Play a [Rob Lucci] from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
