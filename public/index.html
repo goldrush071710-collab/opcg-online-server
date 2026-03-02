@@ -730,7 +730,7 @@
     }
 
     function bindCardEvents(c) {
-        c.onmousedown = (e) => { 
+c.onmousedown = (e) => { 
             if (e.button !== 0 || combatState.step === 'wait_counter') return; 
             if (selectConfig) { handleSelection(c); return; }
             
@@ -764,28 +764,18 @@
                 return; 
             }
             
-       // DON!! Logic - Fixed String vs Boolean check
-            if (selectedDon && c.dataset.isDon !== "true" && (c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.id.includes('opp-')) { 
-                selectedDon.dataset.parentId = c.id; 
-                selectedDon.style.outline = ""; 
-                const tId = c.id; selectedDon = null; 
-                updateBadges(tId); organizeDon(); saveState(); 
-                e.stopPropagation(); return; 
-            }
+            // NEW: CLICK TO DETACH DON!! (It pops right back to the zone)
             if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { 
                 const oldId = c.dataset.parentId; 
                 delete c.dataset.parentId; 
                 updateBadges(oldId); organizeDon(); saveState(); 
                 e.stopPropagation(); return; 
             }
-            if (c.dataset.isDon === "true" && !c.dataset.parentId && !c.classList.contains('rested') && (isMyTurn || isDevMode)) { 
-                selectedDon = c; c.style.outline = "3px solid #ffcc00"; 
-                e.stopPropagation(); return; 
-            }
             
             // Drag Prep
             const locked = ['leader-zone', 'char-zone-front', 'stage-zone']; 
-            if(locked.includes(c.parentElement.id) && !isDevMode) return; 
+            if(c.dataset.isDon !== "true" && locked.includes(c.parentElement.id) && !isDevMode) return; 
+            
             offX = e.clientX - c.getBoundingClientRect().left; 
             offY = e.clientY - c.getBoundingClientRect().top; 
             startX = e.clientX; startY = e.clientY; 
@@ -1552,17 +1542,6 @@
     window.addEventListener('mousedown', (e) => { 
         if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
         if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } 
-        
-        // FIX: The Window will correctly read the "true" / "false" text strings now
-        if (selectedDon) { 
-            const t = e.target.closest('.card'); 
-            const isValidTarget = t && t.dataset.isDon !== "true" && (t.parentElement.id === 'char-zone-front' || t.parentElement.id === 'leader-zone') && !t.id.includes('opp-');
-            
-            if (!isValidTarget && t !== selectedDon) { 
-                selectedDon.style.outline = ""; 
-                selectedDon = null; 
-            } 
-        } 
     }, true);
     
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
@@ -1582,7 +1561,29 @@
     window.addEventListener('mouseup', (e) => { 
         if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
         const c = dragged; dragged = null; 
+        
         if(!isDragging) { if(c.parentElement.id === 'hand-bar' && !isDevMode) playCardConfirm(c); return; } 
+        
+        // NEW: DRAG AND DROP DON!! ATTACHMENT
+        if (c.dataset.isDon === "true") {
+            let attached = false;
+            const targets = document.querySelectorAll('#char-zone-front .card, #leader-zone .card');
+            
+            targets.forEach(t => {
+                if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) {
+                    const r = t.getBoundingClientRect();
+                    if (isInside(e, r)) {
+                        c.dataset.parentId = t.id;
+                        updateBadges(t.id);
+                        organizeDon();
+                        saveState();
+                        attached = true;
+                    }
+                }
+            });
+            if (attached) return; // If it successfully attached, stop right here
+        }
+
         c.style.zIndex = 20; const handR = document.getElementById('hand-bar').getBoundingClientRect(); 
         if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
     });
@@ -1618,5 +1619,6 @@
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 </script>
+
 
 
