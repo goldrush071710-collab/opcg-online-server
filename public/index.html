@@ -419,7 +419,6 @@
         if (!opts.isOpponent) { 
             bindCardEvents(c); 
         } else { 
-            // FIXED: Allow targeting opponent cards during effect selections!
             c.onmousedown = (e) => { 
                 if (e.button !== 0) return; 
                 if (selectConfig) { handleSelection(c); return; } 
@@ -611,11 +610,46 @@
     function drawArrow(attId, defId) { const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return; const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2; const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; const arrow = document.getElementById('combat-arrow'); arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px'; arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block'; }
     document.addEventListener('mousedown', (e) => {
         if(combatState.active && combatState.step === 'bon_clay_copy') { const target = e.target.closest('#opp-char-zone-front .card'); if(target) { const tBase = CARD_DB[target.dataset.url]?.power || 0; const attCard = document.getElementById(combatState.attackerId); attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); document.body.classList.remove('bon-clay-mode'); combatState.step = 'target'; document.body.classList.add('combat-target-mode'); appendChat(`Bon Clay copied power (${tBase})! Now select attack target.`, "#f1c40f"); } else if (e.button === 2) { document.body.classList.remove('bon-clay-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; }
-        if(combatState.active && combatState.step === 'target') { const target = e.target.closest('.card'); if(!target) return; const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')); if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') { document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Waiting for Opponent..."); socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId }); appendChat("Attack Declared! Waiting...", "#f1c40f"); } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; }
+        
+        if(combatState.active && combatState.step === 'target') { 
+            const target = e.target.closest('.card'); if(!target) return; 
+            const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')); 
+            if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') { 
+                document.body.classList.remove('combat-target-mode'); 
+                combatState.defenderId = target.id; combatState.step = 'wait_counter'; 
+                
+                // EXPLICIT SYNC FIX: Grab actual power and send it over the socket!
+                const attCardForPow = document.getElementById(combatState.attackerId);
+                const aPow = parseInt(attCardForPow.dataset.currentPower || 0);
+
+                drawArrow(combatState.attackerId, combatState.defenderId); 
+                openArena(combatState.attackerId, combatState.defenderId, "Waiting for Opponent..."); 
+                socket.emit('game_action', { 
+                    type: 'declare_attack', 
+                    attackerId: combatState.attackerId, 
+                    defenderId: combatState.defenderId,
+                    attackerPower: aPow
+                }); 
+                appendChat("Attack Declared! Waiting...", "#f1c40f"); 
+            } else if (e.button === 2) { 
+                document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); 
+            } return; 
+        }
+        
         if(combatState.active && combatState.step === 'select_blocker') { const target = e.target.closest('.valid-blocker'); if(target) { target.classList.add('rested'); saveState(); combatState.defenderId = target.id; document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id}); drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase..."); askCounterPhase(); } else if (e.button === 2) { document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); askCounterPhase(); } return; }
     });
     socket.on('game_action', (data) => {
-        if(data.type === 'declare_attack') { const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-','')); drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id }; openArena(att.id, def.id, "You are being attacked!"); if(att.dataset.unblockable === "true") { askCounterPhase(); return; } const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested):not(.frozen)')).filter(c => CARD_DB[c.dataset.url]?.blocker || (CARD_DB[c.dataset.url]?.name==="Rob Lucci (Y)" && document.getElementById('life-zone').children.length<=1) || (CARD_DB[c.dataset.url]?.name==="Monkey D. Luffy" && c.dataset.luffyBuff==="true")); if(blockers.length > 0) { showModal("Opponent is attacking! Use a Blocker?", "confirm", () => { combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode'); blockers.forEach(b => b.classList.add('valid-blocker')); appendChat("Select a Blocker.", "#3498db"); }, () => askCounterPhase()); } else { askCounterPhase(); } }
+        if(data.type === 'declare_attack') { 
+            const att = document.getElementById('opp-' + data.attackerId); 
+            const def = document.getElementById(data.defenderId.replace('opp-','')); 
+            
+            // EXPLICIT SYNC FIX: Opponent receives true calculated power
+            if (data.attackerPower !== undefined) {
+                att.dataset.currentPower = data.attackerPower;
+            }
+
+            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id }; openArena(att.id, def.id, "You are being attacked!"); if(att.dataset.unblockable === "true") { askCounterPhase(); return; } const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested):not(.frozen)')).filter(c => CARD_DB[c.dataset.url]?.blocker || (CARD_DB[c.dataset.url]?.name==="Rob Lucci (Y)" && document.getElementById('life-zone').children.length<=1) || (CARD_DB[c.dataset.url]?.name==="Monkey D. Luffy" && c.dataset.luffyBuff==="true")); if(blockers.length > 0) { showModal("Opponent is attacking! Use a Blocker?", "confirm", () => { combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode'); blockers.forEach(b => b.classList.add('valid-blocker')); appendChat("Select a Blocker.", "#3498db"); }, () => askCounterPhase()); } else { askCounterPhase(); } 
+        }
         else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Opponent Blocked! Counter Phase..."); }
         else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; updateArenaCounter(data.counterValue); }
         else if(data.type === 'counter_declared') { executeCombatResolution(data.counterValue); }
