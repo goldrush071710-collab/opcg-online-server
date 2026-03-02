@@ -739,17 +739,27 @@
     });
 
     // ULTIMATE DON DETACHMENT SLEDGEHAMMER
+// --- BRAND NEW DON SYSTEM: THE RESPAWN METHOD ---
     function refreshPhase() {
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
 
-        const donZone = document.getElementById('don-zone');
-        // Scan strictly your side of the board for DON and force them to detach
-        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
-            don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
-            don.style.outline = ""; don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
-            if (donZone) donZone.appendChild(don); 
-        });
+        // 1. Calculate exactly how many DON you currently have in play
+        let activeDonCount = 10 - DON_DECK_COUNT;
 
+        // 2. VAPORIZE EVERY DON ON YOUR BOARD (Destroys all bugs/attachments instantly)
+        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => d.remove());
+
+        // 3. RESPAWN FRESH DON DIRECTLY IN THE COST AREA
+        for(let i = 0; i < activeDonCount; i++) {
+            const freshDon = createCard(DON_URL, 0, 0, {zone: 'don-zone'});
+            freshDon.style.position = "relative"; 
+            freshDon.style.left = "0"; 
+            freshDon.style.top = "0"; 
+            freshDon.style.zIndex = "20";
+            freshDon.style.opacity = "1";
+        }
+
+        // 4. RESET CHARACTERS & WIPE ALL BADGES
         document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
             delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
             if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
@@ -763,11 +773,16 @@
             }
 
             updateBadges(c.id); 
+            // Force the yellow badge UI to visually disappear
             const badge = c.querySelector('.don-badge');
             if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
 
-        organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
+        // 5. DRAW TURN CARDS & SPAWN THE 2 NEW DON!!
+        drawCardAction(); 
+        spawnDonLocal(false); // Adds 1st turn DON
+        spawnDonLocal(false); // Adds 2nd turn DON
+        saveState();
     }
 
     socket.on('turn_passed', () => {
@@ -1172,3 +1187,4 @@
 </script>
 </body>
 </html>
+
