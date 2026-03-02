@@ -62,6 +62,7 @@
 
         .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; }
         .kw-tag { display:none; font-size:1.2vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .blocker-tag { background:#3498db; color:#fff; }
         .rush-tag { background:#f39c12; color:#000; }
         .banish-tag { background:#8e44ad; color:#fff; }
         .double-attack-tag { background:#e74c3c; color:#fff; }
@@ -570,7 +571,15 @@
     function createCard(url, x, y, opts = {}) { 
         const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; 
         
-        c.innerHTML = `<div class="don-badge">0</div><div class="power-badge hidden">+0</div><div class="keyword-tags"><div class="kw-tag rush-tag">RUSH</div><div class="kw-tag banish-tag">BANISH</div><div class="kw-tag double-attack-tag">DOUBLE ATK</div></div>`; 
+        c.innerHTML = `
+            <div class="don-badge">0</div>
+            <div class="power-badge hidden">+0</div>
+            <div class="keyword-tags">
+                <div class="kw-tag blocker-tag">BLOCKER</div>
+                <div class="kw-tag rush-tag">RUSH</div>
+                <div class="kw-tag banish-tag">BANISH</div>
+                <div class="kw-tag double-attack-tag">DOUBLE ATK</div>
+            </div>`; 
             
         if (opts.isBack) c.classList.add('card-back'); 
         
@@ -611,11 +620,12 @@
         
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
-            let h = ""; 
-            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
-            if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
-            // ACTION LOCK LOGIC
+            // CONTEXT MENU FIX: Using onmousedown to prevent the "vanishing button" bug
+            let h = ""; 
+            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onmousedown="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
+            if(isDevMode) { h += `<div onmousedown="setPower(1000)">+1000 Power</div><div onmousedown="setPower(0)">Reset Power</div>`; }
+            
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
                 if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -625,26 +635,29 @@
                 } 
             }
             
-            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
+            if(canAttack) h += `<div onmousedown="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
                 if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Summon Sickness)</div>`;
             }
 
             if (!c.classList.contains('frozen')) {
-                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-                if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-                if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onmousedown="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+                if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onmousedown="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onmousedown="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onmousedown="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
+                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onmousedown="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
+                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onmousedown="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
             }
 
-            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
+            // Franky bypasses freeze because it does not rest him!
+            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onmousedown="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
 
-            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
-            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
-            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            // ONLY inside Hand
+            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onmousedown="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
+            
+            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onmousedown="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onmousedown="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
 
             menu.innerHTML = h; 
         }; c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
@@ -659,23 +672,36 @@
             const db = CARD_DB[c.dataset.url]; 
             if(!db) return;
             
-            const rushT = c.querySelector('.rush-tag'); const banishT = c.querySelector('.banish-tag'); const doubleT = c.querySelector('.double-attack-tag');
-            if(rushT) rushT.style.display = (db.rush || c.dataset.hasRush === "true") ? 'block' : 'none';
-            if(banishT) banishT.style.display = (db.banish || c.dataset.banish === "true") ? 'block' : 'none';
-            if(doubleT) doubleT.style.display = (db.doubleAttack || c.dataset.doubleAttack === "true") ? 'block' : 'none';
+            let isOppCard = c.id.startsWith('opp-');
+            let zone = c.parentElement.id;
+            // SCOPE FIX: Tags only show on the field!
+            let onField = zone === 'char-zone-front' || zone === 'leader-zone' || zone === 'opp-char-zone-front' || zone === 'opp-leader-zone';
+
+            const rushT = c.querySelector('.rush-tag'); const banishT = c.querySelector('.banish-tag'); const doubleT = c.querySelector('.double-attack-tag'); const blockerT = c.querySelector('.blocker-tag');
+            
+            if(rushT) rushT.style.display = (onField && (db.rush || c.dataset.hasRush === "true")) ? 'block' : 'none';
+            if(banishT) banishT.style.display = (onField && (db.banish || c.dataset.banish === "true")) ? 'block' : 'none';
+            if(doubleT) doubleT.style.display = (onField && (db.doubleAttack || c.dataset.doubleAttack === "true")) ? 'block' : 'none';
+
+            // DYNAMIC BLOCKER TAG
+            let hasBlocker = db.blocker;
+            if(db.name === "Rob Lucci (Y)") { const lifeZ = isOppCard ? 'opp-life-zone' : 'life-zone'; if(document.getElementById(lifeZ) && document.getElementById(lifeZ).children.length <= 1) hasBlocker = true; }
+            if(db.name === "Monkey D. Luffy" && c.dataset.luffyBuff === "true") hasBlocker = true;
+            if(db.name === "Spandam") hasBlocker = true;
+            if(blockerT) blockerT.style.display = (onField && hasBlocker) ? 'block' : 'none';
 
             if(db.power !== undefined) { 
                 let base = db.power; 
                 let attachedDon = document.querySelectorAll(`[data-parent-id="${c.id}"]`).length; 
-                let isOppCard = c.id.startsWith('opp-'); let donBoost = 0;
+                let donBoost = 0;
                 if (!isOppCard && isMyTurn) donBoost = attachedDon * 1000;
                 if (isOppCard && !isMyTurn) donBoost = attachedDon * 1000;
                 let temp = parseInt(c.dataset.tempPower || 0); 
                 let passiveBoost = 0;
-                if (c.parentElement.id === 'leader-zone') { 
-                    if(db.name === "Franky" && hasGenFranky) passiveBoost += 2000; 
-                    if (window.rogerBuffActive) passiveBoost += 2000; 
-                    if (luffy && luffy.dataset.luffyBuff === "true") passiveBoost += 2000; 
+                if (zone === 'leader-zone' || zone === 'opp-leader-zone') { 
+                    if(db.name === "Franky" && hasGenFranky && !isOppCard) passiveBoost += 2000; 
+                    if(window.rogerBuffActive && !isOppCard) passiveBoost += 2000; 
+                    if(luffy && luffy.dataset.luffyBuff === "true" && !isOppCard) passiveBoost += 2000; 
                 } 
                 let totalBoost = donBoost + temp + passiveBoost;
                 c.dataset.currentPower = base + totalBoost; 
@@ -769,7 +795,7 @@
     window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); if (selectConfig && selectConfig.onCancel) selectConfig.onCancel(); selectConfig = null; }
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
-        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } }
+        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front') { showModal("Select a Character", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
@@ -837,7 +863,7 @@
             const def = document.getElementById(data.defenderId.replace('opp-','')); 
             if (data.attackerPower !== undefined) { att.dataset.currentPower = data.attackerPower; }
             
-            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id }; openArena(att.id, def.id, "You are being attacked!"); if(att.dataset.unblockable === "true") { askCounterPhase(); return; } const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested):not(.frozen)')).filter(c => CARD_DB[c.dataset.url]?.blocker || (CARD_DB[c.dataset.url]?.name==="Rob Lucci (Y)" && document.getElementById('life-zone').children.length<=1) || (CARD_DB[c.dataset.url]?.name==="Monkey D. Luffy" && c.dataset.luffyBuff==="true")); if(blockers.length > 0) { showModal("Opponent is attacking! Use a Blocker?", "confirm", () => { combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode'); blockers.forEach(b => b.classList.add('valid-blocker')); appendChat("Select a Blocker.", "#3498db"); }, () => askCounterPhase()); } else { askCounterPhase(); } 
+            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id }; openArena(att.id, def.id, "You are being attacked!"); if(att.dataset.unblockable === "true") { askCounterPhase(); return; } const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested):not(.frozen)')).filter(c => CARD_DB[c.dataset.url]?.blocker || (CARD_DB[c.dataset.url]?.name==="Rob Lucci (Y)" && document.getElementById('life-zone').children.length<=1) || (CARD_DB[c.dataset.url]?.name==="Monkey D. Luffy" && c.dataset.luffyBuff==="true") || CARD_DB[c.dataset.url]?.name==="Spandam"); if(blockers.length > 0) { showModal("Opponent is attacking! Use a Blocker?", "confirm", () => { combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode'); blockers.forEach(b => b.classList.add('valid-blocker')); appendChat("Select a Blocker.", "#3498db"); }, () => askCounterPhase()); } else { askCounterPhase(); } 
         }
         else if(data.type === 'block_declared') { combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Opponent Blocked! Counter Phase..."); }
         else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; updateArenaCounter(data.counterValue); }
@@ -850,6 +876,7 @@
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
                 if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); } 
+                else if(data.status === 'freeze_rest') { myTarget.classList.add('rested'); myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Rested and Action Locked (Frozen) by opponent!", "#34dbdb"); } 
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 saveState(); 
