@@ -383,7 +383,7 @@
         "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
         "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
     };
-   // --- DECK BUILDER LOGIC ---
+  // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f"}; return map[c] || "#fff"; }
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
     function clearLeader() { editingDeck.leader = null; renderDeckList(); updateDeckBuilderPool(); }
@@ -621,7 +621,6 @@
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
-            // CONTEXT MENU FIX: Switched to ONCLICK to prevent conflict with Mousedown listeners
             let h = ""; 
             if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
@@ -700,8 +699,17 @@
                 } 
                 let totalBoost = donBoost + temp + passiveBoost;
                 c.dataset.currentPower = base + totalBoost; 
+                
+                // POWER BADGE DISPLAY FIX: Negative buffs like S-Snake now correctly show up!
                 let badge = c.querySelector('.power-badge');
-                if(badge) { if(totalBoost > 0) { badge.innerText = `+${totalBoost}`; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
+                if(badge) { 
+                    if(totalBoost !== 0) { 
+                        badge.innerText = totalBoost > 0 ? `+${totalBoost}` : `${totalBoost}`; 
+                        badge.classList.remove('hidden'); 
+                    } else { 
+                        badge.classList.add('hidden'); 
+                    } 
+                }
             } 
         });
     }
@@ -730,9 +738,12 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
+    // ULTIMATE DON DETACHMENT SLEDGEHAMMER
     function refreshPhase() {
         const donZone = document.getElementById('don-zone');
-        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
+        // Grabs EVERY don across the entire page and rips them back to the Don Zone
+        document.querySelectorAll('.card[data-is-don="true"]').forEach(don => {
+            if (don.id && don.id.startsWith('opp-')) return; // Ignore opponent's dons
             don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
             don.style.outline = ""; don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
             if (donZone) donZone.appendChild(don); 
@@ -751,6 +762,9 @@
             }
 
             updateBadges(c.id); 
+            // Nuclear wipe to ensure UI resets perfectly
+            const badge = c.querySelector('.don-badge');
+            if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
 
         organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
@@ -790,7 +804,11 @@
     window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); if (selectConfig && selectConfig.onCancel) selectConfig.onCancel(); selectConfig = null; }
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
-        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front') { showModal("Select a Character", "alert"); return; } }
+        // STUSSY FIX: Target logic properly expanded to grab characters OR the leader
+        else if(selectConfig.mode === 'stussy_freeze') { 
+            if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } 
+            if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { showModal("Select a Character or Leader", "alert"); return; } 
+        }
         else if(selectConfig.mode === 'seraphim_freeze') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
@@ -820,7 +838,7 @@
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
         const top = lifeCards[lifeCards.length-1]; 
         if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } 
-        startSelection('stussy_freeze', 1, "Freeze 1 Character", (cards) => { 
+        startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { 
             top.classList.remove('card-back'); 
             cards[0].classList.add('frozen');
             cards[0].dataset.frozenUntil = myTurnCount + 2; 
@@ -896,6 +914,7 @@
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
                 if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); } 
+                else if(data.status === 'freeze_rest') { myTarget.classList.add('rested'); myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Rested and Action Locked (Frozen) by opponent!", "#34dbdb"); } 
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 saveState(); 
