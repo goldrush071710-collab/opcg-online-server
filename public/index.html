@@ -814,5 +814,18 @@
     
     function refreshStats() { document.getElementById('deck-count').innerText=DECK_ARR.length; document.getElementById('trash-count').innerText=TRASH_ARR.length; document.getElementById('life-count').innerText=Array.from(document.getElementById('life-zone').children).filter(c=>c.classList.contains('card')).length; document.getElementById('don-deck-count').innerText=DON_DECK_COUNT; }
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
-    function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+   function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+    
+    // --- BROWSER SAFETY LOCK ---
+    // Prevents accidental back-buttons, swipes, or refreshes from ruining the game
+    window.addEventListener('beforeunload', (e) => { 
+        // Only lock the page if they are actually in a game (home screen is hidden)
+        if (document.getElementById('home-screen').style.display === 'none') {
+            e.preventDefault(); 
+            e.returnValue = ''; // Triggers the browser's "Are you sure you want to leave?" warning
+        } 
+    });
 </script>
+</body>
+</html>
+
