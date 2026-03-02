@@ -700,7 +700,7 @@
                 let totalBoost = donBoost + temp + passiveBoost;
                 c.dataset.currentPower = base + totalBoost; 
                 
-                // POWER BADGE DISPLAY FIX: Negative buffs like S-Snake now correctly show up!
+                // POWER BADGE DISPLAY FIX: Negative buffs clearly shown
                 let badge = c.querySelector('.power-badge');
                 if(badge) { 
                     if(totalBoost !== 0) { 
@@ -739,27 +739,19 @@
     });
 
     // ULTIMATE DON DETACHMENT SLEDGEHAMMER
-// --- BRAND NEW DON SYSTEM: THE RESPAWN METHOD ---
     function refreshPhase() {
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
 
-        // 1. Calculate exactly how many DON you currently have in play
-        let activeDonCount = 10 - DON_DECK_COUNT;
+        const donZone = document.getElementById('don-zone');
+        
+        // GHOST DON FIX: Finds ALL Dons on the page (even ones stuck in the viewport), except the opponent's
+        document.querySelectorAll('.card[data-is-don="true"]').forEach(don => {
+            if (don.id && don.id.startsWith('opp-')) return;
+            don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
+            don.style.outline = ""; don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
+            if (donZone) donZone.appendChild(don); 
+        });
 
-        // 2. VAPORIZE EVERY DON ON YOUR BOARD (Destroys all bugs/attachments instantly)
-        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => d.remove());
-
-        // 3. RESPAWN FRESH DON DIRECTLY IN THE COST AREA
-        for(let i = 0; i < activeDonCount; i++) {
-            const freshDon = createCard(DON_URL, 0, 0, {zone: 'don-zone'});
-            freshDon.style.position = "relative"; 
-            freshDon.style.left = "0"; 
-            freshDon.style.top = "0"; 
-            freshDon.style.zIndex = "20";
-            freshDon.style.opacity = "1";
-        }
-
-        // 4. RESET CHARACTERS & WIPE ALL BADGES
         document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
             delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
             if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
@@ -773,16 +765,11 @@
             }
 
             updateBadges(c.id); 
-            // Force the yellow badge UI to visually disappear
             const badge = c.querySelector('.don-badge');
             if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
 
-        // 5. DRAW TURN CARDS & SPAWN THE 2 NEW DON!!
-        drawCardAction(); 
-        spawnDonLocal(false); // Adds 1st turn DON
-        spawnDonLocal(false); // Adds 2nd turn DON
-        saveState();
+        organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
     }
 
     socket.on('turn_passed', () => {
@@ -825,7 +812,6 @@
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
         
-        // STUSSY FIX: Target expanded to firmly include Leader zones
         else if(selectConfig.mode === 'stussy_freeze') { 
             if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } 
             if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { showModal("Select a Character or Leader", "alert"); return; } 
@@ -879,8 +865,6 @@
     window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
 
     // --- COMBAT SYSTEM ---
-    
-    // S-SNAKE FIX: Async execution to guarantee the power reduction resolves BEFORE attack begins
     function sSnakeEffect(c, onComplete) { 
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); 
         const top = lifeCards[lifeCards.length-1]; 
@@ -913,10 +897,7 @@
         if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
         
-        if(db.name === "S-Snake") { 
-            sSnakeEffect(c, () => execAttackPhase(c)); 
-            return; // Stops here and waits for the S-Snake async process to finish
-        }
+        if(db.name === "S-Snake") { sSnakeEffect(c, () => execAttackPhase(c)); return; }
         execAttackPhase(c);
     }
     function drawArrow(attId, defId) { const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return; const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2; const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; const arrow = document.getElementById('combat-arrow'); arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px'; arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block'; }
@@ -985,29 +966,30 @@
     function askCounterPhase() { combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-controls').style.display = 'flex'; currentCounterTotal = 0; selectedCounterCards = []; let req = parseInt(document.getElementById('arena-att-pow').innerText) - parseInt(document.getElementById('arena-def-pow').innerText) + 1000; document.getElementById('arena-math').innerText = `Needs +${Math.max(0,req)} to survive`; }
     window.confirmCounter = function() { selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); saveState(); executeCombatResolution(currentCounterTotal); }
     window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); executeCombatResolution(0); }
+    
     function executeCombatResolution(counterVal) { 
         const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId); 
         if(!att || !def) { clearCombatState(); return; } 
         const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + counterVal; 
         document.getElementById('arena-def-pow').innerText = dPow; 
         
+        // BLOCKER TRASH FIX: The Kill command is moved OUTSIDE the timeout so it fires instantly!
         if(isMyTurn) { 
             if(aPow >= dPow) { 
                 document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c"; document.getElementById('arena-math').innerText = "Defender takes Damage"; 
-                setTimeout(() => { 
-                    appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); 
-                    if(def.parentElement.id.includes('char-zone')) {
-                        if(isDevMode) { trashCard(def); appendChat("K.O.'d!", "#e74c3c"); }
-                        else socket.emit('game_action', {type: 'resolve_kill', target: def.id});
-                    } 
-                    else if(def.parentElement.id.includes('leader-zone')) {
-                        const isBanish = CARD_DB[att.dataset.url]?.banish || att.dataset.banish === "true";
-                        const isDouble = CARD_DB[att.dataset.url]?.doubleAttack || att.dataset.doubleAttack === "true";
-                        if(isDevMode) { handleLifeDamage(isBanish, isDouble); } 
-                        else { socket.emit('game_action', {type: 'resolve_life', banish: isBanish, double: isDouble}); }
-                    }
-                    clearCombatState(); 
-                }, 2500); 
+                appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); 
+                
+                if(def.parentElement.id.includes('char-zone')) {
+                    if(isDevMode) { trashCard(def); appendChat("K.O.'d!", "#e74c3c"); }
+                    else { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); }
+                } 
+                else if(def.parentElement.id.includes('leader-zone')) {
+                    const isBanish = CARD_DB[att.dataset.url]?.banish || att.dataset.banish === "true";
+                    const isDouble = CARD_DB[att.dataset.url]?.doubleAttack || att.dataset.doubleAttack === "true";
+                    if(isDevMode) { handleLifeDamage(isBanish, isDouble); } 
+                    else { socket.emit('game_action', {type: 'resolve_life', banish: isBanish, double: isDouble}); }
+                }
+                setTimeout(() => { clearCombatState(); }, 2500); 
             } else { 
                 document.getElementById('arena-status').innerText = "ATTACK FAILED!"; document.getElementById('arena-status').style.color = "#2ecc71"; document.getElementById('arena-math').innerText = "Defender Survives"; 
                 setTimeout(() => { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); clearCombatState(); }, 2500); 
@@ -1156,7 +1138,8 @@
     
     function organizeDon() { 
         const parentCounts = {}; 
-        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(d => { 
+        document.querySelectorAll('.card[data-is-don="true"]').forEach(d => { 
+            if(d.id && d.id.startsWith('opp-')) return;
             if(d.dataset.parentId) { 
                 const p = document.getElementById(d.dataset.parentId); 
                 if(p) { 
@@ -1187,4 +1170,3 @@
 </script>
 </body>
 </html>
-
