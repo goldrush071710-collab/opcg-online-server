@@ -191,28 +191,36 @@
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
         <h2 style="margin:0; color:var(--op-blue);">OPCG Master Engine</h2>
+        
+        <div style="text-align: left; font-size: 14px; font-weight: bold; color: #aaa;">SELECT ACTIVE DECK:</div>
+        <div id="home-deck-list" style="height: 150px; overflow-y: auto; background: #000; border: 1px solid #444; border-radius: 6px; padding: 5px; display: flex; flex-direction: column; gap: 5px;">
+            </div>
+        <button onclick="openDeckBuilder()" style="background:#f39c12; padding: 12px; margin-top: 5px;">+ CREATE NEW DECK</button>
+        
+        <hr style="border-color:#333; width:100%; margin: 15px 0;">
+        
         <div style="display:flex; gap:10px;">
-            <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">HOST LOBBY</button>
-            <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">JOIN LOBBY</button>
+            <button onclick="createLobby()" style="flex:1; padding: 15px; background:#2ecc71;">HOST</button>
+            <button onclick="showJoinLobby()" style="flex:1; padding: 15px; background:#e67e22;">JOIN</button>
+            <button onclick="randomMatch()" style="flex:1; padding: 15px; background:#3498db;">RANDOM</button>
         </div>
-        <button onclick="randomMatch()" style="background:#3498db; padding: 15px;">RANDOM MATCH</button>
-        <button onclick="openDeckBuilder()" style="background:#f39c12; padding: 15px;">DECK BUILDER</button>
-        <hr style="border-color:#333; width:100%;">
-        <button onclick="startDevMode()" style="background:#8e44ad; padding:15px;">DEV MODE (SINGLE PLAYER)</button>
+        <hr style="border-color:#333; width:100%; margin: 15px 0;">
+        <button onclick="startDevMode()" style="background:#8e44ad; padding:15px;">SOLO / TEST DECK</button>
     </div>
+
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22;">Join Lobby</h2>
         <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="padding:10px; font-size:20px; text-align:center; text-transform:uppercase; background:#000; color:#fff; border:1px solid #444;">
         <button onclick="joinLobby()" style="background:#e67e22; padding: 15px;">JOIN</button>
+        <button onclick="backToMain()" style="background:#555; padding: 10px; margin-top: 10px;">BACK</button>
     </div>
+
     <div class="menu-box" id="menu-deck" style="display:none;">
         <h2 style="margin:0; color:var(--op-blue); display: flex; align-items: center; justify-content: center;">
             Lobby: <span id="display-room-code" style="color:#e74c3c; margin-left: 10px;">----</span> 
             <button onclick="copyCode()" style="margin-left:15px; background:#3498db; padding:5px 10px;">COPY</button>
         </h2>
         <p id="lobby-status">Waiting for opponent to join...</p>
-        <div id="lobby-deck-list" style="max-height: 150px; overflow-y:auto; border:1px solid #333; padding:10px; text-align:left;"></div>
-        <button onclick="confirmSelectDeck()" id="btn-select-deck" disabled style="padding: 15px; margin-top:10px;">READY</button>
     </div>
 </div>
 
@@ -229,10 +237,10 @@
         <div><b>Main Deck (<span id="db-count">0</span>/50)</b></div>
         <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid #333; padding:5px; display:flex; flex-direction:column; gap:5px;"></div>
         <div style="display:flex; gap:5px;">
-            <button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:15px;">SAVE</button>
-            <button onclick="importDeck()" style="flex:1; background:#8e44ad; padding:15px;">IMPORT</button>
-            <button onclick="exportDeck()" style="flex:1; background:#3498db; padding:15px;">EXPORT</button>
+            <button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:15px;">SAVE DECK</button>
+            <button onclick="exportTextList()" style="flex:1; background:#3498db; padding:15px;">COPY TEXT</button>
         </div>
+        <button onclick="importDeck()" style="background:#8e44ad; padding:15px;">IMPORT STRING</button>
         <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:15px;">EXIT TO MENU</button>
     </div>
 </div>
@@ -315,13 +323,12 @@
     let currentCounterTotal = 0, selectedCounterCards = [];
     
     let savedDecks = JSON.parse(localStorage.getItem('opcg_decks') || "[]"); 
-    let editingDeck = { name: "", leader: null, main: {} }, activeLobbyDeckUrlArray = [];
+    let editingDeck = { name: "", leader: null, main: {} }, editingDeckIndex = -1;
+    let activeDeckIndex = -1, activeLobbyDeckUrlArray = [];
     
     window.sanjiUsedThisTurn = false; 
-    window.rogerBuffActive = false; 
-    window.rogerBuffExpiresTurn = 0;
-    window.tempSearchCallback = null;
-    window.locked7Plus = false; 
+    window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
+    window.tempSearchCallback = null; window.locked7Plus = false; 
 
     const CARD_DB = {
         // --- FRANKY CORE (Red/Purple) ---
@@ -370,25 +377,71 @@
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
     function clearLeader() { editingDeck.leader = null; renderDeckList(); updateDeckBuilderPool(); }
     function updateDeckBuilderPool() { const pool = document.getElementById('db-pool'); pool.innerHTML = ''; const leaderColors = editingDeck.leader ? CARD_DB[editingDeck.leader].color : null; Object.keys(CARD_DB).forEach(url => { const db = CARD_DB[url]; if(db.type === 'Leader') { createPoolItem(url, pool); } else if (leaderColors && db.color.some(c => leaderColors.includes(c))) { createPoolItem(url, pool); } else if (!leaderColors) { createPoolItem(url, pool); } }); }
-    function createPoolItem(url, pool) { const div = document.createElement('div'); div.className = 'db-card-item'; div.style.backgroundImage = `url('${url}')`; div.onclick = () => addToDeck(url); pool.appendChild(div); }
+    function createPoolItem(url, pool) { const div = document.createElement('div'); div.className = 'db-card-item'; div.style.backgroundImage = `url('${url}')`; div.oncontextmenu = (e) => { e.preventDefault(); document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; }; div.onclick = () => addToDeck(url); pool.appendChild(div); }
     function addToDeck(url) { const db = CARD_DB[url]; if(db.type === 'Leader') { editingDeck.leader = url; updateDeckBuilderPool(); } else { if(!editingDeck.leader) { showModal("Select a Leader first!", "alert"); return; } let count = editingDeck.main[url] || 0; let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); if(count < 4 && total < 50) editingDeck.main[url] = count + 1; } renderDeckList(); }
     function removeFrmDeck(url) { if(editingDeck.main[url]) { editingDeck.main[url]--; if(editingDeck.main[url] <= 0) delete editingDeck.main[url]; } renderDeckList(); }
     function renderDeckList() { const ld = document.getElementById('db-leader'); const ldots = document.getElementById('db-leader-colors'); ldots.innerHTML = ''; if(editingDeck.leader) { ld.innerText = CARD_DB[editingDeck.leader].name; CARD_DB[editingDeck.leader].color.forEach(c => { const d = document.createElement('div'); d.className='color-dot'; d.style.background=getColorCode(c); ldots.appendChild(d); }); } else { ld.innerText = "None"; } let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); document.getElementById('db-count').innerText = total; const list = document.getElementById('db-list'); list.innerHTML = ''; Object.keys(editingDeck.main).forEach(url => { const div = document.createElement('div'); div.className = 'db-list-item'; div.innerHTML = `<span>${CARD_DB[url].name}</span> <span>x${editingDeck.main[url]}</span>`; div.onclick = () => removeFrmDeck(url); list.appendChild(div); }); }
-    function saveDeck() { editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck"; let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); if(!editingDeck.leader || total !== 50) { showModal("Deck must have 1 Leader and exactly 50 cards.", "alert"); return; } savedDecks.push(JSON.parse(JSON.stringify(editingDeck))); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); showModal("Deck Saved!", "alert"); }
-    function closeDeckBuilder() { document.getElementById('deck-builder-screen').style.display = 'none'; document.getElementById('home-screen').style.display = 'flex'; }
-    function exportDeck() { editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck"; navigator.clipboard.writeText(btoa(JSON.stringify(editingDeck))).then(() => showModal("Deck copied!", "alert")); }
+    function saveDeck() { 
+        editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck"; 
+        let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); 
+        if(!editingDeck.leader || total !== 50) { showModal("Deck must have 1 Leader and exactly 50 cards.", "alert"); return; } 
+        
+        if (editingDeckIndex === -1) {
+            savedDecks.push(JSON.parse(JSON.stringify(editingDeck))); 
+        } else {
+            savedDecks[editingDeckIndex] = JSON.parse(JSON.stringify(editingDeck));
+        }
+        localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); 
+        renderHomeDecks();
+        showModal("Deck Saved!", "alert", () => closeDeckBuilder()); 
+    }
+    function closeDeckBuilder() { document.getElementById('deck-builder-screen').style.display = 'none'; document.getElementById('home-screen').style.display = 'flex'; renderHomeDecks(); }
+    function exportTextList() { navigator.clipboard.writeText(btoa(JSON.stringify(editingDeck))).then(() => showModal("Deck String copied!", "alert")); }
     function importDeck() { showModal("Paste deck string:", "prompt", (val) => { try { editingDeck = JSON.parse(atob(val)); document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool(); } catch(e) { showModal("Invalid string.", "alert"); } }); }
 
     // --- LOBBY LOGIC ---
-    function startDevMode() { if(savedDecks.length === 0) { showModal("Make a deck first!", "alert"); return; } isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; window.locked7Plus = false; document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; const d = savedDecks[0]; let arr = []; Object.keys(d.main).forEach(u => { for(let k=0; k<d.main[u]; k++) arr.push(u); }); DECK_ARR = arr; shuffleArray(DECK_ARR); createCard(d.leader, 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[d.leader]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); }
-    function createLobby() { socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; populateLobbyDecks(); }); }
-    function showJoinLobby() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
-    function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); populateLobbyDecks(); } else { showModal("Invalid room.", "alert"); } }); }
-    function randomMatch() { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching..."; socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; populateLobbyDecks(); if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Select deck."; } }); }
+    function prepActiveDeck() {
+        if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false;
+        const d = savedDecks[activeDeckIndex];
+        activeLobbyDeckUrlArray = [d.leader]; 
+        Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) activeLobbyDeckUrlArray.push(url); });
+        return true;
+    }
+
+    function startDevMode() { 
+        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
+        isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; window.locked7Plus = false; 
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
+        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
+        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
+        for(let i=0; i<leaderLife; i++) deckToLife(); 
+        for(let i=0; i<5; i++) drawCardAction(); 
+    }
+
+    function createLobby() { 
+        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
+        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }); 
+    }
+    
+    function showJoinLobby() { 
+        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
+        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; 
+    }
+    function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); } else { showModal("Invalid room.", "alert"); } }); }
+    function backToMain() { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; }
+    
+    function randomMatch() { 
+        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
+        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; 
+        socket.emit('join_random', (res) => { 
+            document.getElementById('display-room-code').innerText = res.roomId; 
+            if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } 
+            else { socket.emit('deck_selected', "custom"); }
+        }); 
+    }
     function copyCode() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=>showModal("Code copied!", "alert")); }
-    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Select your deck."; });
-    function populateLobbyDecks() { const list = document.getElementById('lobby-deck-list'); list.innerHTML = ''; if(savedDecks.length === 0) { list.innerHTML = "<span style='color:#e74c3c'>No decks saved. Go to Deck Builder!</span>"; return; } savedDecks.forEach((d, i) => { const div = document.createElement('div'); div.style.padding = "5px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #444"; div.innerText = d.name; div.onclick = () => { Array.from(list.children).forEach(c => c.style.background = "transparent"); div.style.background = "var(--op-blue)"; activeLobbyDeckUrlArray = [d.leader]; Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) activeLobbyDeckUrlArray.push(url); }); document.getElementById('btn-select-deck').disabled = false; }; list.appendChild(div); }); }
-    function confirmSelectDeck() { document.getElementById('btn-select-deck').innerText = "READY"; document.getElementById('btn-select-deck').disabled = true; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }
+    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Connecting..."; });
 
     // --- GAME INITIALIZATION ---
     socket.on('game_start', (data) => {
@@ -411,6 +464,55 @@
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
     function clearCombatState() { document.getElementById('combat-arrow').style.display = 'none'; document.getElementById('combat-arena').style.display = 'none'; document.body.classList.remove('combat-target-mode', 'bon-clay-mode', 'blocker-target-mode', 'counter-mode'); document.getElementById('counter-controls').style.display = 'none'; combatState = { active: false, attackerId: null, defenderId: null, step: null }; document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); }); }
     window.concedeGame = function() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
+
+    // --- MAIN MENU DECK MANAGEMENT ---
+    function renderHomeDecks() {
+        const list = document.getElementById('home-deck-list');
+        list.innerHTML = '';
+        if (savedDecks.length === 0) {
+            list.innerHTML = "<span style='color:#777; font-style:italic;'>No decks saved. Create one!</span>";
+            return;
+        }
+        savedDecks.forEach((d, i) => {
+            const div = document.createElement('div');
+            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
+            div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "#222";
+            div.style.border = "1px solid #444"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
+
+            const nameSpan = document.createElement('span'); nameSpan.innerText = d.name; nameSpan.style.fontWeight = "bold"; nameSpan.style.flex = "1";
+            nameSpan.onclick = () => { activeDeckIndex = i; renderHomeDecks(); };
+
+            const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
+
+            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px";
+            editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
+
+            const copyBtn = document.createElement('button'); copyBtn.innerText = "LIST"; copyBtn.style.padding = "5px"; copyBtn.style.fontSize = "10px"; copyBtn.style.background = "#8e44ad";
+            copyBtn.onclick = (e) => { e.stopPropagation(); copyDeckTextList(i); };
+
+            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c";
+            delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
+
+            btnContainer.appendChild(editBtn); btnContainer.appendChild(copyBtn); btnContainer.appendChild(delBtn);
+            div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
+        });
+        
+        if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
+    }
+
+    function editSavedDeck(index) {
+        editingDeckIndex = index; editingDeck = JSON.parse(JSON.stringify(savedDecks[index]));
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex';
+        document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool();
+    }
+
+    function copyDeckTextList(index) {
+        const d = savedDecks[index]; let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown'}\n\n`; let total = 0;
+        Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name} x${d.main[url]}\n`; total += d.main[url]; });
+        text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => showModal("Decklist copied to clipboard!", "alert"));
+    }
+
+    window.onload = () => { renderHomeDecks(); };
 
     // --- CARD CREATION & EVENTS ---
     function createCard(url, x, y, opts = {}) { 
@@ -468,7 +570,6 @@
             if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
-            // STUSSY ACTION LOCK: Physically prevents Attack or Active Main
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
                 if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -484,16 +585,18 @@
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Summon Sickness)</div>`;
             }
 
-            // ACTIVATE MAINS (Blocked if Frozen)
+            // ACTIVATE MAINS
             if (!c.classList.contains('frozen')) {
                 if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
                 if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-                if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
                 if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
                 if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
                 if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
                 if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
             }
+
+            // Franky bypasses freeze because it does not rest him!
+            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
 
             if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
@@ -541,7 +644,7 @@
     function saveState() {
         if(isDevMode) { updatePowerDisplay(); return; } 
         updatePowerDisplay();
-        const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), noRestand: c.dataset.noRestand }));
+        const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), frozenUntil: c.dataset.frozenUntil, noRestand: c.dataset.noRestand }));
         socket.emit('board_update', { deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, field, handCount: document.querySelectorAll('#hand-bar .card').length }); refreshStats();
     }
 
@@ -552,7 +655,7 @@
             const z = document.getElementById(targetZoneId);
             if(z) { 
                 const c = createCard(d.url, 0, 0, { isOpponent: true, isLife: d.isLife==="true", isBack: d.back, id: 'opp-'+d.id }); 
-                if(d.rested) c.classList.add('rested'); if(d.frozen) c.classList.add('frozen'); if(d.noRestand === "true") c.dataset.noRestand = "true"; if(d.noRestand) c.classList.add('no-restand'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
+                if(d.rested) c.classList.add('rested'); if(d.frozen) c.classList.add('frozen'); if(d.frozenUntil) c.dataset.frozenUntil = d.frozenUntil; if(d.noRestand === "true") c.dataset.noRestand = "true"; if(d.noRestand) c.classList.add('no-restand'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
                 c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; 
                 c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
                 z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 15) + 'px'; } 
@@ -562,7 +665,6 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
-    // THE DON!! SLEDGEHAMMER & PROPER UNFREEZE PHASE
     function refreshPhase() {
         const donZone = document.getElementById('don-zone');
         document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
@@ -575,12 +677,9 @@
             delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
             if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
 
-            // ACTION LOCK (FREEZE) LOGIC
-            // Standard restand happens for ALL cards, but the Action Lock prevents doing anything with them.
             if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } 
-            else { c.classList.remove('rested'); } // Let the card stand up normally!
+            else { c.classList.remove('rested'); } 
 
-            // Clear the freeze tag if the opponent's NEXT turn is over.
             if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) {
                 c.classList.remove('frozen'); 
                 delete c.dataset.frozenUntil;
@@ -713,7 +812,6 @@
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
                 if(data.status === 'freeze') { 
-                    // ACTION LOCK: Stays frozen until the START of your next turn
                     myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; 
                     appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); 
                 } 
@@ -727,16 +825,11 @@
     });
     function openArena(attId, defId, statusMsg) { const aCard = document.getElementById(attId); const dCard = document.getElementById(defId); if(!aCard || !dCard) return; document.getElementById('arena-att-img').style.backgroundImage = `url('${aCard.dataset.url}')`; document.getElementById('arena-def-img').style.backgroundImage = `url('${dCard.dataset.url}')`; let aPow = parseInt(aCard.dataset.currentPower || 0); let dPow = parseInt(dCard.dataset.currentPower || 0); document.getElementById('arena-att-pow').innerText = aPow; document.getElementById('arena-def-pow').innerText = dPow; document.getElementById('arena-status').innerText = statusMsg; document.getElementById('arena-status').style.color = "#34dbdb"; let req = aPow - dPow + 1000; if(req <= 0) req = 0; document.getElementById('arena-math').innerText = `Needs +${req} to survive`; document.getElementById('combat-arena').style.display = 'flex'; }
     
-    // COUNTER BUG FIX: No more double-counting the counterValue!
     function updateArenaCounter(counterVal) { 
         const defCard = document.getElementById(combatState.defenderId); if(!defCard) return; 
-        let baseDPow = parseInt(defCard.dataset.currentPower || 0);
-        let totalDPow = baseDPow + counterVal; 
+        let baseDPow = parseInt(defCard.dataset.currentPower || 0); let totalDPow = baseDPow + counterVal; 
         document.getElementById('arena-def-pow').innerText = totalDPow; 
-        
-        const attCard = document.getElementById(combatState.attackerId); 
-        let aPow = parseInt(attCard.dataset.currentPower || 0); 
-        
+        const attCard = document.getElementById(combatState.attackerId); let aPow = parseInt(attCard.dataset.currentPower || 0); 
         let req = aPow - totalDPow + 1000; 
         if(req <= 0) document.getElementById('arena-math').innerText = "DEFENSE SUCCESSFUL"; 
         else document.getElementById('arena-math').innerText = `Needs +${req} more`; 
@@ -751,7 +844,6 @@
         const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + counterVal; 
         document.getElementById('arena-def-pow').innerText = dPow; 
         
-        // 7000 vs 7000 hits! Tie goes to attacker!
         if(isMyTurn) { 
             if(aPow >= dPow) { 
                 document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c"; document.getElementById('arena-math').innerText = "Defender takes Damage"; 
@@ -764,12 +856,8 @@
                     else if(def.parentElement.id.includes('leader-zone')) {
                         const isBanish = CARD_DB[att.dataset.url]?.banish || att.dataset.banish === "true";
                         const isDouble = CARD_DB[att.dataset.url]?.doubleAttack || att.dataset.doubleAttack === "true";
-                        
-                        if(isDevMode) { 
-                            handleLifeDamage(isBanish, isDouble); 
-                        } else {
-                            socket.emit('game_action', {type: 'resolve_life', banish: isBanish, double: isDouble}); 
-                        }
+                        if(isDevMode) { handleLifeDamage(isBanish, isDouble); } 
+                        else { socket.emit('game_action', {type: 'resolve_life', banish: isBanish, double: isDouble}); }
                     }
                     clearCombatState(); 
                 }, 2500); 
@@ -802,7 +890,6 @@
         
         const db = CARD_DB[c.dataset.url]; 
         if(db && db.hasTrigger) { 
-            // VISUAL TRIGGER UPGRADE: Shows the card image in the modal!
             let triggerMsg = `<img src="${c.dataset.url}" style="height:150px; border-radius:10px; margin-bottom:10px;"><br>Activate Trigger of <b>${db.name}</b>?`;
             showModal(triggerMsg, "confirm", () => { resolveTrigger(c, db); finishHit(); }, () => { putInHand(c); finishHit(); }); 
         } else { 
@@ -875,17 +962,6 @@
         if(db.name === "Charlotte Katakuri") { const myL = document.getElementById('life-zone').children.length; const oppL = document.getElementById('opp-life-zone').children.length; if(myL < oppL) { c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); } showModal("Look at top Life card?", "confirm", () => { startSelection('katakuri_life', 1, "Select your Life or Opponent's Life", (cards) => { const target = cards[0]; target.classList.remove('card-back'); document.getElementById('zoom-img').src = target.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Put on Top (YES) or Bottom (NO)?", "confirm", () => { target.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri left card on Top of Life.", "#f1c40f"); saveState(); }, () => { target.classList.add('card-back'); target.parentElement.prepend(target); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri moved card to Bottom of Life.", "#f1c40f"); saveState(); }); }); }); }
         if(db.name === "S-Snake") { sSnakeEffect(c); }
     }
-
-    // --- CONTEXT MENU ABILITIES ---
-    window.stussyLeaderFlip = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Stussy flipped life & froze target!", "#2ecc71"); }); }
-    window.lucciYellowMain = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
-    window.kakuMain = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
-    window.hattoriMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { rightClickedCard.classList.remove('rested'); saveState(); }); }
-    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card').forEach(s => s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
-    window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
-    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
-    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
-    window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
 
     // --- SEARCH & INSPECTOR ---
     window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target`; window.tempSearchCallback = callback; SEARCH_ARR.forEach((url, i) => { const db = CARD_DB[url]; let canTake = true; if(filterTraits && !filterTraits.some(t => db.traits.includes(t))) canTake = false; if(isTriggerOnly && !db.hasTrigger) canTake = false; if(isCost4Plus && db.cost < 4) canTake = false; if(excludeName && db.name === excludeName) canTake = false; const div = document.createElement('div'); div.style.textAlign = 'center'; div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'};" onclick="${canTake ? `resolveStructuredSearch(${i})` : ''}"></div>`; grid.appendChild(div); }); const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('inspector').style.display = 'flex'; }
