@@ -764,12 +764,10 @@ c.onmousedown = (e) => {
                 return; 
             }
             
-            // NEW: CLICK TO DETACH DON!! (It pops right back to the zone)
-            if (c.dataset.isDon === "true" && c.dataset.parentId && (isMyTurn || isDevMode)) { 
-                const oldId = c.dataset.parentId; 
-                delete c.dataset.parentId; 
-                updateBadges(oldId); organizeDon(); saveState(); 
-                e.stopPropagation(); return; 
+            // FIX: RULE ENFORCEMENT - Attached DON!! are strictly locked.
+            if (c.dataset.isDon === "true" && c.dataset.parentId) { 
+                e.stopPropagation(); 
+                return; // Prevents clicking, dragging, or detaching a committed DON!!
             }
             
             // Drag Prep
@@ -1619,6 +1617,7 @@ c.onmousedown = (e) => {
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 </script>
+
 
 
 
