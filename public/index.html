@@ -1548,10 +1548,21 @@
     window.closeInspector = function() { if(SEARCH_ARR.length > 0) resolveStructuredSearch(-1); else { document.getElementById('inspector').style.display = 'none'; refreshStats(); } }
 
     // --- DRAG & DROP LOGIC ---
+  // --- DRAG & DROP LOGIC ---
     window.addEventListener('mousedown', (e) => { 
         if(!e.target.closest('#context-menu') && !e.target.closest('#inspector') && !e.target.closest('#custom-modal-box')) hideMenu(); 
         if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } 
-        if (selectedDon) { const t = e.target.closest('.card'); if (!t || t !== selectedDon) { selectedDon.style.outline = ""; selectedDon = null; } } 
+        
+        // FIX: The Window will no longer drop the DON!! if you are clicking a valid Character or Leader
+        if (selectedDon) { 
+            const t = e.target.closest('.card'); 
+            const isValidTarget = t && !t.dataset.isDon && (t.parentElement.id === 'char-zone-front' || t.parentElement.id === 'leader-zone') && !t.id.includes('opp-');
+            
+            if (!isValidTarget && t !== selectedDon) { 
+                selectedDon.style.outline = ""; 
+                selectedDon = null; 
+            } 
+        } 
     }, true);
     
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
@@ -1607,3 +1618,4 @@
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 </script>
+
