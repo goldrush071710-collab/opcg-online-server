@@ -526,52 +526,54 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
-socket.on('turn_passed', () => {
+// --- THE FOOLPROOF REFRESH PHASE ---
+    function refreshPhase() {
+        // 1. NUKE ALL DON!! ATTACHMENTS
+        document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
+            don.removeAttribute('data-parent-id');
+            delete don.dataset.parentId;
+            don.classList.remove('rested'); // Wake up rested DON
+        });
+
+        // 2. WAKE UP CHARACTERS & WIPE BADGES
+        document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
+            delete c.dataset.tempPower; 
+            delete c.dataset.unblockable; 
+            delete c.dataset.hasRush; 
+            delete c.dataset.usedDefend;
+            if (c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
+            if (c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none';
+
+            // Stussy Freeze Check
+            if (c.dataset.frozenUntil && turnNum <= parseInt(c.dataset.frozenUntil)) {
+                // Stay frozen
+            } else {
+                c.classList.remove('frozen');
+                delete c.dataset.frozenUntil;
+                if (c.dataset.noRestand === "true") {
+                    delete c.dataset.noRestand;
+                    c.classList.remove('no-restand');
+                } else {
+                    c.classList.remove('rested');
+                }
+            }
+            updateBadges(c.id); // Wipe the yellow DON number back to 0
+        });
+
+        // 3. CLEANUP & DRAW
+        organizeDon(); 
+        drawCardAction(); 
+        spawnDonLocal(false); 
+        spawnDonLocal(false); 
+        saveState();
+    }
+
+    socket.on('turn_passed', () => {
         isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); window.sanjiUsedThisTurn = false; window.locked7Plus = false; 
         if(window.rogerBuffActive && turnNum >= window.rogerBuffExpiresTurn) window.rogerBuffActive = false;
         
         showModal("It's your turn!", "alert", () => {
-            
-            // --- SLEDGEHAMMER DON!! FIX ---
-            // 1. Physically grab all DON cards, strip their data, and force them into the DON Area
-            const donZone = document.getElementById('don-zone');
-            document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
-                delete don.dataset.parentId;
-                don.removeAttribute('data-parent-id');
-                don.classList.remove('rested'); // Make them active again!
-                don.style.outline = "";
-                don.style.position = "relative";
-                don.style.left = "0";
-                don.style.top = "0";
-                don.style.zIndex = "20";
-                donZone.appendChild(don); // Physically move the HTML element
-            });
-
-            // 2. Loop through Characters & Leader to reset stats and wipe Badges
-            document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
-                delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
-                
-                // Stussy Freeze Check
-                if (c.dataset.frozenUntil && turnNum <= parseInt(c.dataset.frozenUntil)) {
-                    // Stays frozen and rested. Do nothing.
-                } else {
-                    c.classList.remove('frozen'); 
-                    delete c.dataset.frozenUntil;
-                    
-                    if(c.dataset.noRestand === "true") { 
-                        delete c.dataset.noRestand; c.classList.remove('no-restand'); 
-                    } else { 
-                        c.classList.remove('rested'); 
-                    }
-                }
-
-                if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
-                if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none';
-                
-                updateBadges(c.id); // Wipe the yellow badge to 0
-            });
-
-            organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
+            refreshPhase();
         });
     });
 
@@ -858,5 +860,6 @@ socket.on('turn_passed', () => {
 </script>
 </body>
 </html>
+
 
 
