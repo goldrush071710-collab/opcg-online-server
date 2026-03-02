@@ -526,14 +526,14 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
-    socket.on('turn_passed', () => {
+   socket.on('turn_passed', () => {
         isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); window.sanjiUsedThisTurn = false; window.locked7Plus = false; 
         if(window.rogerBuffActive && turnNum >= window.rogerBuffExpiresTurn) window.rogerBuffActive = false;
         showModal("It's your turn!", "alert", () => {
             document.querySelectorAll('#my-board .card').forEach(c => {
                 delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
                 
-                // STUSSY FREEZE FIX: Skips restand if frozen
+                // STUSSY FREEZE FIX
                 if (c.dataset.frozenUntil && turnNum <= parseInt(c.dataset.frozenUntil)) {
                     // Stays frozen and rested. Do nothing.
                 } else {
@@ -548,9 +548,19 @@
                 }
 
                 if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
-                if(c.dataset.isDon === "true") { delete c.dataset.parentId; c.style.outline=""; }
+                
+                // FIX: Forcefully detaches DON!! in both JS memory AND the HTML Document
+                if(c.dataset.isDon === "true") { 
+                    delete c.dataset.parentId; 
+                    c.removeAttribute('data-parent-id'); 
+                    c.style.outline=""; 
+                }
                 if(c.querySelector('.rush-tag')) c.querySelector('.rush-tag').style.display = 'none';
             });
+
+            // FIX: Wipe all yellow Don Badges on your Characters/Leader back to 0
+            document.querySelectorAll('#char-zone-front .card, #leader-zone .card').forEach(c => updateBadges(c.id));
+
             organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
         });
     });
@@ -838,3 +848,4 @@
 </script>
 </body>
 </html>
+
