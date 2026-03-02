@@ -50,17 +50,16 @@
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg') !important; color: transparent !important; }
         
-        /* STUSSY STATUS EFFECTS */
-        .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 15px #34dbdb !important; filter: hue-rotate(180deg) brightness(0.8); }
+        /* STUSSY ACTION LOCK (FREEZE) */
+        .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 15px #34dbdb !important; }
         .no-restand { outline: 3px dashed #9b59b6 !important; }
 
-        /* POWER BADGES & DON UNDERNEATH FIX */
+        /* POWER BADGES & KEYWORD TAGS */
         .power-badge { display: flex !important; position: absolute; top: -10px; right: -10px; background: #e74c3c; border: 2px solid #fff; color: white; border-radius: 10px; padding: 2px 8px; font-size: 1.5vh; font-weight: bold; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.8); transition: 0.2s ease; }
         .power-badge.hidden { display: none !important; }
-        .card[data-is-don="true"][data-parent-id] { z-index: 10 !important; } /* Forces DON under the Char */
+        .card[data-is-don="true"][data-parent-id] { z-index: 10 !important; } 
         .don-badge { display: none !important; }
 
-        /* KEYWORD TAGS */
         .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; }
         .kw-tag { display:none; font-size:1.2vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         .rush-tag { background:#f39c12; color:#000; }
@@ -359,7 +358,12 @@
         "https://i.imgur.com/NcbAdsG.jpeg": { name: "Atlas", type: "Character", color: ["Green"], cost: 3, power: 5000, counter: 0, traits: ["Scientist", "Egghead"], hasOnPlay: true, hasTrigger: true },
         "https://i.imgur.com/PxaLb4K.jpeg": { name: "Dracule Mihawk (8c)", type: "Character", color: ["Green"], cost: 8, power: 8000, counter: 0, traits: ["Seven Warlords", "Muggy Kingdom"], blocker: true, hasOnPlay: true },
         "https://i.imgur.com/3L6BkzS.jpeg": { name: "Dracule Mihawk (9c)", type: "Character", color: ["Green"], cost: 9, power: 10000, counter: 0, traits: ["Seven Warlords"] },
-        "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true }
+        "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true },
+        
+        // --- NEW CARDS ---
+        "https://imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
+        "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
+        "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
     };
     // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f"}; return map[c] || "#fff"; }
@@ -399,7 +403,7 @@
 
     // --- UI & UTILITY FUNCTIONS ---
     function showModal(msg, type, onConfirm, onCancel, defaultVal = "") { 
-        const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerText = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; 
+        const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerHTML = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; 
         const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2); 
         if(type === 'alert') { inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; } else if(type === 'confirm') { inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } else if(type === 'prompt') { inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
     }
@@ -412,7 +416,6 @@
     function createCard(url, x, y, opts = {}) { 
         const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; 
         
-        // NEW TAG SYSTEM
         c.innerHTML = `
             <div class="don-badge">0</div>
             <div class="power-badge hidden">+0</div>
@@ -465,24 +468,37 @@
             if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
+            // STUSSY ACTION LOCK: Physically prevents Attack or Active Main
             let canAttack = false; 
-            if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { if(db.type === 'Leader' && myTurnCount === 1) canAttack = false; else if(db.type === 'Character' && c.dataset.turnPlayed == myTurnCount && c.dataset.hasRush !== "true") canAttack = false; else canAttack = true; } }
-            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested') && !c.classList.contains('frozen')) h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Cannot Attack)</div>`;
+            if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
+                if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
+                    if(db.type === 'Leader' && myTurnCount === 1) canAttack = false; 
+                    else if(db.type === 'Character' && c.dataset.turnPlayed == myTurnCount && c.dataset.hasRush !== "true") canAttack = false; 
+                    else canAttack = true; 
+                } 
+            }
             
-            // FRANKY ABILITIES
-            if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-            if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
+            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
+            else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
+                if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
+                else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack (Summon Sickness)</div>`;
+            }
+
+            // ACTIVATE MAINS (Blocked if Frozen)
+            if (!c.classList.contains('frozen')) {
+                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+                if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
+                if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
+                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
+                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+            }
+
             if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom & Draw 1</div>`; 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
             if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
 
-            // STUSSY/CP0 ABILITIES
-            if (db?.name === "Stussy" && db.type === "Leader" && isMyTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-            if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-            if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && isMyTurn) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-            if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && isMyTurn) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
-            
             menu.innerHTML = h; 
         }; c.onmouseenter = () => hovered = c; c.onmouseleave = () => hovered = null;
     }
@@ -496,7 +512,6 @@
             const db = CARD_DB[c.dataset.url]; 
             if(!db) return;
             
-            // KEYWORD TAG UPDATER
             const rushT = c.querySelector('.rush-tag'); const banishT = c.querySelector('.banish-tag'); const doubleT = c.querySelector('.double-attack-tag');
             if(rushT) rushT.style.display = (db.rush || c.dataset.hasRush === "true") ? 'block' : 'none';
             if(banishT) banishT.style.display = (db.banish || c.dataset.banish === "true") ? 'block' : 'none';
@@ -547,34 +562,30 @@
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
-    // THE DON!! SLEDGEHAMMER PHASE
+    // THE DON!! SLEDGEHAMMER & PROPER UNFREEZE PHASE
     function refreshPhase() {
         const donZone = document.getElementById('don-zone');
         document.querySelectorAll('#my-board .card[data-is-don="true"]').forEach(don => {
-            don.removeAttribute('data-parent-id');
-            delete don.dataset.parentId;
-            don.classList.remove('rested'); 
-            don.style.outline = "";
-            don.style.position = "relative";
-            don.style.left = "0";
-            don.style.top = "0";
-            don.style.zIndex = "20";
+            don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
+            don.style.outline = ""; don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
             if (donZone) donZone.appendChild(don); 
         });
 
         document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
             delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
-            
-            if (c.dataset.frozenUntil && turnNum <= parseInt(c.dataset.frozenUntil)) {
-                // Stay frozen
-            } else {
+            if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
+
+            // ACTION LOCK (FREEZE) LOGIC
+            // Standard restand happens for ALL cards, but the Action Lock prevents doing anything with them.
+            if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } 
+            else { c.classList.remove('rested'); } // Let the card stand up normally!
+
+            // Clear the freeze tag if the opponent's NEXT turn is over.
+            if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) {
                 c.classList.remove('frozen'); 
                 delete c.dataset.frozenUntil;
-                if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } 
-                else { c.classList.remove('rested'); }
             }
 
-            if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
             updateBadges(c.id); 
         });
 
@@ -618,6 +629,10 @@
         else if(selectConfig.mode === 'stussy_freeze') { if(!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone')) { showModal("Select Opponent Character or Leader", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
+        else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
+        else if(selectConfig.mode === 'play_lucci_free') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || !db.name.includes("Rob Lucci")) { showModal("Select a Rob Lucci from hand", "alert"); return; } }
+        else if(selectConfig.mode === 'katakuri_life') { if(card.parentElement.id !== 'life-zone' && card.parentElement.id !== 'opp-life-zone') { showModal("Select a Life card", "alert"); return; } }
+        else if(selectConfig.mode === 'ssnake_minus') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front') { showModal("Select Opponent Character", "alert"); return; } }
         else if(selectConfig.mode === 'play_trigger_5') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || !db.hasTrigger) { showModal("Select Cost 5 or less Trigger", "alert"); return; } }
         else if(selectConfig.mode === 'hand_trigger') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || !db.hasTrigger) { showModal("Select a Trigger card from hand", "alert"); return; } }
         else if(selectConfig.mode === 'hand_stage') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage') { showModal("Select a Stage from hand.", "alert"); return; } }
@@ -635,10 +650,11 @@
     }
 
     // --- COMBAT SYSTEM ---
+    function sSnakeEffect(c) { const top = document.getElementById('life-zone').lastElementChild; if(top && top.classList.contains('card-back')) { showModal("S-Snake: Turn top Life face-up to give Opponent -2000 power?", "confirm", () => { top.classList.remove('card-back'); saveState(); startSelection('ssnake_minus', 1, "Select Opp Character to give -2000", (cards) => { cards[0].dataset.tempPower = parseInt(cards[0].dataset.tempPower||0) - 2000; updatePowerDisplay(); saveState(); appendChat("S-Snake gave -2000 power!", "#f1c40f"); }); }); } }
     function execAttackPhase(c) { combatState = { active: true, attackerId: c.id, step: 'target' }; document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f"); }
     window.simulateAttack = function() { 
         hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } 
-        const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Frozen!", "alert"); return; } 
+        const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Action Locked!", "alert"); return; } 
         const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); saveState(); 
         
         if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { 
@@ -649,6 +665,7 @@
         if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
         if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
+        if(db.name === "S-Snake") { sSnakeEffect(c); }
         execAttackPhase(c);
     }
     function drawArrow(attId, defId) { const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return; const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2; const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; const arrow = document.getElementById('combat-arrow'); arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px'; arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block'; }
@@ -695,7 +712,11 @@
         else if(data.type === 'apply_status') { 
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
-                if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = turnNum + 1; appendChat("Your card was Frozen by opponent!", "#34dbdb"); } 
+                if(data.status === 'freeze') { 
+                    // ACTION LOCK: Stays frozen until the START of your next turn
+                    myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; 
+                    appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); 
+                } 
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 saveState(); 
@@ -705,7 +726,22 @@
         else if (data.type === 'game_over') { showModal("Opponent took damage at 0 Life! YOU WIN!", "alert", ()=>window.location.reload()); }
     });
     function openArena(attId, defId, statusMsg) { const aCard = document.getElementById(attId); const dCard = document.getElementById(defId); if(!aCard || !dCard) return; document.getElementById('arena-att-img').style.backgroundImage = `url('${aCard.dataset.url}')`; document.getElementById('arena-def-img').style.backgroundImage = `url('${dCard.dataset.url}')`; let aPow = parseInt(aCard.dataset.currentPower || 0); let dPow = parseInt(dCard.dataset.currentPower || 0); document.getElementById('arena-att-pow').innerText = aPow; document.getElementById('arena-def-pow').innerText = dPow; document.getElementById('arena-status').innerText = statusMsg; document.getElementById('arena-status').style.color = "#34dbdb"; let req = aPow - dPow + 1000; if(req <= 0) req = 0; document.getElementById('arena-math').innerText = `Needs +${req} to survive`; document.getElementById('combat-arena').style.display = 'flex'; }
-    function updateArenaCounter(counterVal) { const defCard = document.getElementById(combatState.defenderId); if(!defCard) return; let dPow = parseInt(defCard.dataset.currentPower || 0) + counterVal; document.getElementById('arena-def-pow').innerText = dPow; const attCard = document.getElementById(combatState.attackerId); let aPow = parseInt(attCard.dataset.currentPower || 0); let req = aPow - dPow + 1000 - counterVal; if(req <= 0) document.getElementById('arena-math').innerText = "DEFENSE SUCCESSFUL"; else document.getElementById('arena-math').innerText = `Needs +${req} more`; }
+    
+    // COUNTER BUG FIX: No more double-counting the counterValue!
+    function updateArenaCounter(counterVal) { 
+        const defCard = document.getElementById(combatState.defenderId); if(!defCard) return; 
+        let baseDPow = parseInt(defCard.dataset.currentPower || 0);
+        let totalDPow = baseDPow + counterVal; 
+        document.getElementById('arena-def-pow').innerText = totalDPow; 
+        
+        const attCard = document.getElementById(combatState.attackerId); 
+        let aPow = parseInt(attCard.dataset.currentPower || 0); 
+        
+        let req = aPow - totalDPow + 1000; 
+        if(req <= 0) document.getElementById('arena-math').innerText = "DEFENSE SUCCESSFUL"; 
+        else document.getElementById('arena-math').innerText = `Needs +${req} more`; 
+    }
+    
     function askCounterPhase() { combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-controls').style.display = 'flex'; currentCounterTotal = 0; selectedCounterCards = []; let req = parseInt(document.getElementById('arena-att-pow').innerText) - parseInt(document.getElementById('arena-def-pow').innerText) + 1000; document.getElementById('arena-math').innerText = `Needs +${Math.max(0,req)} to survive`; }
     window.confirmCounter = function() { selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); saveState(); executeCombatResolution(currentCounterTotal); }
     window.takeHit = function() { socket.emit('game_action', {type: 'counter_declared', counterValue: 0}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); executeCombatResolution(0); }
@@ -715,6 +751,7 @@
         const aPow = parseInt(att.dataset.currentPower || 0); const dPow = parseInt(def.dataset.currentPower || 0) + counterVal; 
         document.getElementById('arena-def-pow').innerText = dPow; 
         
+        // 7000 vs 7000 hits! Tie goes to attacker!
         if(isMyTurn) { 
             if(aPow >= dPow) { 
                 document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c"; document.getElementById('arena-math').innerText = "Defender takes Damage"; 
@@ -756,7 +793,6 @@
         if(lifeCards.length === 0) { socket.emit('game_action', {type: 'game_over'}); showModal("YOU LOSE!", "alert", ()=>window.location.reload()); return; } 
         const c = lifeCards[lifeCards.length-1]; 
         
-        // This loops the damage 1.5 seconds later if it was a Double Attack
         const finishHit = () => { if(isDouble) setTimeout(() => handleLifeDamage(isBanish, false), 1500); };
 
         if(isBanish) { 
@@ -766,13 +802,27 @@
         
         const db = CARD_DB[c.dataset.url]; 
         if(db && db.hasTrigger) { 
-            showModal(`Activate Trigger of ${db.name}?`, "confirm", () => { resolveTrigger(c, db); finishHit(); }, () => { putInHand(c); finishHit(); }); 
+            // VISUAL TRIGGER UPGRADE: Shows the card image in the modal!
+            let triggerMsg = `<img src="${c.dataset.url}" style="height:150px; border-radius:10px; margin-bottom:10px;"><br>Activate Trigger of <b>${db.name}</b>?`;
+            showModal(triggerMsg, "confirm", () => { resolveTrigger(c, db); finishHit(); }, () => { putInHand(c); finishHit(); }); 
         } else { 
             putInHand(c); finishHit(); 
         } 
     }
     function putInHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); updateLifePositions(); saveState(); }
-    function resolveTrigger(c, db) { c.dataset.isLife="false"; c.classList.remove('card-back'); updateLifePositions(); if(db.name === "Unblockable") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); startSelection('trigger_ko', 1, "Select Opponent Blocker (Cost 3 or less) to K.O.", (targets) => { socket.emit('game_action', {type: 'request_ko', target: targets[0].id.replace('opp-', '')}); appendChat("Trigger activated: Requested K.O.!", "#e74c3c"); updateLifePositions(); saveState(); }); } else if(db.name === "Rob Lucci (Y)" || db.name === "Kaku") { document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat(`Triggered ${db.name}!`, "#f1c40f"); } else if(db.name === "Maha") { document.getElementById('hand-bar').appendChild(c); drawCardAction(); saveState(); appendChat("Maha Trigger: Draw 1", "#f1c40f"); } else if(db.name === "Lilith") { document.getElementById('hand-bar').appendChild(c); openStructuredSearch(4, null, "Lilith", true); } else if(db.name === "Seraphim") { document.getElementById('hand-bar').appendChild(c); startSelection('doflamingo_lock', 1, "Select 6c or less to Freeze", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Seraphim Trigger Freeze!", "#34dbdb"); }); } else if(db.name === "Rob Lucci (G)") { document.getElementById('hand-bar').appendChild(c); startSelection('doflamingo_lock', 1, "Select 3c or less to Rest", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); saveState(); }); } else if(db.name === "Hattori") { document.getElementById('char-zone-front').appendChild(c); c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Trigger: Select Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori Trigger: Gave Lucci +2000!", "#2ecc71"); }, () => { appendChat("Hattori trigger placed but buff cancelled.", "#ccc"); }); } else { putInHand(c); } }
+    function resolveTrigger(c, db) { 
+        c.dataset.isLife="false"; c.classList.remove('card-back'); updateLifePositions(); 
+        if(db.name === "Unblockable") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); startSelection('trigger_ko', 1, "Select Opponent Blocker (Cost 3 or less) to K.O.", (targets) => { socket.emit('game_action', {type: 'request_ko', target: targets[0].id.replace('opp-', '')}); appendChat("Trigger activated: Requested K.O.!", "#e74c3c"); updateLifePositions(); saveState(); }); } 
+        else if(db.name === "Rob Lucci (Y)" || db.name === "Kaku") { document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat(`Triggered ${db.name}!`, "#f1c40f"); } 
+        else if(db.name === "Maha") { document.getElementById('hand-bar').appendChild(c); drawCardAction(); saveState(); appendChat("Maha Trigger: Draw 1", "#f1c40f"); } 
+        else if(db.name === "Lilith") { document.getElementById('hand-bar').appendChild(c); openStructuredSearch(4, null, "Lilith", true); } 
+        else if(db.name === "Seraphim") { document.getElementById('hand-bar').appendChild(c); startSelection('doflamingo_lock', 1, "Select 6c or less to Freeze", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Seraphim Trigger Freeze!", "#34dbdb"); }); } 
+        else if(db.name === "Rob Lucci (G)") { document.getElementById('hand-bar').appendChild(c); startSelection('lucci_g_rest_trigger', 1, "Select 3c or less to Rest", (cards)=>{ socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); saveState(); }); } 
+        else if(db.name === "Hattori") { document.getElementById('char-zone-front').appendChild(c); c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Trigger: Select Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori Trigger: Gave Lucci +2000!", "#2ecc71"); }, () => { appendChat("Hattori trigger placed but buff cancelled.", "#ccc"); }); } 
+        else if(db.name === "Spandam") { const leaderCard = document.querySelector('#leader-zone .card'); if (leaderCard && CARD_DB[leaderCard.dataset.url]?.name === "Stussy") { drawCardAction(); appendChat("Spandam Trigger: Drew 1 card.", "#f1c40f"); } putInHand(c); }
+        else if(db.name === "S-Snake") { startSelection('hand_trash', 1, "Trash 1 card to play S-Snake", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat("S-Snake played via Trigger!", "#f1c40f"); setTimeout(()=>triggerOnPlay(c,db), 100); }, () => { putInHand(c); }); }
+        else { putInHand(c); } 
+    }
 
     // --- PLAYING CARDS & EFFECTS ---
     function playCardConfirm(c) { if(!isDevMode && !isMyTurn) return; const db = CARD_DB[c.dataset.url]; let cost = db.cost; const lifeCount = document.getElementById('life-zone').children.length; if(db.name==="Monkey D. Luffy" && lifeCount<=1) cost-=1; if (window.locked7Plus && cost >= 7 && db.type === 'Character') { showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(false, cost); }); }
@@ -789,42 +839,22 @@
             const bz = document.getElementById('stage-zone');
             const leaderCard = document.querySelector('#leader-zone .card');
             const leaderName = leaderCard ? CARD_DB[leaderCard.dataset.url]?.name : "";
-            // LIMIT: 5 Stages for Franky, 1 Stage for everyone else
             const maxStages = (leaderName === "Franky") ? 5 : 1;
             
             if (bz.children.length >= maxStages) {
                 showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => {
-                    startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => {
-                        trashCard(cards[0]);
-                        bz.appendChild(c);
-                        saveState();
-                        setTimeout(() => triggerOnPlay(c, db), 100);
-                    }, () => {
-                        document.getElementById('hand-bar').appendChild(c);
-                    });
+                    startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { trashCard(cards[0]); bz.appendChild(c); saveState(); setTimeout(() => triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); });
                 });
                 return;
-            } else {
-                bz.appendChild(c);
-            }
+            } else { bz.appendChild(c); }
         } else { 
             const fz = document.getElementById('char-zone-front'); 
-            // LIMIT: 5 Characters max
             if(fz.children.length >= 5) {
                 showModal("Front line is full! Trash a Character to play this.", "confirm", () => {
-                    startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => {
-                        trashCard(cards[0]);
-                        fz.appendChild(c);
-                        saveState();
-                        setTimeout(() => triggerOnPlay(c, db), 100);
-                    }, () => {
-                        document.getElementById('hand-bar').appendChild(c); // Cancelled, return to hand
-                    });
+                    startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { trashCard(cards[0]); fz.appendChild(c); saveState(); setTimeout(() => triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); });
                 });
-                return; // Stops the function so they don't get 6 characters
-            } else {
-                fz.appendChild(c);
-            }
+                return; 
+            } else { fz.appendChild(c); }
         } 
         saveState(); setTimeout(() => triggerOnPlay(c, db), 100); 
     }
@@ -841,13 +871,16 @@
         if(db.name === "Monkey D. Luffy") { startSelection('hand_trash', 1, "Trash 1 for +2k Leader & Blocker", (cards)=>{ TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); c.dataset.luffyBuff = "true"; saveState(); appendChat("Luffy gave +2k & Blocker!", "#f1c40f"); }); }
         if(db.name === "Seraphim") { const lifeCount = document.getElementById('life-zone').children.length; if(lifeCount >= 2) { startSelection('hand_trigger', 1, "Select Trigger to stack on Life", (cards)=>{ const top = cards[0]; top.classList.remove('card-back'); top.style.position = 'absolute'; document.getElementById('life-zone').appendChild(top); updateLifePositions(); saveState(); appendChat("Seraphim stacked a Trigger on Life!", "#f1c40f"); }); } }
         if(db.name === "Dracule Mihawk (8c)") { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')).slice(0, 4); restedDons.forEach(d => d.classList.remove('rested')); window.locked7Plus = true; appendChat("Mihawk rested 4 DON!! and locked 7+ cost plays.", "#2ecc71"); saveState(); }
+        if(db.name === "Spandam") { startSelection('play_lucci_free', 1, "Play a [Rob Lucci] from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
+        if(db.name === "Charlotte Katakuri") { const myL = document.getElementById('life-zone').children.length; const oppL = document.getElementById('opp-life-zone').children.length; if(myL < oppL) { c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); } showModal("Look at top Life card?", "confirm", () => { startSelection('katakuri_life', 1, "Select your Life or Opponent's Life", (cards) => { const target = cards[0]; target.classList.remove('card-back'); document.getElementById('zoom-img').src = target.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Put on Top (YES) or Bottom (NO)?", "confirm", () => { target.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri left card on Top of Life.", "#f1c40f"); saveState(); }, () => { target.classList.add('card-back'); target.parentElement.prepend(target); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri moved card to Bottom of Life.", "#f1c40f"); saveState(); }); }); }); }
+        if(db.name === "S-Snake") { sSnakeEffect(c); }
     }
 
     // --- CONTEXT MENU ABILITIES ---
     window.stussyLeaderFlip = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Stussy flipped life & froze target!", "#2ecc71"); }); }
     window.lucciYellowMain = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
     window.kakuMain = function() { hideMenu(); const top = document.getElementById('life-zone').lastElementChild; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
-    window.hattoriMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori gave Lucci +2000 power!", "#2ecc71"); }, () => { rightClickedCard.classList.remove('rested'); saveState(); }); }
+    window.hattoriMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { rightClickedCard.classList.remove('rested'); saveState(); }); }
     window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card').forEach(s => s.classList.add('rested')); createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
     window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
     window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
@@ -881,11 +914,7 @@
             targets.forEach(t => {
                 if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) {
                     const r = t.getBoundingClientRect();
-                    if (isInside(e, r)) {
-                        c.dataset.parentId = t.id;
-                        updateBadges(t.id); organizeDon(); saveState();
-                        attached = true;
-                    }
+                    if (isInside(e, r)) { c.dataset.parentId = t.id; updateBadges(t.id); organizeDon(); saveState(); attached = true; }
                 }
             });
             if (attached) return; 
@@ -910,16 +939,9 @@
                     parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; 
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
-                    d.style.position = 'absolute'; 
-                    d.style.left = (p.offsetLeft + 5 + (idx * 5)) + 'px'; 
-                    d.style.top = (p.offsetTop + 20 + (idx * 15)) + 'px'; 
-                    d.style.zIndex = 10 - idx; 
-                    d.style.opacity = "1"; 
+                    d.style.position = 'absolute'; d.style.left = (p.offsetLeft + 5 + (idx * 5)) + 'px'; d.style.top = (p.offsetTop + 20 + (idx * 15)) + 'px'; d.style.zIndex = 10 - idx; d.style.opacity = "1"; 
                 } 
-            } else { 
-                document.getElementById('don-zone').appendChild(d); 
-                d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; 
-            } 
+            } else { document.getElementById('don-zone').appendChild(d); d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; } 
         }); 
     }
     
@@ -935,10 +957,7 @@
 
     // --- BROWSER REFRESH SAFETY LOCK ---
     window.addEventListener('beforeunload', (e) => { 
-        if (document.getElementById('home-screen').style.display === 'none') {
-            e.preventDefault(); 
-            e.returnValue = ''; 
-        } 
+        if (document.getElementById('home-screen').style.display === 'none') { e.preventDefault(); e.returnValue = ''; } 
     });
 
 </script>
