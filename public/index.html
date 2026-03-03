@@ -5,15 +5,23 @@
     <title>OPCG Master Engine - Precision Tabletop</title>
     <style>
         :root { 
-            /* UPSCALED CARD SIZES */
-            --card-h: 15vh; --card-w: calc(var(--card-h) * 0.71); 
-            --leader-h: 16.5vh; --leader-w: calc(var(--leader-h) * 0.71); 
+            /* BIG HAND CARDS */
+            --card-h: 14vh; --card-w: calc(var(--card-h) * 0.71); 
             --don-h: var(--card-h); --don-w: var(--card-w); 
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
+
+            /* DYNAMIC ALIGNMENT COORDINATES (Can be overridden by the Dev Tool) */
+            --lf-t: 6%; --lf-l: 4%; --lf-w: 11.2%; --lf-h: 60%;
+            --ch-t: 5%; --ch-l: 20%; --ch-w: 75%; --ch-h: 28%;
+            --ld-t: 40%; --ld-l: 47.8%; --ld-w: 11.2%;
+            --st-t: 40%; --st-l: 66%; --st-w: 11.2%;
+            --dk-t: 40%; --dk-l: 84%; --dk-w: 11.2%;
+            --tr-t: 73%; --tr-l: 84%; --tr-w: 11.2%;
+            --dd-t: 73%; --dd-l: 4.5%; --dd-w: 11.2%;
+            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%;
         }
         
-        /* THE WOOD TABLE */
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; 
             background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; 
@@ -22,7 +30,6 @@
             display: flex; user-select: none;
         }
 
-        /* GLASSMORPHISM PANELS */
         .glass-panel {
             background: rgba(20, 20, 25, 0.85);
             backdrop-filter: blur(12px);
@@ -32,14 +39,12 @@
             z-index: 100; box-sizing: border-box;
         }
         
-        /* 3-COLUMN TABLETOP LAYOUT */
         #left-col { width: 350px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
         #right-col { width: 350px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
-        /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
-            aspect-ratio: 24 / 14; 
+            aspect-ratio: 16 / 9; 
             width: 100%; max-width: 1050px; max-height: 48vh;
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
             border-radius: 10px; border: 2px solid #000; 
@@ -48,55 +53,52 @@
             overflow: hidden;
         }
         
-        /* Dark overlay so cards pop against bright mats */
         .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; }
         
-        /* Invisible Hitboxes (Relies purely on exact absolute positioning over the art) */
+        /* INVISIBLE HITBOXES DRIVEN BY THE DEV ALIGNMENT TOOL */
         .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
         .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
         .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
-        /* EXACT COORDINATES MATCHING THE PRINTED PLAYMAT BOXES */
-        .life-zone { top: 4%; left: 3%; width: 12%; height: 55%; align-items: center; padding-top: 10px; }
-        .char-zone { top: 4%; left: 18.5%; width: 78%; height: var(--card-h); padding-left: 0; }
+        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
+        .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
+        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--ld-w); aspect-ratio: 71/100; }
+        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); aspect-ratio: 71/100; }
         
-        .leader-zone { top: 37%; left: 47.5%; width: var(--leader-w); height: var(--leader-h); }
-        .stage-zone { top: 37%; left: 64.5%; width: var(--card-w); height: var(--card-h); }
-        .drop-deck { top: 37%; left: 81.5%; width: var(--card-w); height: var(--card-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
+        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
         
-        .don-deck { bottom: 4%; left: 3.5%; width: var(--card-w); height: var(--card-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
-        .don-zone { bottom: 4%; left: 18.5%; width: 60%; height: var(--card-h); }
+        /* NO MORE GRAY TRASH BOX! Completely invisible */
+        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); aspect-ratio: 71/100; background: transparent !important; box-shadow: none !important; border: none !important;}
         
-        /* Removed Gray Trash Box completely! */
-        .drop-trash { bottom: 4%; left: 81.5%; width: var(--card-w); height: var(--card-h); background: transparent; border: none; box-shadow: none; }
+        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
 
-        /* FRANKY STAGE FAN-OUT EFFECT */
-        .stage-zone.franky-active {
-            width: var(--card-w); display: flex; flex-direction: row; justify-content: center; align-items: center; z-index: 40;
-        }
+        /* NEW PERFECT FRANKY STAGE FAN-OUT */
         .stage-zone.franky-active .card {
-            position: relative !important; 
-            margin-left: -4.5vw; /* Severe negative margin squeezes them all into the single box */
-            box-shadow: -4px 0 12px rgba(0,0,0,0.9);
+            position: absolute !important; margin-left: 0;
+            box-shadow: -2px 2px 8px rgba(0,0,0,0.9);
+            transition: transform 0.2s ease, z-index 0s;
         }
-        .stage-zone.franky-active .card:first-child { margin-left: 0; }
-        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-15px); }
+        .stage-zone.franky-active .card:nth-child(1) { transform: translate(0, 0); z-index: 20; }
+        .stage-zone.franky-active .card:nth-child(2) { transform: translate(4px, 4px); z-index: 21; }
+        .stage-zone.franky-active .card:nth-child(3) { transform: translate(8px, 8px); z-index: 22; }
+        .stage-zone.franky-active .card:nth-child(4) { transform: translate(12px, 12px); z-index: 23; }
+        .stage-zone.franky-active .card:nth-child(5) { transform: translate(16px, 16px); z-index: 24; }
+        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: translate(20px, -15px) scale(1.15) !important; }
 
         #opp-board { transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
         #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
-        /* CARDS */
-        .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
+        /* CARDS ON BOARD SCALE DYNAMICALLY TO THE DEV TOOL WIDTH */
+        .board-section .card { width: var(--ld-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
-        #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         
-        /* DON CSS OVERRIDE FIX: Forces normal cards to stay side-by-side, but allows DONs to float absolutely underneath! */
-        .flex-zone .card:not([data-is-don="true"]), #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
+        .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         
         .life-zone .card { position: absolute !important; left: 50% !important; transform: translateX(-50%); z-index: 20;}
-        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
+        .card[data-is-don="true"] { cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
         
@@ -114,19 +116,21 @@
         .banish-tag { background:#8e44ad; color:#fff; }
         .double-attack-tag { background:#e74c3c; color:#fff; }
 
-        /* LEFT COLUMN: CHAT, STATS & HAND */
+        /* LEFT COLUMN */
         .stat-container { display: flex; gap: 8px; margin-bottom: 5px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.3vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
+        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.4vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
         .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
 
         #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
-        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; color: #ddd; }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; color: #ddd; }
         #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); }
         #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;}
-        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 10px; font-size: 13px; }
+        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
 
         #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
-        #hand-bar { height: 32vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 15px; gap: 10px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
+        #hand-bar { height: 30vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 15px; gap: 10px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
+        #hand-bar .card { position: relative !important; width: var(--card-w) !important; height: var(--card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s;}
+        #hand-bar .card:hover { transform: scale(1.05); z-index: 100 !important;}
 
         /* RIGHT COLUMN: INSPECTOR & END TURN */
         #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
@@ -156,9 +160,18 @@
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
+        /* THE DEV ALIGNMENT TOOL UI */
+        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 300px; color: white;}
+        #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
+        .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
+        .align-slider { width: 150px; cursor: pointer;}
+
         /* TRANSPARENT FLOATING SEARCH MODAL */
-        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(3px); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.85); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; }
+        #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
+        
+        #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;}
+        #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -258,6 +271,30 @@
     </div>
 </div>
 
+<div id="align-tool">
+    <h3>ALIGNMENT TOOL</h3>
+    <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
+        <option value="ld">Leader</option>
+        <option value="st">Stage Area</option>
+        <option value="dk">Deck Area</option>
+        <option value="tr">Trash Area</option>
+        <option value="ch">Character Row</option>
+        <option value="lf">Life Column</option>
+        <option value="dd">DON!! Deck</option>
+        <option value="dz">DON!! Area (Cost Area)</option>
+    </select>
+    <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+    
+    <div style="margin-top:20px; display:flex; gap:5px;">
+        <button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
+        <button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
+        <button onclick="document.getElementById('align-tool').style.display='none'" style="flex:1;">HIDE</button>
+    </div>
+</div>
+
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
@@ -297,6 +334,8 @@
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
+
+    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
@@ -432,6 +471,77 @@
     window.sanjiUsedThisTurn = false; 
     window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
     window.tempSearchCallback = null; window.locked7Plus = false; window.stussyUsedThisTurn = false;
+
+    // --- GLOBAL ALIGNMENT TOOL LOGIC ---
+    const root = document.documentElement;
+    let savedAlign = JSON.parse(localStorage.getItem('opcg_align') || "{}");
+    for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
+
+    // Listens to the server. If anyone (like you) updates the alignment, it instantly applies it to everyone!
+    socket.on('global_align_update', (alignData) => {
+        if (alignData && Object.keys(alignData).length > 0) {
+            savedAlign = alignData;
+            localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
+            for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
+        }
+    });
+
+    window.openAlignAuth = function() {
+        showModal("Enter Dev Access Code:", "prompt", (val) => {
+            if (val === "717") {
+                document.getElementById('align-tool').style.display = 'block';
+                if(!isDevMode) {
+                    activeLobbyDeckUrlArray = ["https://i.imgur.com/TwmysAX.png", DON_URL, DON_URL, DON_URL];
+                    startDevMode(); 
+                }
+                loadZoneAlign();
+            } else { showModal("Access Denied.", "alert"); }
+        });
+    };
+
+    window.loadZoneAlign = function() {
+        const z = document.getElementById('align-zone').value;
+        const styles = getComputedStyle(root);
+        document.getElementById('slider-t').value = parseFloat(styles.getPropertyValue(`--${z}-t`)) || 0;
+        document.getElementById('slider-l').value = parseFloat(styles.getPropertyValue(`--${z}-l`)) || 0;
+        document.getElementById('slider-w').value = parseFloat(styles.getPropertyValue(`--${z}-w`)) || 10;
+        document.getElementById('slider-h').value = parseFloat(styles.getPropertyValue(`--${z}-h`)) || 10;
+        
+        document.getElementById('val-t').innerText = document.getElementById('slider-t').value + '%';
+        document.getElementById('val-l').innerText = document.getElementById('slider-l').value + '%';
+        document.getElementById('val-w').innerText = document.getElementById('slider-w').value + '%';
+        document.getElementById('val-h').innerText = document.getElementById('slider-h').value + '%';
+    };
+
+    window.updateAlign = function(prop, val) {
+        const z = document.getElementById('align-zone').value;
+        root.style.setProperty(`--${z}-${prop}`, val + '%');
+        document.getElementById(`val-${prop}`).innerText = val + '%';
+    };
+
+    window.saveAlign = function() {
+        const zones = ['lf', 'ch', 'ld', 'st', 'dk', 'tr', 'dd', 'dz'];
+        const props = ['t', 'l', 'w', 'h'];
+        zones.forEach(z => {
+            props.forEach(p => {
+                const varName = `--${z}-${p}`;
+                const val = root.style.getPropertyValue(varName);
+                if (val) savedAlign[varName] = val;
+            });
+        });
+        localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
+        
+        // Broadcasts your exact settings to the server so EVERYONE gets them
+        socket.emit('set_global_align', savedAlign); 
+        
+        showModal("Alignment saved GLOBALLY for all players!", "alert");
+    };
+
+    window.resetAlign = function() {
+        localStorage.removeItem('opcg_align');
+        socket.emit('set_global_align', {}); // Wipes the server memory
+        window.location.reload();
+    };
 
     const CARD_DB = {
         // --- FRANKY CORE (Red/Purple) ---
@@ -702,8 +812,6 @@
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
             c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
             c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
-            
-            // THE GIANT INSPECTOR OVERLAY FOR OPPONENT CARDS
             c.onmouseenter = () => { if(!c.classList.contains('card-back')) document.getElementById('right-col-inspector').style.backgroundImage = `url('${c.dataset.url}')`; };
         } 
         
@@ -712,7 +820,6 @@
     }
 
     function bindCardEvents(c) {
-        // THE GIANT INSPECTOR OVERLAY FOR YOUR CARDS
         c.onmouseenter = () => { 
             hovered = c; 
             if(!c.classList.contains('card-back') || isDevMode) {
@@ -871,7 +978,7 @@
 
     function saveState() {
         if(isDevMode) { updatePowerDisplay(); return; } 
-        organizeDon(); // Keep don perfectly locked before broadcast
+        organizeDon(); 
         updatePowerDisplay();
         
         let currentMat = document.getElementById('my-board').style.backgroundImage;
@@ -893,7 +1000,6 @@
         const oppBoard = document.getElementById('opp-board');
         let oppMat = s.playmat || 'https://i.imgur.com/SSN1DUI.jpeg';
 
-        // Opponent Franky dynamic stage & override check
         if(CARD_DB[oppLeaderUrl]?.name === "Franky") {
             document.getElementById('opp-stage-zone').classList.add('franky-active');
             oppMat = "https://i.imgur.com/SSN1DUI.jpeg"; 
@@ -902,11 +1008,8 @@
         }
 
         oppBoard.style.backgroundImage = `url('${oppMat}')`;
-        if (oppMat.includes('WjiUDr0')) {
-            oppBoard.classList.add('mat-white');
-        } else {
-            oppBoard.classList.remove('mat-white');
-        }
+        if (oppMat.includes('WjiUDr0')) oppBoard.classList.add('mat-white');
+        else oppBoard.classList.remove('mat-white');
 
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
@@ -929,7 +1032,6 @@
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
 
         const donZone = document.getElementById('don-zone');
-        // GHOST DON FIX: Finds ALL Dons on your side (even if they slipped) and resets them.
         document.querySelectorAll('.card[data-is-don="true"]').forEach(don => {
             if (don.id && don.id.startsWith('opp-')) return;
             don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
