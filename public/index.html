@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Tabletop Simulator</title>
+    <title>OPCG Master Engine - Premium Tabletop</title>
     <style>
         :root { 
-            --card-h: 12vh; --card-w: calc(var(--card-h) * 0.71); 
-            --leader-h: 13.5vh; --leader-w: calc(var(--leader-h) * 0.71); 
+            --card-h: 11vh; --card-w: calc(var(--card-h) * 0.71); 
+            --leader-h: 13vh; --leader-w: calc(var(--leader-h) * 0.71); 
             --don-h: var(--card-h); --don-w: var(--card-w); 
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
-            --card-back-url: url('https://i.imgur.com/roTPyRc.jpeg');
+            /* Reverted to Classic OP Card Back */
+            --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
         }
         
         /* THE WOOD TABLE */
@@ -23,62 +24,69 @@
 
         /* GLASSMORPHISM PANELS */
         .glass-panel {
-            background: rgba(15, 15, 20, 0.7);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(20, 20, 25, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-            z-index: 100;
+            z-index: 100; box-sizing: border-box;
         }
         
         /* 3-COLUMN TABLETOP LAYOUT */
-        #left-col { width: 320px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 1px solid rgba(255,255,255,0.1); box-sizing: border-box; }
-        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 10px; overflow: hidden; position: relative; }
-        #right-col { width: 320px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 1px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; box-sizing: border-box; }
+        #left-col { width: 320px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
+        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 10px; overflow: hidden; position: relative; }
+        #right-col { width: 320px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
-        /* PLAYMAT CSS GRID OVERLAY */
+        /* PRECISE PLAYMAT GRID SYSTEM */
         .board-section { 
-            aspect-ratio: 24 / 14; /* Standard Playmat Ratio */
-            width: 100%; max-width: 900px; max-height: 48vh;
+            aspect-ratio: 24 / 14; 
+            width: 100%; max-width: 950px; max-height: 48vh;
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
-            border-radius: 12px; border: 2px solid rgba(0,0,0,0.8); 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.9); position: relative;
-            background-image: url('https://i.imgur.com/uTKAN1p.jpeg'); /* Default Fallback Mat */
+            border-radius: 10px; border: 2px solid #111; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
+            background-image: url('https://i.imgur.com/WjiUDr0.jpeg'); /* Default White Mat */
             display: grid;
-            /* Maps exactly to the printed zones on your mats */
-            grid-template-columns: 12% 15% 59% 14%;
-            grid-template-rows: 35% 30% 35%;
-            gap: 0;
-            overflow: hidden;
-        }
-
-        /* Subtle darkening so cards pop off the mats */
-        .board-section::before {
-            content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0;
+            /* Matches the physical printed zones on your mats */
+            grid-template-columns: 16% 26% 26% 16%;
+            grid-template-rows: 35% 32% 33%;
+            gap: 2%; padding: 2% 4%; box-sizing: border-box;
         }
         
-        /* ZONES */
-        .slot, .flex-zone { z-index: 1; position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-        /* Invisible borders so they don't cover the playmat art */
-        .slot { border: 1px solid transparent; flex-direction: column; }
-        .flex-zone { gap: 6px; padding: 6px; justify-content: flex-start; flex-wrap: wrap; align-items: center; }
+        /* Dark overlay so cards pop against bright mats */
+        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
+        
+        /* Invisible Hitboxes (No more dashed lines, relies entirely on Mat art) */
+        .slot, .flex-zone { z-index: 1; display: flex; align-items: center; justify-content: center; position: relative; min-height: var(--card-h); }
+        .slot { flex-direction: column; }
+        .flex-zone { flex-wrap: wrap; justify-content: flex-start; gap: 6px; padding-left: 5px; }
 
-        /* Mapping exactly to Playmat Graphic */
-        .life-zone { grid-column: 1; grid-row: 1 / 4; justify-content: flex-start; padding-top: 10px; width: 100%; }
-        .leader-zone { grid-column: 2; grid-row: 1 / 3; align-self: center; justify-self: center; }
-        .stage-zone { grid-column: 2; grid-row: 3; align-self: center; justify-self: center; width: 100%; }
-        .char-zone { grid-column: 3; grid-row: 1 / 3; padding-left: 20px; align-items: center; justify-content: flex-start; }
-        .don-zone { grid-column: 3; grid-row: 3; padding-left: 20px; justify-content: flex-start; }
-        .drop-deck { grid-column: 4; grid-row: 1; align-self: center; justify-self: center; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
-        .drop-trash { grid-column: 4; grid-row: 2; align-self: center; justify-self: center; background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6);}
-        .don-deck { grid-column: 4; grid-row: 3; align-self: center; justify-self: center; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        /* GRID MAPPING */
+        .life-zone { grid-column: 1; grid-row: 1 / 3; align-items: center; justify-content: flex-start; padding-top: 10px; }
+        .don-deck { grid-column: 1; grid-row: 3; justify-self: center; align-self: center; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; width: var(--card-w); height: var(--card-h);}
+        
+        .char-zone { grid-column: 2 / 5; grid-row: 1; align-items: center; padding-left: 10px; }
+        
+        .leader-zone { grid-column: 2; grid-row: 2; justify-self: center; align-self: center; width: var(--leader-w); height: var(--leader-h); }
+        .stage-zone { grid-column: 3; grid-row: 2; justify-self: center; align-self: center; width: 100%; }
+        
+        .drop-deck { grid-column: 4; grid-row: 2; justify-self: center; align-self: center; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; width: var(--card-w); height: var(--card-h);}
+        .drop-trash { grid-column: 4; grid-row: 3; justify-self: center; align-self: center; background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); width: var(--card-w); height: var(--card-h);}
+        
+        .don-zone { grid-column: 2 / 4; grid-row: 3; align-items: center; justify-content: flex-start; padding-left: 10px;}
 
-        /* Dynamic Franky Stage Expansion */
+        /* FRANKY DYNAMIC FAN-OUT STAGE */
         .stage-zone.franky-active {
-            grid-column: 2 / 4; 
-            justify-content: flex-start;
-            padding-left: 10px;
+            display: flex; flex-direction: row; flex-wrap: nowrap;
+            justify-content: center; align-items: center;
+            width: 180%; /* Spills over perfectly into adjacent zones visually */
+            z-index: 40; margin-left: -20px;
         }
+        .stage-zone.franky-active .card {
+            position: relative !important; margin-left: -30px; /* Overlaps them beautifully */
+            box-shadow: -2px 0 10px rgba(0,0,0,0.8);
+        }
+        .stage-zone.franky-active .card:first-child { margin-left: 0; }
+        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-10px); }
 
         #opp-board { transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
@@ -86,13 +94,13 @@
         .opp-hud { position: absolute; bottom: 5px; right: 15px; background: rgba(192, 57, 43, 0.9); padding: 5px 12px; border-radius: 6px; font-weight: bold; font-size: 1.2vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
 
         /* CARDS */
-        .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
+        .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
         #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
-        .life-zone .card { position: absolute !important; left: 50% !important; transform: translateX(-50%); z-index: 20;}
+        .life-zone .card { position: absolute !important; z-index: 20;}
         .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
-        .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
+        .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
         
         .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; }
@@ -109,9 +117,9 @@
         .banish-tag { background:#8e44ad; color:#fff; }
         .double-attack-tag { background:#e74c3c; color:#fff; }
 
-        /* LEFT COLUMN COMPONENTS */
+        /* LEFT COLUMN: CHAT, STATS & HAND */
         .stat-container { display: flex; gap: 8px; margin-bottom: 5px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.3vh; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.3vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; }
         .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
 
         #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
@@ -120,13 +128,13 @@
         #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 12px; outline: none;}
         #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 10px; font-size: 12px; }
 
-        #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 14px;}
-        #hand-bar { height: 28vh; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2); display: flex; align-content: flex-start; justify-content: center; padding: 10px; gap: 8px; overflow-y: auto; flex-wrap: wrap; }
+        #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 14px; text-shadow: 0 2px 4px #000;}
+        #hand-bar { height: 28vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 10px; gap: 8px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
 
         /* RIGHT COLUMN: INSPECTOR & END TURN */
         #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
         
-        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; }
+        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;}
         #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); }
         #btn-end-turn:disabled { background: rgba(85,85,85,0.8) !important; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
         
@@ -150,6 +158,10 @@
         
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
+
+        /* FLOATING DECK SEARCH MODAL */
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99998; justify-content: center; align-items: center; }
+        #search-modal-container { background: rgba(20,20,25,0.95); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -202,7 +214,7 @@
 <div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
 
-<div id="visual-decklist-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,15,0.98); z-index:9999999; flex-direction:column; padding: 40px; overflow-y:auto; box-sizing: border-box;">
+<div id="visual-decklist-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,15,0.98); z-index:9999999; flex-direction:column; padding: 40px; overflow-y:auto; box-sizing: border-box; backdrop-filter: blur(15px);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid var(--op-blue); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <h1 id="visual-decklist-title" style="color:#fff; margin:0; text-transform: uppercase; letter-spacing: 2px;">Deck Name</h1>
         <div style="display:flex; gap:15px;">
@@ -259,10 +271,8 @@
         
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa; margin-top:5px;">SELECT PLAYMAT:</div>
         <select id="playmat-selector" style="width:100%; padding:10px; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius:6px; font-size: 14px; outline:none; cursor:pointer;">
-            <option value="https://i.imgur.com/uTKAN1p.jpeg">Straw Hats Crew</option>
-            <option value="https://i.imgur.com/WwA7Ila.jpeg">Nika Luffy / Gear 5</option>
-            <option value="https://i.imgur.com/M82x8vg.jpeg">Trafalgar Law</option>
-            <option value="https://i.imgur.com/8r7exnP.jpeg">Uta Live</option>
+            <option value="https://i.imgur.com/SSN1DUI.jpeg">Yellow OP Sim</option>
+            <option value="https://i.imgur.com/WjiUDr0.jpeg">White Plain</option>
         </select>
         
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
@@ -315,11 +325,13 @@
 </div>
 
 <div id="search-modal">
-    <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">
-        <h2 id="insp-title" style="margin:0; color:var(--op-blue); font-size: 28px;">Search / Inspect</h2>
-        <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button>
+    <div id="search-modal-container">
+        <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">
+            <h2 id="insp-title" style="margin:0; color:var(--op-blue); font-size: 28px;">Search / Inspect</h2>
+            <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button>
+        </div>
+        <div id="insp-grid" style="display:flex; flex-wrap: wrap; gap: 15px; width: 100%; justify-content: center;"></div>
     </div>
-    <div id="insp-grid" style="display:flex; flex-wrap: wrap; gap: 15px; width: 100%; justify-content: center;"></div>
 </div>
 
 <div id="left-col" class="glass-panel">
@@ -357,24 +369,24 @@
     <div id="opp-board" class="board-section">
         <div class="opp-hud">Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
         <div id="opp-life-zone" class="slot life-zone"></div>
-        <div id="opp-leader-zone" class="slot leader-zone"></div>
         <div id="opp-char-zone-front" class="flex-zone char-zone"></div>
-        <div id="opp-drop-deck" class="slot drop-deck"></div>
+        <div id="opp-leader-zone" class="slot leader-zone"></div>
         <div id="opp-stage-zone" class="slot stage-zone"></div>
-        <div id="opp-drop-trash" class="slot drop-trash"></div>
+        <div id="opp-drop-deck" class="slot drop-deck"></div>
         <div id="opp-don-deck" class="slot don-deck"></div>
         <div id="opp-don-zone" class="flex-zone don-zone"></div>
+        <div id="opp-drop-trash" class="slot drop-trash"></div>
     </div>
 
     <div id="my-board" class="board-section">
         <div id="life-zone" class="slot life-zone"></div>
-        <div id="leader-zone" class="slot leader-zone active-zone"></div>
         <div id="char-zone-front" class="flex-zone char-zone"></div>
-        <div id="drop-deck" class="slot drop-deck card-back"></div>
+        <div id="leader-zone" class="slot leader-zone active-zone"></div>
         <div id="stage-zone" class="slot stage-zone"></div>
-        <div id="drop-trash" class="slot drop-trash"></div>
+        <div id="drop-deck" class="slot drop-deck card-back"></div>
         <div id="don-deck" class="slot don-deck"></div>
         <div id="don-zone" class="flex-zone don-zone"></div>
+        <div id="drop-trash" class="slot drop-trash"></div>
     </div>
 </div>
 
@@ -566,7 +578,7 @@
     // --- LOBBY LOGIC ---
     function getSelectedPlaymat() {
         const sel = document.getElementById('playmat-selector');
-        return sel ? sel.value : 'https://i.imgur.com/uTKAN1p.jpeg';
+        return sel ? sel.value : 'https://i.imgur.com/WjiUDr0.jpeg'; // White default
     }
 
     function prepActiveDeck() {
@@ -577,20 +589,28 @@
         return true;
     }
 
+    function setupPlayerBoardVisuals(leaderUrl) {
+        const isFranky = CARD_DB[leaderUrl] && CARD_DB[leaderUrl].name === "Franky";
+        if(isFranky) {
+            document.getElementById('my-board').style.backgroundImage = "url('https://i.imgur.com/SSN1DUI.jpeg')"; // Force Yellow OP Sim
+            document.getElementById('stage-zone').classList.add('franky-active');
+            if(document.getElementById('playmat-selector')) document.getElementById('playmat-selector').value = "https://i.imgur.com/SSN1DUI.jpeg";
+        } else {
+            document.getElementById('my-board').style.backgroundImage = `url('${getSelectedPlaymat()}')`;
+            document.getElementById('stage-zone').classList.remove('franky-active');
+        }
+    }
+
     function startDevMode() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; window.locked7Plus = false; window.stussyUsedThisTurn = false;
         
-        // Dynamic Playmat & Franky Stage Check
-        const leaderUrl = activeLobbyDeckUrlArray[0];
-        document.getElementById('my-board').style.backgroundImage = `url('${getSelectedPlaymat()}')`;
-        if(CARD_DB[leaderUrl]?.name === "Franky") document.getElementById('stage-zone').classList.add('franky-active');
-        else document.getElementById('stage-zone').classList.remove('franky-active');
+        setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
 
         document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
         DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
-        createCard(leaderUrl, 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[leaderUrl]?.life || 5; 
+        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
         for(let i=0; i<leaderLife; i++) deckToLife(); 
         for(let i=0; i<5; i++) drawCardAction(); 
     }
@@ -621,13 +641,10 @@
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; window.locked7Plus = false; window.stussyUsedThisTurn = false;
         
-        const leaderUrl = activeLobbyDeckUrlArray[0];
-        document.getElementById('my-board').style.backgroundImage = `url('${getSelectedPlaymat()}')`;
-        if(CARD_DB[leaderUrl]?.name === "Franky") document.getElementById('stage-zone').classList.add('franky-active');
-        else document.getElementById('stage-zone').classList.remove('franky-active');
+        setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
 
         DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
-        createCard(leaderUrl, 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[leaderUrl]?.life || 5; 
+        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
         for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
         for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); refreshStats();
         setTimeout(() => { showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); }, 500);
@@ -761,7 +778,9 @@
             if (!c.classList.contains('frozen')) {
                 if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
                 if (db?.type === "Stage" && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                
                 if (db?.name === "Stussy" && db.type === "Leader" && (isMyTurn || isDevMode) && !window.stussyUsedThisTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                
                 if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
                 if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
                 if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
@@ -834,25 +853,32 @@
 
     function saveState() {
         if(isDevMode) { updatePowerDisplay(); return; } 
-        organizeDon(); 
+        organizeDon(); // Keep don perfectly locked before broadcast
         updatePowerDisplay();
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), frozenUntil: c.dataset.frozenUntil, noRestand: c.dataset.noRestand }));
         socket.emit('board_update', { 
             deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, 
             field, handCount: document.querySelectorAll('#hand-bar .card').length,
-            playmat: getSelectedPlaymat()
+            playmat: document.getElementById('my-board').style.backgroundImage.slice(5, -2) // Extract the applied playmat URL
         }); 
         refreshStats();
     }
 
     socket.on('opponent_board_update', (s) => {
-        if(s.playmat) document.getElementById('opp-board').style.backgroundImage = `url('${s.playmat}')`;
-        
-        document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
-        
         let oppLeaderUrl = "";
+        s.field.forEach(d => { if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url; });
+        
+        // Opponent Franky dynamic stage & override check
+        if(CARD_DB[oppLeaderUrl]?.name === "Franky") {
+            document.getElementById('opp-stage-zone').classList.add('franky-active');
+            document.getElementById('opp-board').style.backgroundImage = "url('https://i.imgur.com/SSN1DUI.jpeg')"; 
+        } else {
+            document.getElementById('opp-stage-zone').classList.remove('franky-active');
+            if(s.playmat) document.getElementById('opp-board').style.backgroundImage = `url('${s.playmat}')`;
+        }
+
+        document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
-            if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url;
             const targetZoneId = d.zone.replace('my-', 'opp-').replace('char-', 'opp-char-').replace('stage-', 'opp-stage-').replace('leader-', 'opp-leader-').replace('don-z', 'opp-don-z').replace('life-', 'opp-life-');
             const z = document.getElementById(targetZoneId);
             if(z) { 
@@ -863,12 +889,7 @@
                 z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '50%'; c.style.transform = 'translateX(-50%)'; c.style.top = (z.children.length * 12) + 'px'; } 
             }
         });
-
-        // Opponent Franky dynamic stage
-        if(CARD_DB[oppLeaderUrl]?.name === "Franky") document.getElementById('opp-stage-zone').classList.add('franky-active');
-        else document.getElementById('opp-stage-zone').classList.remove('franky-active');
-
-        // Opponent DON perfect syncing
+        
         const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop - 20 - (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', 10 - idx, 'important'); d.style.opacity = "1"; } });
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
@@ -1177,7 +1198,7 @@
         
         const db = CARD_DB[c.dataset.url]; 
         if(db && db.hasTrigger) { 
-            let triggerMsg = `<img src="${c.dataset.url}" style="height:150px; border-radius:10px; margin-bottom:10px;"><br>Activate Trigger of <b>${db.name}</b>?`;
+            let triggerMsg = `<div style="height:150px; width:100px; margin: 0 auto 15px auto; background-image:url('${c.dataset.url}'); background-size:100% 100%; border-radius:8px; border:2px solid #fff;"></div>Activate Trigger of <b>${db.name}</b>?`;
             showModal(triggerMsg, "confirm", () => { resolveTrigger(c, db); finishHit(); }, () => { putInHand(c); finishHit(); }); 
         } else { 
             putInHand(c); finishHit(); 
@@ -1252,10 +1273,10 @@
     }
 
     // --- SEARCH & INSPECTOR ---
-    window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target`; window.tempSearchCallback = callback; SEARCH_ARR.forEach((url, i) => { const db = CARD_DB[url]; let canTake = true; if(filterTraits && !filterTraits.some(t => db.traits.includes(t))) canTake = false; if(isTriggerOnly && !db.hasTrigger) canTake = false; if(isCost4Plus && db.cost < 4) canTake = false; if(excludeName && db.name === excludeName) canTake = false; const div = document.createElement('div'); div.style.textAlign = 'center'; div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'};" onclick="${canTake ? `resolveStructuredSearch(${i})` : ''}"></div>`; grid.appendChild(div); }); const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('search-modal').style.display = 'flex'; }
+    window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { SEARCH_ARR = DECK_ARR.splice(-val).reverse(); const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; document.getElementById('insp-title').innerText = `Pick 1 Target`; window.tempSearchCallback = callback; SEARCH_ARR.forEach((url, i) => { const db = CARD_DB[url]; let canTake = true; if(filterTraits && !filterTraits.some(t => db.traits.includes(t))) canTake = false; if(isTriggerOnly && !db.hasTrigger) canTake = false; if(isCost4Plus && db.cost < 4) canTake = false; if(excludeName && db.name === excludeName) canTake = false; const div = document.createElement('div'); div.style.textAlign = 'center'; div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'}; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" onclick="${canTake ? `resolveStructuredSearch(${i})` : ''}"></div>`; grid.appendChild(div); }); const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('search-modal').style.display = 'flex'; }
     window.resolveStructuredSearch = function(index) { if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); appendChat(`Searched: ${CARD_DB[url].name}`, "#2ecc71"); } while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); document.getElementById('search-modal').style.display = 'none'; saveState(); if (window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null; } }
     window.inspectDeck = function() { if(!isDevMode) return; openInspector('deck'); };
-    window.openInspector = function(mode) { const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; list.forEach((url, i) => { const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; if(isDevMode) { img.style.cursor='pointer'; img.onclick = () => { if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1); createCard(url, 0, 0, {inHand: true}); closeInspector(); saveState(); }; } grid.appendChild(img); }); document.getElementById('search-modal').style.display = 'flex'; }
+    window.openInspector = function(mode) { const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; list.forEach((url, i) => { const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; img.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)'; if(isDevMode) { img.style.cursor='pointer'; img.onclick = () => { if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1); createCard(url, 0, 0, {inHand: true}); closeInspector(); saveState(); }; } grid.appendChild(img); }); document.getElementById('search-modal').style.display = 'flex'; }
     window.closeInspector = function() { if(SEARCH_ARR.length > 0) resolveStructuredSearch(-1); else { document.getElementById('search-modal').style.display = 'none'; refreshStats(); } }
 
     // --- DRAG & DROP LOGIC ---
