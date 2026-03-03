@@ -39,7 +39,8 @@
             z-index: 100; box-sizing: border-box;
         }
         
-        #left-col { width: 350px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
+        /* Widened the left column slightly to accommodate the scrolling hand better */
+        #left-col { width: 380px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
         #right-col { width: 350px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
@@ -89,7 +90,7 @@
         .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); aspect-ratio: 71/100; }
         
         .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
-        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); aspect-ratio: 71/100; background: transparent !important; border: none !important;}
+        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
         
         .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
         .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
@@ -118,7 +119,9 @@
         
         .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         
-        .life-zone .card { position: absolute !important; left: 50% !important; transform: translateX(-50%); z-index: 20;}
+        /* FIX: Life cards now anchor exactly to the Left Edge, removing the forced centering! */
+        .life-zone .card { position: absolute !important; left: 0 !important; transform: none !important; z-index: 20;}
+        
         .card[data-is-don="true"] { cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
@@ -149,9 +152,16 @@
         #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
 
         #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
-        #hand-bar { height: 30vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 15px; gap: 10px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
+        
+        /* FIX: NEW HORIZONTAL SCROLLING SINGLE-ROW HAND */
+        #hand-bar { height: 26vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 10px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
+        /* Custom sleek scrollbar for the hand */
+        #hand-bar::-webkit-scrollbar { height: 8px; }
+        #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
+
         #hand-bar .card { position: relative !important; width: var(--card-w) !important; height: var(--card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s;}
-        #hand-bar .card:hover { transform: scale(1.05); z-index: 100 !important;}
+        #hand-bar .card:hover { transform: scale(1.05) translateY(-5px); z-index: 100 !important;}
 
         /* RIGHT COLUMN: INSPECTOR & END TURN */
         #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
@@ -405,6 +415,73 @@
     </div>
 </div>
 
+<div id="left-col" class="glass-panel">
+    <div class="stat-container">
+        <div class="stat-card" style="border-color:#2ecc71;" onclick="inspectDeck()">DECK: <span id="deck-count">0</span></div>
+        <div class="stat-card" style="border-color:#e67e22;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
+    </div>
+    <div class="stat-container">
+        <div class="stat-card" style="border-color:#e74c3c;">LIFE: <span id="life-count">0</span></div>
+        <div class="stat-card" style="border-color:#f1c40f;">DON: <span id="don-deck-count">10</span></div>
+    </div>
+    <div class="stat-card" style="background:rgba(52, 152, 219, 0.2); border-color:#3498db; margin-bottom: 5px;">OPP DON!!: <span id="opp-don">0</span></div>
+    
+    <div id="chat-container">
+        <div id="chat-messages"></div>
+        <form id="chat-form" onsubmit="sendChat(event)">
+            <input type="text" id="chat-input" placeholder="Chat..." autocomplete="off">
+            <button id="chat-btn" type="submit">SEND</button>
+        </form>
+    </div>
+
+    <div id="hand-label">Your Hand</div>
+    <div id="hand-bar"></div>
+
+    <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
+        <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
+        <div style="display:flex; gap:5px;">
+            <button onclick="spawnDonAction()" style="flex:1; padding: 8px;">+ DON!!</button>
+            <button onclick="killDon()" style="flex:1; background:#e67e22; padding: 8px;">- DON!!</button>
+        </div>
+    </div>
+</div>
+
+<div id="center-col">
+    <div id="opp-board" class="board-section">
+        <div class="opp-hud">Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
+        <div id="opp-life-zone" class="slot life-zone"></div>
+        <div id="opp-char-zone-front" class="flex-zone char-zone"></div>
+        <div id="opp-leader-zone" class="slot leader-zone"></div>
+        <div id="opp-stage-zone" class="slot stage-zone"></div>
+        <div id="opp-drop-deck" class="slot drop-deck"></div>
+        <div id="opp-don-deck" class="slot don-deck"></div>
+        <div id="opp-don-zone" class="flex-zone don-zone"></div>
+        <div id="opp-drop-trash" class="slot drop-trash"></div>
+    </div>
+
+    <div id="my-board" class="board-section">
+        <div id="life-zone" class="slot life-zone"></div>
+        <div id="char-zone-front" class="flex-zone char-zone"></div>
+        <div id="leader-zone" class="slot leader-zone active-zone"></div>
+        <div id="stage-zone" class="slot stage-zone"></div>
+        <div id="drop-deck" class="slot drop-deck card-back"></div>
+        <div id="don-deck" class="slot don-deck"></div>
+        <div id="don-zone" class="flex-zone don-zone"></div>
+        <div id="drop-trash" class="slot drop-trash"></div>
+    </div>
+</div>
+
+<div id="right-col" class="glass-panel">
+    <div id="right-col-inspector"></div>
+    
+    <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-end-turn" onclick="endTurn()">END TURN</button>
+        <button id="btn-concede" onclick="concedeGame()">CONCEDE MATCH</button>
+    </div>
+</div>
+
+<div id="context-menu"></div>
+<div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 panel">
     <div class="stat-container">
         <div class="stat-card" style="border-color:#2ecc71;" onclick="inspectDeck()">DECK: <span id="deck-count">0</span></div>
