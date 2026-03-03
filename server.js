@@ -1,20 +1,18 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path'); // <-- Added the path module
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve your static files
-app.use(express.static(__dirname));
+// BULLETPROOF ROUTING: Tells the server your HTML is inside the "public" folder!
+app.use(express.static(path.join(__dirname, 'public')));
 
-// BULLETPROOF ROUTE: Forces the server to load your index.html when you open the link!
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
 
 // --- SERVER STATE ---
 const rooms = {};
@@ -164,7 +162,7 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`=========================================`);
     console.log(`OPCG Master Engine Running on Port ${PORT}`);
+    console.log(`Serving target: /public/index.html`);
     console.log(`Ready for battles!`);
     console.log(`=========================================`);
 });
-
