@@ -405,7 +405,7 @@
     </div>
 </div>
 
-<div id="left-col" class="glass-panel">
+panel">
     <div class="stat-container">
         <div class="stat-card" style="border-color:#2ecc71;" onclick="inspectDeck()">DECK: <span id="deck-count">0</span></div>
         <div class="stat-card" style="border-color:#e67e22;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
@@ -425,7 +425,7 @@
     </div>
 
     <div id="hand-label">Your Hand</div>
-    <div id="hand-bar"></div>
+    <div id="hand-bar" onwheel="this.scrollLeft += (event.deltaY > 0 ? 100 : -100); event.preventDefault();"></div>
 
     <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
         <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
@@ -472,6 +472,7 @@
 
 <div id="context-menu"></div>
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io(); 
@@ -1062,7 +1063,9 @@
                 if(d.rested) c.classList.add('rested'); if(d.frozen) c.classList.add('frozen'); if(d.frozenUntil) c.dataset.frozenUntil = d.frozenUntil; if(d.noRestand === "true") c.dataset.noRestand = "true"; if(d.noRestand) c.classList.add('no-restand'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
                 c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; 
                 c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
-                z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '50%'; c.style.transform = 'translateX(-50%)'; c.style.top = (z.children.length * 15) + 'px'; } 
+                
+                // FIXED OPPONENT LIFE STACKING
+                z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '0'; c.style.transform = 'none'; c.style.top = (z.children.length * 15) + 'px'; } 
             }
         });
         
@@ -1489,7 +1492,17 @@
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
 
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
-    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '50%'; c.style.transform = 'translateX(-50%)'; c.style.top = (i * 12) + 'px'; c.style.zIndex = 20 + i; }); }
+    
+    // PERFECT LIFE POSITIONING: Left aligned to match the slider!
+    function updateLifePositions() { 
+        const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
+        lifeCards.forEach((c, i) => { 
+            c.style.left = '0'; 
+            c.style.transform = 'none'; 
+            c.style.top = (i * 15) + 'px'; 
+            c.style.zIndex = 20 + i; 
+        }); 
+    }
     
     function organizeDon() { 
         const parentCounts = {}; 
@@ -1501,8 +1514,6 @@
                     parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; 
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
-                    
-                    // PERFECT ABSOLUTE DON SNAPPING
                     d.style.setProperty('position', 'absolute', 'important'); 
                     d.style.setProperty('left', p.offsetLeft + 'px', 'important'); 
                     d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); 
