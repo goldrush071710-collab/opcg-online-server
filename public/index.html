@@ -2,26 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Precision Tabletop</title>
+    <title>OPCG Master Engine - Stable Tabletop</title>
     <style>
         :root { 
             /* BIG HAND CARDS */
-            --card-h: 14vh; --card-w: calc(var(--card-h) * 0.71); 
-            --don-h: var(--card-h); --don-w: var(--card-w); 
+            --hand-card-h: 15vh; 
+            --hand-card-w: calc(var(--hand-card-h) * 0.71); 
+            
+            /* BOARD CARDS (Synced perfectly to playmat box sizes) */
+            --board-card-w: 11.5%; 
+            
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
-
-            /* DYNAMIC ALIGNMENT COORDINATES (Can be overridden by the Dev Tool) */
-            --lf-t: 6%; --lf-l: 4%; --lf-w: 11.2%; --lf-h: 60%;
-            --ch-t: 5%; --ch-l: 20%; --ch-w: 75%; --ch-h: 28%;
-            --ld-t: 40%; --ld-l: 47.8%; --ld-w: 11.2%;
-            --st-t: 40%; --st-l: 66%; --st-w: 11.2%;
-            --dk-t: 40%; --dk-l: 84%; --dk-w: 11.2%;
-            --tr-t: 73%; --tr-l: 84%; --tr-w: 11.2%;
-            --dd-t: 73%; --dd-l: 4.5%; --dd-w: 11.2%;
-            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%;
         }
         
+        /* THE WOOD TABLE */
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; 
             background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; 
@@ -30,6 +25,7 @@
             display: flex; user-select: none;
         }
 
+        /* GLASSMORPHISM PANELS */
         .glass-panel {
             background: rgba(20, 20, 25, 0.85);
             backdrop-filter: blur(12px);
@@ -40,86 +36,84 @@
         }
         
         /* Widened the left column slightly to accommodate the scrolling hand better */
-        #left-col { width: 380px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
+        #left-col { width: 360px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
-        #right-col { width: 350px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
+        #right-col { width: 330px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
+        /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
-            aspect-ratio: 16 / 9; 
+            aspect-ratio: 24 / 14; 
             width: 100%; max-width: 1050px; max-height: 48vh;
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
             border-radius: 10px; border: 2px solid #000; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
             background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); 
-            overflow: hidden;
         }
         
-        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; }
+        /* Dark overlay so cards pop against bright mats */
+        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
         
-        /* DEFAULT SUBTLE ZONES: Gives a tiny indented shadow so you know where empty slots are */
-        .slot, .flex-zone { 
-            position: absolute; z-index: 1; display: flex; box-sizing: border-box; 
-            border-radius: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); transition: all 0.2s ease;
-        }
+        /* Invisible Hitboxes (Relies purely on exact absolute positioning over the art) */
+        .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
         .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
         .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
         /* ========================================================
-           DEV MODE VISIBILITY LIGHTS! (Triggered by 717 Code)
+           LAYOUT 1: STANDARD ANIME MATS (Yellow, Nami, Luffy, etc) 
            ======================================================== */
-        body.align-mode-active .slot, 
-        body.align-mode-active .flex-zone {
-            background-color: rgba(52, 152, 219, 0.3) !important; 
-            border: 2px dashed var(--op-gold) !important;
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
-        }
+        .life-zone { top: 6%; left: 4%; width: 11.5%; height: 60%; align-items: flex-start; justify-content: flex-start; }
+        .char-zone { top: 5%; left: 20%; width: 62%; height: 28%; padding-left: 0; }
+        
+        .leader-zone { top: 40%; left: 47.8%; width: var(--board-card-w); aspect-ratio: 71/100; }
+        .stage-zone { top: 40%; left: 66%; width: var(--board-card-w); aspect-ratio: 71/100; }
+        
+        .drop-deck { top: 40%; left: 84%; width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
+        
+        /* Trash box completely invisible! */
+        .drop-trash { top: 73%; left: 84%; width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
+        
+        .don-deck { top: 73%; left: 4.5%; width: var(--board-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        .don-zone { top: 73%; left: 20%; width: 62%; height: 28%; align-items: flex-start; justify-content: flex-start; }
 
-        /* HIGHLIGHTS THE SPECIFIC ZONE YOU ARE CURRENTLY MOVING */
-        body.align-mode-active .zone-is-selected {
-            background-color: rgba(231, 76, 60, 0.5) !important;
-            border: 3px solid var(--op-red) !important;
-            box-shadow: 0 0 20px var(--op-red) !important;
-            z-index: 1000 !important;
-        }
+        /* ========================================================
+           LAYOUT 2: WHITE PLAIN MAT OVERRIDES 
+           ======================================================== */
+        .mat-white .life-zone { top: 15%; left: 5%; }
+        .mat-white .char-zone { top: 6%; left: 22%; width: 60%; }
+        .mat-white .leader-zone { top: 42%; left: 46%; }
+        .mat-white .stage-zone { top: 42%; left: 65%; }
+        .mat-white .drop-deck { top: 38%; left: 83%; }
+        .mat-white .don-deck { top: 74%; left: 5%; }
+        .mat-white .don-zone { top: 74%; left: 22%; width: 58%; }
+        .mat-white .drop-trash { top: 74%; left: 83%; }
 
         /* ======================================================== */
 
-        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
-        .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
-        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--ld-w); aspect-ratio: 71/100; }
-        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); aspect-ratio: 71/100; }
-        
-        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
-        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
-        
-        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
-        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
-
-        /* PERFECT FRANKY STAGE FAN-OUT */
+        /* PERFECT FRANKY STAGE DIAGONAL STACK */
         .stage-zone.franky-active .card {
             position: absolute !important; margin-left: 0;
             box-shadow: -2px 2px 8px rgba(0,0,0,0.9);
             transition: transform 0.2s ease, z-index 0s;
         }
         .stage-zone.franky-active .card:nth-child(1) { transform: translate(0, 0); z-index: 20; }
-        .stage-zone.franky-active .card:nth-child(2) { transform: translate(4px, 4px); z-index: 21; }
-        .stage-zone.franky-active .card:nth-child(3) { transform: translate(8px, 8px); z-index: 22; }
-        .stage-zone.franky-active .card:nth-child(4) { transform: translate(12px, 12px); z-index: 23; }
-        .stage-zone.franky-active .card:nth-child(5) { transform: translate(16px, 16px); z-index: 24; }
-        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: translate(20px, -15px) scale(1.15) !important; }
+        .stage-zone.franky-active .card:nth-child(2) { transform: translate(6px, 6px); z-index: 21; }
+        .stage-zone.franky-active .card:nth-child(3) { transform: translate(12px, 12px); z-index: 22; }
+        .stage-zone.franky-active .card:nth-child(4) { transform: translate(18px, 18px); z-index: 23; }
+        .stage-zone.franky-active .card:nth-child(5) { transform: translate(24px, 24px); z-index: 24; }
+        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: translate(25px, -15px) scale(1.15) !important; }
 
         #opp-board { transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
         #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
-        /* CARDS ON BOARD SCALE DYNAMICALLY TO THE DEV TOOL WIDTH */
-        .board-section .card { width: var(--ld-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
+        /* BOARD CARDS: Scale perfectly to match playmat zone width */
+        .board-section .card { width: var(--board-card-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
         
         .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         
-        /* FIX: Life cards now anchor exactly to the Left Edge, removing the forced centering! */
+        /* FIX: Life cards anchor flush to the Left edge! */
         .life-zone .card { position: absolute !important; left: 0 !important; transform: none !important; z-index: 20;}
         
         .card[data-is-don="true"] { cursor: pointer !important; }
@@ -160,7 +154,7 @@
         #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
         #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
 
-        #hand-bar .card { position: relative !important; width: var(--card-w) !important; height: var(--card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s;}
+        #hand-bar .card { position: relative !important; width: var(--hand-card-w) !important; height: var(--hand-card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s; flex-shrink: 0;}
         #hand-bar .card:hover { transform: scale(1.05) translateY(-5px); z-index: 100 !important;}
 
         /* RIGHT COLUMN: INSPECTOR & END TURN */
@@ -190,12 +184,6 @@
         
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
-
-        /* THE DEV ALIGNMENT TOOL UI */
-        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 300px; color: white;}
-        #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
-        .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
-        .align-slider { width: 150px; cursor: pointer;}
 
         /* TRANSPARENT FLOATING SEARCH MODAL */
         #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; }
@@ -302,30 +290,6 @@
     </div>
 </div>
 
-<div id="align-tool">
-    <h3>ALIGNMENT TOOL</h3>
-    <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
-        <option value="ld">Leader</option>
-        <option value="st">Stage Area</option>
-        <option value="dk">Deck Area</option>
-        <option value="tr">Trash Area</option>
-        <option value="ch">Character Row</option>
-        <option value="lf">Life Column</option>
-        <option value="dd">DON!! Deck</option>
-        <option value="dz">DON!! Area (Cost Area)</option>
-    </select>
-    <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
-    <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
-    <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
-    <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
-    
-    <div style="margin-top:20px; display:flex; gap:5px;">
-        <button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
-        <button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
-        <button onclick="closeAlignTool()" style="flex:1;">HIDE</button>
-    </div>
-</div>
-
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
@@ -365,8 +329,6 @@
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
-
-    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
@@ -435,73 +397,6 @@
     </div>
 
     <div id="hand-label">Your Hand</div>
-    <div id="hand-bar"></div>
-
-    <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
-        <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
-        <div style="display:flex; gap:5px;">
-            <button onclick="spawnDonAction()" style="flex:1; padding: 8px;">+ DON!!</button>
-            <button onclick="killDon()" style="flex:1; background:#e67e22; padding: 8px;">- DON!!</button>
-        </div>
-    </div>
-</div>
-
-<div id="center-col">
-    <div id="opp-board" class="board-section">
-        <div class="opp-hud">Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
-        <div id="opp-life-zone" class="slot life-zone"></div>
-        <div id="opp-char-zone-front" class="flex-zone char-zone"></div>
-        <div id="opp-leader-zone" class="slot leader-zone"></div>
-        <div id="opp-stage-zone" class="slot stage-zone"></div>
-        <div id="opp-drop-deck" class="slot drop-deck"></div>
-        <div id="opp-don-deck" class="slot don-deck"></div>
-        <div id="opp-don-zone" class="flex-zone don-zone"></div>
-        <div id="opp-drop-trash" class="slot drop-trash"></div>
-    </div>
-
-    <div id="my-board" class="board-section">
-        <div id="life-zone" class="slot life-zone"></div>
-        <div id="char-zone-front" class="flex-zone char-zone"></div>
-        <div id="leader-zone" class="slot leader-zone active-zone"></div>
-        <div id="stage-zone" class="slot stage-zone"></div>
-        <div id="drop-deck" class="slot drop-deck card-back"></div>
-        <div id="don-deck" class="slot don-deck"></div>
-        <div id="don-zone" class="flex-zone don-zone"></div>
-        <div id="drop-trash" class="slot drop-trash"></div>
-    </div>
-</div>
-
-<div id="right-col" class="glass-panel">
-    <div id="right-col-inspector"></div>
-    
-    <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-        <button id="btn-end-turn" onclick="endTurn()">END TURN</button>
-        <button id="btn-concede" onclick="concedeGame()">CONCEDE MATCH</button>
-    </div>
-</div>
-
-<div id="context-menu"></div>
-<div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
-panel">
-    <div class="stat-container">
-        <div class="stat-card" style="border-color:#2ecc71;" onclick="inspectDeck()">DECK: <span id="deck-count">0</span></div>
-        <div class="stat-card" style="border-color:#e67e22;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
-    </div>
-    <div class="stat-container">
-        <div class="stat-card" style="border-color:#e74c3c;">LIFE: <span id="life-count">0</span></div>
-        <div class="stat-card" style="border-color:#f1c40f;">DON: <span id="don-deck-count">10</span></div>
-    </div>
-    <div class="stat-card" style="background:rgba(52, 152, 219, 0.2); border-color:#3498db; margin-bottom: 5px;">OPP DON!!: <span id="opp-don">0</span></div>
-    
-    <div id="chat-container">
-        <div id="chat-messages"></div>
-        <form id="chat-form" onsubmit="sendChat(event)">
-            <input type="text" id="chat-input" placeholder="Chat..." autocomplete="off">
-            <button id="chat-btn" type="submit">SEND</button>
-        </form>
-    </div>
-
-    <div id="hand-label">Your Hand</div>
     <div id="hand-bar" onwheel="this.scrollLeft += (event.deltaY > 0 ? 100 : -100); event.preventDefault();"></div>
 
     <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
@@ -549,7 +444,6 @@ panel">
 
 <div id="context-menu"></div>
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
-
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io(); 
@@ -570,98 +464,6 @@ panel">
     window.sanjiUsedThisTurn = false; 
     window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
     window.tempSearchCallback = null; window.locked7Plus = false; window.stussyUsedThisTurn = false;
-
-    // --- GLOBAL ALIGNMENT TOOL LOGIC ---
-    const root = document.documentElement;
-    let savedAlign = JSON.parse(localStorage.getItem('opcg_align') || "{}");
-    for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
-
-    // Listens to the server. If anyone (like you) updates the alignment, it instantly applies it to everyone!
-    socket.on('global_align_update', (alignData) => {
-        if (alignData && Object.keys(alignData).length > 0) {
-            savedAlign = alignData;
-            localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
-            for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
-        }
-    });
-
-    window.openAlignAuth = function() {
-        showModal("Enter Dev Access Code:", "prompt", (val) => {
-            if (val === "717") {
-                document.getElementById('align-tool').style.display = 'block';
-                document.body.classList.add('align-mode-active'); // TURN ON NEON LIGHTS
-                
-                if(!isDevMode) {
-                    activeLobbyDeckUrlArray = ["https://i.imgur.com/TwmysAX.png", DON_URL, DON_URL, DON_URL];
-                    startDevMode(); 
-                }
-                loadZoneAlign();
-            } else { showModal("Access Denied.", "alert"); }
-        });
-    };
-
-    window.closeAlignTool = function() {
-        document.getElementById('align-tool').style.display = 'none';
-        document.body.classList.remove('align-mode-active'); // TURN OFF NEON LIGHTS
-        document.querySelectorAll('.zone-is-selected').forEach(el => el.classList.remove('zone-is-selected'));
-    };
-
-    window.loadZoneAlign = function() {
-        const z = document.getElementById('align-zone').value;
-        const styles = getComputedStyle(root);
-        document.getElementById('slider-t').value = parseFloat(styles.getPropertyValue(`--${z}-t`)) || 0;
-        document.getElementById('slider-l').value = parseFloat(styles.getPropertyValue(`--${z}-l`)) || 0;
-        document.getElementById('slider-w').value = parseFloat(styles.getPropertyValue(`--${z}-w`)) || 10;
-        document.getElementById('slider-h').value = parseFloat(styles.getPropertyValue(`--${z}-h`)) || 10;
-        
-        document.getElementById('val-t').innerText = document.getElementById('slider-t').value + '%';
-        document.getElementById('val-l').innerText = document.getElementById('slider-l').value + '%';
-        document.getElementById('val-w').innerText = document.getElementById('slider-w').value + '%';
-        document.getElementById('val-h').innerText = document.getElementById('slider-h').value + '%';
-
-        // Target the specific active zone for the Neon Red highlight
-        document.querySelectorAll('.zone-is-selected').forEach(el => el.classList.remove('zone-is-selected'));
-        let targetId = '';
-        if(z==='lf') targetId='life-zone';
-        if(z==='ch') targetId='char-zone-front';
-        if(z==='ld') targetId='leader-zone';
-        if(z==='st') targetId='stage-zone';
-        if(z==='dk') targetId='drop-deck';
-        if(z==='tr') targetId='drop-trash';
-        if(z==='dd') targetId='don-deck';
-        if(z==='dz') targetId='don-zone';
-        if(document.getElementById(targetId)) document.getElementById(targetId).classList.add('zone-is-selected');
-    };
-
-    window.updateAlign = function(prop, val) {
-        const z = document.getElementById('align-zone').value;
-        root.style.setProperty(`--${z}-${prop}`, val + '%');
-        document.getElementById(`val-${prop}`).innerText = val + '%';
-    };
-
-    window.saveAlign = function() {
-        const zones = ['lf', 'ch', 'ld', 'st', 'dk', 'tr', 'dd', 'dz'];
-        const props = ['t', 'l', 'w', 'h'];
-        zones.forEach(z => {
-            props.forEach(p => {
-                const varName = `--${z}-${p}`;
-                const val = root.style.getPropertyValue(varName);
-                if (val) savedAlign[varName] = val;
-            });
-        });
-        localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
-        
-        // Broadcasts your exact settings to the server so EVERYONE gets them
-        socket.emit('set_global_align', savedAlign); 
-        
-        showModal("Alignment saved GLOBALLY for all players!", "alert");
-    };
-
-    window.resetAlign = function() {
-        localStorage.removeItem('opcg_align');
-        socket.emit('set_global_align', {}); // Wipes the server memory
-        window.location.reload();
-    };
 
     const CARD_DB = {
         // --- FRANKY CORE (Red/Purple) ---
@@ -1141,7 +943,7 @@ panel">
                 c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; 
                 c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
                 
-                // FIXED OPPONENT LIFE STACKING
+                // LEFT ALIGNED OPPONENT LIFE
                 z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '0'; c.style.transform = 'none'; c.style.top = (z.children.length * 15) + 'px'; } 
             }
         });
@@ -1570,7 +1372,7 @@ panel">
 
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
     
-    // PERFECT LIFE POSITIONING: Left aligned to match the slider!
+    // FIX: Left aligned life cards snapping perfectly to the box edge!
     function updateLifePositions() { 
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
         lifeCards.forEach((c, i) => { 
@@ -1591,6 +1393,8 @@ panel">
                     parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; 
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
+                    
+                    // PERFECT ABSOLUTE DON SNAPPING
                     d.style.setProperty('position', 'absolute', 'important'); 
                     d.style.setProperty('left', p.offsetLeft + 'px', 'important'); 
                     d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); 
