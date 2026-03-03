@@ -1,13 +1,20 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path'); // <-- Added the path module
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve your index.html and any other static files
+// Serve your static files
 app.use(express.static(__dirname));
+
+// BULLETPROOF ROUTE: Forces the server to load your index.html when you open the link!
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 
 // --- SERVER STATE ---
 const rooms = {};
@@ -160,3 +167,4 @@ server.listen(PORT, () => {
     console.log(`Ready for battles!`);
     console.log(`=========================================`);
 });
+
