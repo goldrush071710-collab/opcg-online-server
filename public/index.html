@@ -9,22 +9,18 @@
             --hand-card-h: 15vh; 
             --hand-card-w: calc(var(--hand-card-h) * 0.71); 
             
-            /* DECOUPLED GLOBAL CARD SIZES */
-            --board-card-w: 11.5%; 
-            --don-card-w: 11.5%;
-            
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
 
-            /* DYNAMIC ALIGNMENT COORDINATES */
-            --lf-t: 6%; --lf-l: 4%; --lf-h: 60%;
-            --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%;
-            --ld-t: 40%; --ld-l: 47.8%;
-            --st-t: 40%; --st-l: 66%;
-            --dk-t: 40%; --dk-l: 84%;
-            --tr-t: 73%; --tr-l: 84%;
-            --dd-t: 73%; --dd-l: 4.5%;
-            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%;
+            /* DYNAMIC ALIGNMENT COORDINATES FOR EVERY INDIVIDUAL ZONE */
+            --lf-t: 6%; --lf-l: 4%; --lf-w: 11.5%; --lf-h: 60%;
+            --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%; --ch-cw: 11.5%;
+            --ld-t: 40%; --ld-l: 47.8%; --ld-w: 11.5%; --ld-h: 16.2%;
+            --st-t: 40%; --st-l: 66%; --st-w: 11.5%; --st-h: 16.2%;
+            --dk-t: 40%; --dk-l: 84%; --dk-w: 11.5%; --dk-h: 16.2%;
+            --tr-t: 73%; --tr-l: 84%; --tr-w: 11.5%; --tr-h: 16.2%;
+            --dd-t: 73%; --dd-l: 4.5%; --dd-w: 11.5%; --dd-h: 16.2%;
+            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%; --dz-cw: 11.5%;
         }
         
         body { 
@@ -59,7 +55,7 @@
         
         .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
         
-        /* DEFAULT ZONES: 100% Transparent during standard gameplay! */
+        /* DEFAULT ZONES: 100% Invisible during normal play! */
         .slot, .flex-zone { 
             position: absolute; z-index: 1; display: flex; box-sizing: border-box; 
             border-radius: 8px; transition: all 0.2s ease;
@@ -85,21 +81,19 @@
         }
         /* ======================================================== */
 
-        /* PERFECT 1-TO-1 ZONE SIZING: Boxes are identical to card widths */
-        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--board-card-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
+        /* FULL INDIVIDUAL ZONE POSITIONING & SIZING */
+        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
         .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
-        
-        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--board-card-w); aspect-ratio: 71/100; }
-        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--board-card-w); aspect-ratio: 71/100; }
-        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
-        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
-        
-        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--don-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
+        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--ld-w); height: var(--ld-h); }
+        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); height: var(--st-h); }
+        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); height: var(--dk-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
+        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); height: var(--tr-h); background: transparent !important; border: none !important; box-shadow: none !important;}
+        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); height: var(--dd-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
         .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
 
         /* PERFECT FRANKY STAGE DIAGONAL STACK */
         .stage-zone.franky-active .card {
-            position: absolute !important; margin-left: 0;
+            position: absolute !important; margin-left: 0; top: 0 !important; left: 0 !important;
             box-shadow: -2px 2px 8px rgba(0,0,0,0.9);
             transition: transform 0.2s ease, z-index 0s;
         }
@@ -115,16 +109,24 @@
         #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
-        /* BOARD CARDS: Decoupled Scaling! */
-        .board-section .card { width: var(--board-card-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
-        .board-section .card[data-is-don="true"] { width: var(--don-card-w); }
-        
+        /* CARD SIZING LOGIC: The fix to perfectly fit the boxes! */
+        .board-section .card { position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
-        .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         
-        /* FIX: Life cards anchor flush to the Left edge! */
-        .life-zone .card { position: absolute !important; left: 0 !important; transform: none !important; z-index: 20;}
+        /* Character & Don Zone cards use the special Inner Card Size slider */
+        .char-zone .card, #opp-char-zone-front .card { width: var(--ch-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;}
+        .don-zone .card, #opp-don-zone .card { width: var(--dz-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;}
         
+        /* Life cards use 100% width of the life box, flush left aligned! */
+        .life-zone .card, #opp-life-zone .card { width: 100%; aspect-ratio: 71/100; height: auto; position: absolute !important; left: 0 !important; transform: none !important;}
+        
+        /* Single slots force the card to perfectly fill the box you drew! */
+        .leader-zone .card, #opp-leader-zone .card { width: 100%; height: 100%; }
+        .stage-zone .card, #opp-stage-zone .card { width: 100%; height: 100%; }
+        .drop-deck .card, #opp-drop-deck .card { width: 100%; height: 100%; }
+        .drop-trash .card, #opp-drop-trash .card { width: 100%; height: 100%; }
+        .don-deck .card, #opp-don-deck .card { width: 100%; height: 100%; }
+
         .card[data-is-don="true"] { cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
@@ -156,7 +158,7 @@
 
         #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
         
-        /* SINGLE ROW HORIZONTAL SCROLLING HAND */
+        /* HORIZONTAL SCROLLING HAND */
         #hand-bar { height: 26vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 10px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
         #hand-bar::-webkit-scrollbar { height: 8px; }
         #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
@@ -307,17 +309,6 @@
 <div id="align-tool">
     <h3>ALIGNMENT TOOL</h3>
     
-    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom:10px;">
-        <span style="color:var(--op-blue);">Standard Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('board-card-w', this.value)"> 
-        <span id="val-card-w" style="width:40px; text-align:right;"></span>
-    </div>
-    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
-        <span style="color:var(--op-gold);">DON!! Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('don-card-w', this.value)"> 
-        <span id="val-don-w" style="width:40px; text-align:right;"></span>
-    </div>
-
     <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
         <option value="ld">Leader Area</option>
         <option value="st">Stage Area</option>
@@ -331,10 +322,13 @@
 
     <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
     <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Box Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Box Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
     
-    <div id="width-height-controls">
-        <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
-        <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;">
+        <span style="color:var(--op-blue);">Inner Card %:</span> 
+        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="updateAlign('cw', this.value)"> 
+        <span id="val-cw" style="width:40px; text-align:right;"></span>
     </div>
     
     <div style="margin-top:20px; display:flex; gap:5px;">
@@ -575,22 +569,25 @@
         document.getElementById('slider-don-w').value = donW;
         document.getElementById('val-don-w').innerText = donW + '%';
 
-        // Load specific X/Y
+        // Load specific X/Y/W/H for the box
         document.getElementById('slider-t').value = parseFloat(styles.getPropertyValue(`--${z}-t`)) || 0;
         document.getElementById('slider-l').value = parseFloat(styles.getPropertyValue(`--${z}-l`)) || 0;
         document.getElementById('val-t').innerText = document.getElementById('slider-t').value + '%';
         document.getElementById('val-l').innerText = document.getElementById('slider-l').value + '%';
         
-        // Smart Hide/Show for Width and Height. Single-card slots are locked to the global width!
-        const whControls = document.getElementById('width-height-controls');
-        if (['ch', 'dz', 'lf'].includes(z)) {
-            whControls.style.display = 'block';
-            document.getElementById('slider-w').value = parseFloat(styles.getPropertyValue(`--${z}-w`)) || 10;
-            document.getElementById('slider-h').value = parseFloat(styles.getPropertyValue(`--${z}-h`)) || 10;
-            document.getElementById('val-w').innerText = document.getElementById('slider-w').value + '%';
-            document.getElementById('val-h').innerText = document.getElementById('slider-h').value + '%';
+        document.getElementById('slider-w').value = parseFloat(styles.getPropertyValue(`--${z}-w`)) || 10;
+        document.getElementById('slider-h').value = parseFloat(styles.getPropertyValue(`--${z}-h`)) || 10;
+        document.getElementById('val-w').innerText = document.getElementById('slider-w').value + '%';
+        document.getElementById('val-h').innerText = document.getElementById('slider-h').value + '%';
+
+        // Smart Hide/Show for Inner Card Size (Only for Character and Don Zones)
+        const icControl = document.getElementById('inner-card-control');
+        if (['ch', 'dz'].includes(z)) {
+            icControl.style.display = 'flex';
+            document.getElementById('slider-cw').value = parseFloat(styles.getPropertyValue(`--${z}-cw`)) || 11.5;
+            document.getElementById('val-cw').innerText = document.getElementById('slider-cw').value + '%';
         } else {
-            whControls.style.display = 'none';
+            icControl.style.display = 'none';
         }
 
         // Target the specific active zone for the Neon Red highlight
@@ -622,7 +619,7 @@
 
         // Save Zones
         const zones = ['lf', 'ch', 'ld', 'st', 'dk', 'tr', 'dd', 'dz'];
-        const props = ['t', 'l', 'w', 'h'];
+        const props = ['t', 'l', 'w', 'h', 'cw']; // Includes Inner Card Size
         zones.forEach(z => {
             props.forEach(p => {
                 const varName = `--${z}-${p}`;
@@ -632,13 +629,15 @@
         });
         localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
         
+        // Broadcasts your exact settings to the server so EVERYONE gets them
         socket.emit('set_global_align', savedAlign); 
+        
         showModal("Alignment saved GLOBALLY for all players!", "alert");
     };
 
     window.resetAlign = function() {
         localStorage.removeItem('opcg_align');
-        socket.emit('set_global_align', {}); 
+        socket.emit('set_global_align', {}); // Wipes the server memory
         window.location.reload();
     };
 
@@ -1549,7 +1548,7 @@
 
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
     
-    // FIX: Left aligned life cards snapping perfectly to the box edge!
+    // FIX: Life cards anchor flush to the Left edge of the box!
     function updateLifePositions() { 
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
         lifeCards.forEach((c, i) => { 
@@ -1571,7 +1570,6 @@
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
                     
-                    // PERFECT ABSOLUTE DON SNAPPING
                     d.style.setProperty('position', 'absolute', 'important'); 
                     d.style.setProperty('left', p.offsetLeft + 'px', 'important'); 
                     d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); 
@@ -1596,7 +1594,6 @@
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
     function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 
-    // --- BROWSER REFRESH SAFETY LOCK ---
     window.addEventListener('beforeunload', (e) => { 
         if (document.getElementById('home-screen').style.display === 'none') { e.preventDefault(); e.returnValue = ''; } 
     });
