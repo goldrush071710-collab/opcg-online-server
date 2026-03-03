@@ -600,9 +600,40 @@
             
             const db = CARD_DB[c.dataset.url];
 
+            // EVENT COUNTER INTEGRATION
             if (combatState.step === 'counter') { 
-                if (c.parentElement.id === 'hand-bar' && db && db.counter) { 
-                    if (selectedCounterCards.includes(c)) { selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= db.counter; } else { selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += db.counter; } updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); 
+                if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
+                    
+                    let cv = db.counter || 0;
+                    if (db.isCounter && !db.counter) {
+                        if (db.name === "Gum Gum Giant") cv = 4000;
+                        else cv = 2000; // safe fallback
+                    }
+
+                    if (selectedCounterCards.includes(c)) { 
+                        selectedCounterCards = selectedCounterCards.filter(card => card !== c); 
+                        c.style.outline = ""; 
+                        currentCounterTotal -= cv; 
+                        
+                        // Refund Event Cost
+                        if(db.type === 'Event') {
+                            const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested'));
+                            for(let i=0; i<db.cost; i++) if(restedDons[i]) restedDons[i].classList.remove('rested');
+                        }
+                    } else { 
+                        // Pay Event Cost
+                        if(db.type === 'Event') {
+                            const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
+                            if(activeDons.length < db.cost) { showModal(`Need ${db.cost} active DON!! to use ${db.name}`, "alert"); return; }
+                            for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested');
+                        }
+                        
+                        selectedCounterCards.push(c); 
+                        c.style.outline = "4px solid #3498db"; 
+                        currentCounterTotal += cv; 
+                    } 
+                    updateArenaCounter(currentCounterTotal); 
+                    socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); 
                 } else if (c.parentElement.id === 'char-zone-front' && db?.name === "Dracule Mihawk (9c)" && c.dataset.usedDefend !== "true") {
                     showModal("Trash 1 card from hand to give +2000 defense?", "confirm", () => { startSelection('hand_trash', 1, "Select 1 to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); c.dataset.usedDefend = "true"; currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Dracule Mihawk (9c) provided +2000 defense!", "#3498db"); }, () => askCounterPhase()); });
                 }
@@ -737,11 +768,11 @@
                 z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.top = (z.children.length * 15) + 'px'; } 
             }
         });
-        // OPPONENT DON SYNC FIX: Uses CSS overriding to lock it directly behind the opponent's card
-        const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop - 15 - (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', 10 - idx, 'important'); d.style.opacity = "1"; } });
+        const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.position = 'absolute'; d.style.left = (p.offsetLeft) + 'px'; d.style.top = (p.offsetTop - 15 - (idx * 15)) + 'px'; d.style.zIndex = 10 - idx; d.style.opacity = "1"; } });
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
+    // ULTIMATE DON DETACHMENT SLEDGEHAMMER
     function refreshPhase() {
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
 
@@ -750,7 +781,6 @@
             if (don.id && don.id.startsWith('opp-')) return;
             don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
             
-            // Revert the flexbox override so it acts normal in the DON deck
             don.style.removeProperty('position'); don.style.removeProperty('left'); don.style.removeProperty('top'); don.style.removeProperty('z-index');
             don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
             
@@ -822,7 +852,13 @@
         }
         else if(selectConfig.mode === 'seraphim_freeze') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
-        else if(selectConfig.mode === 'lucci_g_rest') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || card.classList.contains('frozen')) { showModal("Select valid Target", "alert"); return; } }
+        
+        // LUCCI FIX: Targeting logic allows any opponent Leader or Character!
+        else if(selectConfig.mode === 'lucci_g_rest') { 
+            if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } 
+            if(isDevMode && !['char-zone-front', 'opp-char-zone-front', 'leader-zone', 'opp-leader-zone'].includes(card.parentElement.id)) { showModal("Select a Character or Leader", "alert"); return; } 
+        }
+
         else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
         else if(selectConfig.mode === 'play_lucci_free') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || !db.name.includes("Rob Lucci")) { showModal("Select a Rob Lucci from hand", "alert"); return; } }
         else if(selectConfig.mode === 'katakuri_life') { if(card.parentElement.id !== 'life-zone' && card.parentElement.id !== 'opp-life-zone') { showModal("Select a Life card", "alert"); return; } }
@@ -1004,7 +1040,6 @@
                 document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c"; document.getElementById('arena-math').innerText = "Defender takes Damage"; 
                 appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); 
                 
-                // Delay visual reset, but fire the kill command IMMEDIATELY
                 if(def.parentElement.id.includes('char-zone')) {
                     if(isDevMode) { trashCard(def); appendChat("K.O.'d!", "#e74c3c"); }
                     else { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); }
@@ -1132,17 +1167,7 @@
     window.addEventListener('mousemove', (e) => { 
         if (!dragged || selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
         if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
-        
-        // DRAGGING DON FIX: Uses the Wrecking Ball override to force absolute position while dragging
-        if(isDragging) { 
-            dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; 
-            document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { 
-                don.style.setProperty('position', 'absolute', 'important');
-                don.style.setProperty('left', (e.clientX - offX - 250 + 5 + (i*8)) + 'px', 'important');
-                don.style.setProperty('top', (e.clientY - offY + 15 + (i*15)) + 'px', 'important');
-                don.style.setProperty('z-index', (10 - i).toString(), 'important');
-            }); 
-        } 
+        if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.setProperty('position', 'absolute', 'important'); don.style.setProperty('left', (e.clientX - offX - 250 + 5 + (i*8)) + 'px', 'important'); don.style.setProperty('top', (e.clientY - offY + 15 + (i*15)) + 'px', 'important'); don.style.setProperty('z-index', (10 - i).toString(), 'important'); }); } 
     });
     
     window.addEventListener('mouseup', (e) => { 
@@ -1172,7 +1197,6 @@
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0px'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
     
-    // DON SNAPPING OVERHAUL
     function organizeDon() { 
         const parentCounts = {}; 
         document.querySelectorAll('.card[data-is-don="true"]').forEach(d => { 
@@ -1183,19 +1207,9 @@
                     parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; 
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
-                    
-                    // The CSS Wrecking Ball overrides the flexbox spacing
-                    d.style.setProperty('position', 'absolute', 'important');
-                    d.style.setProperty('left', p.offsetLeft + 'px', 'important');
-                    d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important');
-                    d.style.setProperty('z-index', (10 - idx).toString(), 'important');
-                    d.style.opacity = "1"; 
+                    d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', (10 - idx).toString(), 'important'); d.style.opacity = "1"; 
                 } 
-            } else { 
-                document.getElementById('don-zone').appendChild(d); 
-                d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index');
-                d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; 
-            } 
+            } else { document.getElementById('don-zone').appendChild(d); d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index'); d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; } 
         }); 
     }
     
