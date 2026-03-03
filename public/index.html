@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Premium Tabletop</title>
+    <title>OPCG Master Engine - Precision Tabletop</title>
     <style>
         :root { 
             --card-h: 11vh; --card-w: calc(var(--card-h) * 0.71); 
             --leader-h: 13vh; --leader-w: calc(var(--leader-h) * 0.71); 
             --don-h: var(--card-h); --don-w: var(--card-w); 
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
-            /* Reverted to Classic OP Card Back */
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
         }
         
@@ -37,7 +36,7 @@
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 10px; overflow: hidden; position: relative; }
         #right-col { width: 320px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
-        /* PRECISE PLAYMAT GRID SYSTEM */
+        /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
             aspect-ratio: 24 / 14; 
             width: 100%; max-width: 950px; max-height: 48vh;
@@ -45,45 +44,36 @@
             border-radius: 10px; border: 2px solid #111; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
             background-image: url('https://i.imgur.com/WjiUDr0.jpeg'); /* Default White Mat */
-            display: grid;
-            /* Matches the physical printed zones on your mats */
-            grid-template-columns: 16% 26% 26% 16%;
-            grid-template-rows: 35% 32% 33%;
-            gap: 2%; padding: 2% 4%; box-sizing: border-box;
+            overflow: hidden;
         }
         
-        /* Dark overlay so cards pop against bright mats */
-        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
+        /* Subtle darkening so cards pop against bright mats */
+        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0;}
         
-        /* Invisible Hitboxes (No more dashed lines, relies entirely on Mat art) */
-        .slot, .flex-zone { z-index: 1; display: flex; align-items: center; justify-content: center; position: relative; min-height: var(--card-h); }
-        .slot { flex-direction: column; }
-        .flex-zone { flex-wrap: wrap; justify-content: flex-start; gap: 6px; padding-left: 5px; }
+        /* Zones: No more dashed borders. Rely purely on exact Absolute positioning over the mat art */
+        .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
+        .slot { flex-direction: column; align-items: center; justify-content: center; }
+        .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
-        /* GRID MAPPING */
-        .life-zone { grid-column: 1; grid-row: 1 / 3; align-items: center; justify-content: flex-start; padding-top: 10px; }
-        .don-deck { grid-column: 1; grid-row: 3; justify-self: center; align-self: center; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; width: var(--card-w); height: var(--card-h);}
+        /* EXACT COORDINATES TO MATCH THE PRINTED PLAYMAT BOXES */
+        .life-zone { top: 6%; left: 3%; width: 12%; height: 55%; align-items: center; justify-content: flex-start; }
+        .char-zone { top: 6%; left: 21%; width: 75%; height: var(--card-h); padding-left: 0; }
         
-        .char-zone { grid-column: 2 / 5; grid-row: 1; align-items: center; padding-left: 10px; }
+        .leader-zone { top: 38%; left: calc(45% - (var(--leader-w) / 2)); width: var(--leader-w); height: var(--leader-h); }
+        .stage-zone { top: 38%; left: calc(66% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); }
         
-        .leader-zone { grid-column: 2; grid-row: 2; justify-self: center; align-self: center; width: var(--leader-w); height: var(--leader-h); }
-        .stage-zone { grid-column: 3; grid-row: 2; justify-self: center; align-self: center; width: 100%; }
+        .drop-deck { top: 38%; left: calc(89% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
+        .drop-trash { top: 71%; left: calc(89% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
         
-        .drop-deck { grid-column: 4; grid-row: 2; justify-self: center; align-self: center; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; width: var(--card-w); height: var(--card-h);}
-        .drop-trash { grid-column: 4; grid-row: 3; justify-self: center; align-self: center; background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); width: var(--card-w); height: var(--card-h);}
-        
-        .don-zone { grid-column: 2 / 4; grid-row: 3; align-items: center; justify-content: flex-start; padding-left: 10px;}
+        .don-deck { top: 71%; left: calc(8% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        .don-zone { top: 71%; left: 21%; width: 62%; height: var(--card-h); }
 
-        /* FRANKY DYNAMIC FAN-OUT STAGE */
+        /* FRANKY STAGE FAN-OUT EFFECT */
         .stage-zone.franky-active {
-            display: flex; flex-direction: row; flex-wrap: nowrap;
-            justify-content: center; align-items: center;
-            width: 180%; /* Spills over perfectly into adjacent zones visually */
-            z-index: 40; margin-left: -20px;
+            width: 30%; display: flex; flex-direction: row; justify-content: center; align-items: center; margin-left: -20px; z-index: 40;
         }
         .stage-zone.franky-active .card {
-            position: relative !important; margin-left: -30px; /* Overlaps them beautifully */
-            box-shadow: -2px 0 10px rgba(0,0,0,0.8);
+            position: relative !important; margin-left: -30px; box-shadow: -3px 0 10px rgba(0,0,0,0.9);
         }
         .stage-zone.franky-active .card:first-child { margin-left: 0; }
         .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-10px); }
@@ -91,14 +81,14 @@
         #opp-board { transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
         #opp-board .card.rested { transform: rotate(270deg); }
-        .opp-hud { position: absolute; bottom: 5px; right: 15px; background: rgba(192, 57, 43, 0.9); padding: 5px 12px; border-radius: 6px; font-weight: bold; font-size: 1.2vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
+        .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
         /* CARDS */
         .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
         #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
-        .life-zone .card { position: absolute !important; z-index: 20;}
+        .life-zone .card { position: absolute !important; z-index: 20; left: 50%; transform: translateX(-50%);}
         .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
@@ -159,9 +149,9 @@
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
-        /* FLOATING DECK SEARCH MODAL */
-        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.95); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
+        /* TRANSPARENT FLOATING SEARCH MODAL */
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 99998; justify-content: center; align-items: center; }
+        #search-modal-container { background: rgba(20,20,25,0.7); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -271,8 +261,8 @@
         
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa; margin-top:5px;">SELECT PLAYMAT:</div>
         <select id="playmat-selector" style="width:100%; padding:10px; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius:6px; font-size: 14px; outline:none; cursor:pointer;">
-            <option value="https://i.imgur.com/SSN1DUI.jpeg">Yellow OP Sim</option>
             <option value="https://i.imgur.com/WjiUDr0.jpeg">White Plain</option>
+            <option value="https://i.imgur.com/SSN1DUI.jpeg">Yellow OP Sim</option>
         </select>
         
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
@@ -420,7 +410,7 @@
     
     window.sanjiUsedThisTurn = false; 
     window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
-    window.tempSearchCallback = null; window.locked7Plus = false; 
+    window.tempSearchCallback = null; window.locked7Plus = false; window.stussyUsedThisTurn = false;
 
     const CARD_DB = {
         // --- FRANKY CORE (Red/Purple) ---
@@ -685,7 +675,7 @@
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
             c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
             c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
-            // THE GIANT INSPECTOR OVERLAY FOR OPPONENT CARDS
+            // OPPONENT CARD HOVER FOR INSPECTOR
             c.onmouseenter = () => { if(!c.classList.contains('card-back')) document.getElementById('right-col-inspector').style.backgroundImage = `url('${c.dataset.url}')`; };
         } 
         
@@ -694,7 +684,7 @@
     }
 
     function bindCardEvents(c) {
-        // THE GIANT INSPECTOR OVERLAY FOR YOUR CARDS
+        // YOUR CARD HOVER FOR INSPECTOR
         c.onmouseenter = () => { 
             hovered = c; 
             if(!c.classList.contains('card-back') || isDevMode) {
@@ -859,7 +849,7 @@
         socket.emit('board_update', { 
             deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, 
             field, handCount: document.querySelectorAll('#hand-bar .card').length,
-            playmat: document.getElementById('my-board').style.backgroundImage.slice(5, -2) // Extract the applied playmat URL
+            playmat: document.getElementById('my-board').style.backgroundImage.slice(5, -2) 
         }); 
         refreshStats();
     }
