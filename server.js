@@ -1,104 +1,162 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const server = http.createServer(app);
+const io = new Server(server);
 
-app.use(express.static('public'));
+// Serve your index.html and any other static files
+app.use(express.static(__dirname));
 
+// --- SERVER STATE ---
 const rooms = {};
-let waitingPlayer = null; 
+let waitingPlayer = null;
 
+// The Global Alignment System: This holds the perfect coordinates for everyone!
+let globalAlignment = {}; 
+
+// --- HELPER FUNCTION ---
+function generateRoomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let code = '';
+    for(let i=0; i<4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    return code;
+}
+
+// --- SOCKET.IO CONNECTIONS ---
 io.on('connection', (socket) => {
+    console.log('A player connected:', socket.id);
+
+    // 1. Instantly send the Global Alignment to any new player who connects
+    socket.emit('global_align_update', globalAlignment);
+
+    // 2. Listen for when YOU use the 717 Tool to save new alignments
+    socket.on('set_global_align', (data) => {
+        globalAlignment = data; // Save it to the server's memory
+        io.emit('global_align_update', globalAlignment); // Broadcast it to everyone online
+        console.log("Global Alignment Updated!");
+    });
+
+    // --- MATCHMAKING & LOBBIES ---
     socket.on('create_room', (callback) => {
-        const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-        rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false, p1Mulligan: false, p2Mulligan: false };
+        let roomId = generateRoomCode();
+        while(rooms[roomId]) roomId = generateRoomCode(); // Ensure unique code
+        
+        rooms[roomId] = {
+            players: [socket.id],
+            ready: 0
+        };
         socket.join(roomId);
         socket.roomId = roomId;
-        callback({ success: true, roomId: roomId });
+        callback({ roomId });
     });
 
     socket.on('join_room', (roomId, callback) => {
         roomId = roomId.toUpperCase();
-        if (rooms[roomId] && !rooms[roomId].p2) {
-            rooms[roomId].p2 = socket.id;
+        if (rooms[roomId] && rooms[roomId].players.length === 1) {
+            rooms[roomId].players.push(socket.id);
             socket.join(roomId);
             socket.roomId = roomId;
-            io.to(roomId).emit('player_joined');
+            socket.to(roomId).emit('player_joined');
             callback({ success: true });
+            
+            // Randomly decide who goes first
+            const p1GoesFirst = Math.random() >= 0.5;
+            io.to(rooms[roomId].players[0]).emit('game_start', { isFirst: p1GoesFirst });
+            io.to(rooms[roomId].players[1]).emit('game_start', { isFirst: !p1GoesFirst });
         } else {
-            callback({ success: false, msg: 'Room full or invalid.' });
+            callback({ success: false });
         }
     });
 
     socket.on('join_random', (callback) => {
-        if (waitingPlayer && rooms[waitingPlayer.roomId] && !rooms[waitingPlayer.roomId].p2) {
-            const roomId = waitingPlayer.roomId;
-            rooms[roomId].p2 = socket.id;
-            socket.join(roomId);
-            socket.roomId = roomId;
-            waitingPlayer = null; 
-            io.to(roomId).emit('player_joined');
-            callback({ success: true, roomId: roomId, waiting: false });
+        if (waitingPlayer && waitingPlayer.id !== socket.id) {
+            // Found a waiting player! Join their room.
+            let roomId = waitingPlayer.roomId;
+            if(rooms[roomId]) {
+                rooms[roomId].players.push(socket.id);
+                socket.join(roomId);
+                socket.roomId = roomId;
+                socket.to(roomId).emit('player_joined');
+                waitingPlayer = null; // Clear the queue
+                callback({ roomId: roomId, waiting: false });
+
+                // Randomly decide who goes first
+                const p1GoesFirst = Math.random() >= 0.5;
+                io.to(rooms[roomId].players[0]).emit('game_start', { isFirst: p1GoesFirst });
+                io.to(rooms[roomId].players[1]).emit('game_start', { isFirst: !p1GoesFirst });
+            }
         } else {
-            const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            rooms[roomId] = { p1: socket.id, p2: null, p1Ready: false, p2Ready: false, p1Mulligan: false, p2Mulligan: false };
+            // No one is waiting, create a room and wait.
+            let roomId = generateRoomCode();
+            while(rooms[roomId]) roomId = generateRoomCode();
+            rooms[roomId] = { players: [socket.id], ready: 0 };
             socket.join(roomId);
             socket.roomId = roomId;
             waitingPlayer = { id: socket.id, roomId: roomId };
-            callback({ success: true, roomId: roomId, waiting: true });
+            callback({ roomId: roomId, waiting: true });
         }
     });
 
-    socket.on('deck_selected', () => {
-        const room = rooms[socket.roomId];
-        if(!room) return;
-        if (room.p1 === socket.id) room.p1Ready = true;
-        if (room.p2 === socket.id) room.p2Ready = true;
-
-        if (room.p1Ready && room.p2Ready) {
-            const p1GoesFirst = Math.random() > 0.5;
-            io.to(room.p1).emit('game_start', { isFirst: p1GoesFirst });
-            io.to(room.p2).emit('game_start', { isFirst: !p1GoesFirst });
-        }
+    // --- GAMEPLAY SYNCING ---
+    socket.on('deck_selected', (deck) => {
+        // Acknowledges deck selection
     });
 
-    // MULLIGAN SYNC
     socket.on('mulligan_done', () => {
-        const room = rooms[socket.roomId];
-        if(!room) return;
-        if (room.p1 === socket.id) room.p1Mulligan = true;
-        if (room.p2 === socket.id) room.p2Mulligan = true;
-
-        if (room.p1Mulligan && room.p2Mulligan) {
-            io.to(room.p1).emit('begin_game');
-            io.to(room.p2).emit('begin_game');
+        let roomId = socket.roomId;
+        if (rooms[roomId]) {
+            rooms[roomId].ready++;
+            if (rooms[roomId].ready === 2) {
+                // Both players finished mulligan, start the match!
+                io.to(roomId).emit('begin_game');
+            }
         }
     });
 
-    socket.on('board_update', (boardState) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('opponent_board_update', boardState);
+    // Mirrors the exact state of your playmat to the opponent
+    socket.on('board_update', (data) => {
+        socket.to(socket.roomId).emit('opponent_board_update', data);
     });
 
-    socket.on('pass_turn', () => {
-        if(socket.roomId) socket.to(socket.roomId).emit('turn_passed');
-    });
-
-    socket.on('chat_msg', (msg) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('chat_msg', msg);
-    });
-
+    // Relays specific triggers (Attacks, KOs, Counters, Freezes)
     socket.on('game_action', (data) => {
-        if(socket.roomId) socket.to(socket.roomId).emit('game_action', data);
+        socket.to(socket.roomId).emit('game_action', data);
     });
 
+    // Passes the turn
+    socket.on('pass_turn', () => {
+        socket.to(socket.roomId).emit('turn_passed');
+    });
+
+    // Chat functionality
+    socket.on('chat_msg', (msg) => {
+        socket.to(socket.roomId).emit('chat_msg', msg);
+    });
+
+    // --- DISCONNECT HANDLING ---
     socket.on('disconnect', () => {
-        if (waitingPlayer && waitingPlayer.id === socket.id) waitingPlayer = null;
-        if(socket.roomId && rooms[socket.roomId]) {
-            socket.to(socket.roomId).emit('opponent_disconnected');
-            delete rooms[socket.roomId];
+        console.log('A player disconnected:', socket.id);
+        
+        // Remove from matchmaking queue if they leave while searching
+        if (waitingPlayer && waitingPlayer.id === socket.id) {
+            waitingPlayer = null;
+        }
+        
+        // If they leave during a match, auto-concede for them
+        if (socket.roomId && rooms[socket.roomId]) {
+            socket.to(socket.roomId).emit('game_action', { type: 'concede' }); 
+            delete rooms[socket.roomId]; // Destroy the room
         }
     });
 });
 
+// --- BOOT THE SERVER ---
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Server Live!`));
+server.listen(PORT, () => {
+    console.log(`=========================================`);
+    console.log(`OPCG Master Engine Running on Port ${PORT}`);
+    console.log(`Ready for battles!`);
+    console.log(`=========================================`);
+});
