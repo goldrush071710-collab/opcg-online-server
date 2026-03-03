@@ -5,9 +5,7 @@
     <title>OPCG Master Engine - Precision Tabletop</title>
     <style>
         :root { 
-            --card-h: 11vh; --card-w: calc(var(--card-h) * 0.71); 
-            --leader-h: 13vh; --leader-w: calc(var(--leader-h) * 0.71); 
-            --don-h: var(--card-h); --don-w: var(--card-w); 
+            --card-w: 8.8%; /* Fully responsive card width relative to playmat */
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
         }
@@ -38,45 +36,60 @@
 
         /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
-            aspect-ratio: 24 / 14; 
+            aspect-ratio: 16 / 9; 
             width: 100%; max-width: 950px; max-height: 48vh;
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
             border-radius: 10px; border: 2px solid #111; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
-            background-image: url('https://i.imgur.com/WjiUDr0.jpeg'); /* Default White Mat */
-            overflow: hidden;
+            background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); /* Default Yellow Mat */
         }
         
-        /* Subtle darkening so cards pop against bright mats */
-        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0;}
+        /* Dark overlay so cards pop against bright mats */
+        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
         
-        /* Zones: No more dashed borders. Rely purely on exact Absolute positioning over the mat art */
+        /* Invisible Hitboxes (Relies purely on exact absolute positioning over the art) */
         .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
         .slot { flex-direction: column; align-items: center; justify-content: center; }
-        .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
+        .flex-zone { flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
 
-        /* EXACT COORDINATES TO MATCH THE PRINTED PLAYMAT BOXES */
-        .life-zone { top: 6%; left: 3%; width: 12%; height: 55%; align-items: center; justify-content: flex-start; }
-        .char-zone { top: 6%; left: 21%; width: 75%; height: var(--card-h); padding-left: 0; }
+        /* ========================================================
+           LAYOUT 1: STANDARD ANIME MATS (Yellow, Nami, Luffy, etc) 
+           ======================================================== */
+        .life-zone { top: 6%; left: 4%; width: 9%; height: 60%; align-items: flex-start; justify-content: flex-start; }
+        .char-zone { top: 4%; left: 21%; width: 58%; height: 25%; padding-left: 0; }
         
-        .leader-zone { top: 38%; left: calc(45% - (var(--leader-w) / 2)); width: var(--leader-w); height: var(--leader-h); }
-        .stage-zone { top: 38%; left: calc(66% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); }
+        .leader-zone { top: 38%; left: 41.5%; width: var(--card-w); aspect-ratio: 71/100; }
+        .stage-zone { top: 38%; left: 56.5%; width: var(--card-w); aspect-ratio: 71/100; }
         
-        .drop-deck { top: 38%; left: calc(89% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
-        .drop-trash { top: 71%; left: calc(89% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+        .drop-deck { top: 37%; right: 4.5%; width: var(--card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
+        .drop-trash { bottom: 6%; right: 4.5%; width: var(--card-w); aspect-ratio: 71/100; background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
         
-        .don-deck { top: 71%; left: calc(8% - (var(--card-w) / 2)); width: var(--card-w); height: var(--card-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
-        .don-zone { top: 71%; left: 21%; width: 62%; height: var(--card-h); }
+        .don-deck { bottom: 6%; left: 4%; width: var(--card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        .don-zone { bottom: 4%; left: 21%; width: 58%; height: 25%; }
+
+        /* ========================================================
+           LAYOUT 2: WHITE PLAIN MAT OVERRIDES 
+           ======================================================== */
+        .mat-white .life-zone { top: 22%; left: 5%; }
+        .mat-white .char-zone { top: 5%; left: 23%; width: 54%; }
+        .mat-white .leader-zone { top: 36%; left: 46%; }
+        .mat-white .stage-zone { top: 36%; left: 63.5%; }
+        .mat-white .drop-deck { top: 35%; right: 6.5%; }
+        .mat-white .don-deck { bottom: 6%; left: 6.5%; }
+        .mat-white .don-zone { bottom: 6%; left: 23%; width: 54%; }
+        .mat-white .drop-trash { bottom: 7%; right: 6.5%; }
+
+        /* ======================================================== */
 
         /* FRANKY STAGE FAN-OUT EFFECT */
         .stage-zone.franky-active {
-            width: 30%; display: flex; flex-direction: row; justify-content: center; align-items: center; margin-left: -20px; z-index: 40;
+            width: 25%; display: flex; flex-direction: row; justify-content: center; align-items: center; z-index: 40;
         }
         .stage-zone.franky-active .card {
-            position: relative !important; margin-left: -30px; box-shadow: -3px 0 10px rgba(0,0,0,0.9);
+            position: relative !important; margin-left: -55%; box-shadow: -4px 0 12px rgba(0,0,0,0.9);
         }
         .stage-zone.franky-active .card:first-child { margin-left: 0; }
-        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-10px); }
+        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-15px); }
 
         #opp-board { transform: rotate(180deg); }
         #opp-board .card { transform: rotate(180deg); } 
@@ -84,12 +97,11 @@
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
         /* CARDS */
-        .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
+        .card { width: var(--card-w); aspect-ratio: 71/100; height: auto; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
-        #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
         .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
-        .life-zone .card { position: absolute !important; z-index: 20; left: 50%; transform: translateX(-50%);}
-        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
+        .life-zone .card { position: absolute !important; left: 50% !important; transform: translateX(-50%); z-index: 20;}
+        .card[data-is-don="true"] { cursor: pointer !important; }
         .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
         
@@ -109,7 +121,7 @@
 
         /* LEFT COLUMN: CHAT, STATS & HAND */
         .stat-container { display: flex; gap: 8px; margin-bottom: 5px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.3vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; }
+        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.3vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
         .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
 
         #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
@@ -151,7 +163,7 @@
 
         /* TRANSPARENT FLOATING SEARCH MODAL */
         #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.7); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
+        #search-modal-container { background: rgba(20,20,25,0.85); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -261,8 +273,22 @@
         
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa; margin-top:5px;">SELECT PLAYMAT:</div>
         <select id="playmat-selector" style="width:100%; padding:10px; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius:6px; font-size: 14px; outline:none; cursor:pointer;">
-            <option value="https://i.imgur.com/WjiUDr0.jpeg">White Plain</option>
             <option value="https://i.imgur.com/SSN1DUI.jpeg">Yellow OP Sim</option>
+            <option value="https://i.imgur.com/WjiUDr0.jpeg">White Plain</option>
+            <option value="https://i.imgur.com/XPiIZrb.jpeg">Nami</option>
+            <option value="https://i.imgur.com/nHFYk9E.jpeg">Rebecca</option>
+            <option value="https://i.imgur.com/YTUUce7.jpeg">Beast Pirates</option>
+            <option value="https://i.imgur.com/JFXhRxJ.jpeg">Bonney</option>
+            <option value="https://i.imgur.com/0J5R5w2.jpeg">Perona</option>
+            <option value="https://i.imgur.com/Czy1zkI.jpeg">Sanji</option>
+            <option value="https://i.imgur.com/fRrCOIs.jpeg">Doflamingo</option>
+            <option value="https://i.imgur.com/dSvEKtE.jpeg">Yamato</option>
+            <option value="https://i.imgur.com/uYjfwrR.jpeg">King</option>
+            <option value="https://i.imgur.com/eJXQzGe.jpeg">Zoro</option>
+            <option value="https://i.imgur.com/h91IZyj.jpeg">Garp</option>
+            <option value="https://i.imgur.com/FN14de4.jpeg">Marco</option>
+            <option value="https://i.imgur.com/ZKhKrMl.jpeg">Luffy Gear 5</option>
+            <option value="https://i.imgur.com/0hrCVS6.jpeg">Enel</option>
         </select>
         
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
@@ -568,7 +594,7 @@
     // --- LOBBY LOGIC ---
     function getSelectedPlaymat() {
         const sel = document.getElementById('playmat-selector');
-        return sel ? sel.value : 'https://i.imgur.com/WjiUDr0.jpeg'; // White default
+        return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg';
     }
 
     function prepActiveDeck() {
@@ -581,13 +607,24 @@
 
     function setupPlayerBoardVisuals(leaderUrl) {
         const isFranky = CARD_DB[leaderUrl] && CARD_DB[leaderUrl].name === "Franky";
+        const board = document.getElementById('my-board');
+        let chosenMat = getSelectedPlaymat();
+
         if(isFranky) {
-            document.getElementById('my-board').style.backgroundImage = "url('https://i.imgur.com/SSN1DUI.jpeg')"; // Force Yellow OP Sim
+            chosenMat = "https://i.imgur.com/SSN1DUI.jpeg"; // Force Yellow OP Sim
             document.getElementById('stage-zone').classList.add('franky-active');
-            if(document.getElementById('playmat-selector')) document.getElementById('playmat-selector').value = "https://i.imgur.com/SSN1DUI.jpeg";
+            if(document.getElementById('playmat-selector')) document.getElementById('playmat-selector').value = chosenMat;
         } else {
-            document.getElementById('my-board').style.backgroundImage = `url('${getSelectedPlaymat()}')`;
             document.getElementById('stage-zone').classList.remove('franky-active');
+        }
+
+        board.style.backgroundImage = `url('${chosenMat}')`;
+        
+        // Triggers the special coordinate system if using the White mat
+        if (chosenMat.includes('WjiUDr0')) {
+            board.classList.add('mat-white');
+        } else {
+            board.classList.remove('mat-white');
         }
     }
 
@@ -675,7 +712,8 @@
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
             c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
             c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
-            // OPPONENT CARD HOVER FOR INSPECTOR
+            
+            // THE GIANT INSPECTOR OVERLAY FOR OPPONENT CARDS
             c.onmouseenter = () => { if(!c.classList.contains('card-back')) document.getElementById('right-col-inspector').style.backgroundImage = `url('${c.dataset.url}')`; };
         } 
         
@@ -684,7 +722,7 @@
     }
 
     function bindCardEvents(c) {
-        // YOUR CARD HOVER FOR INSPECTOR
+        // THE GIANT INSPECTOR OVERLAY FOR YOUR CARDS
         c.onmouseenter = () => { 
             hovered = c; 
             if(!c.classList.contains('card-back') || isDevMode) {
@@ -845,11 +883,15 @@
         if(isDevMode) { updatePowerDisplay(); return; } 
         organizeDon(); // Keep don perfectly locked before broadcast
         updatePowerDisplay();
+        
+        let currentMat = document.getElementById('my-board').style.backgroundImage;
+        let cleanPlaymatUrl = currentMat ? currentMat.replace(/(url\(|\)|"|')/g, '') : 'https://i.imgur.com/SSN1DUI.jpeg';
+
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), frozenUntil: c.dataset.frozenUntil, noRestand: c.dataset.noRestand }));
         socket.emit('board_update', { 
             deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, 
             field, handCount: document.querySelectorAll('#hand-bar .card').length,
-            playmat: document.getElementById('my-board').style.backgroundImage.slice(5, -2) 
+            playmat: cleanPlaymatUrl
         }); 
         refreshStats();
     }
@@ -858,13 +900,22 @@
         let oppLeaderUrl = "";
         s.field.forEach(d => { if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url; });
         
+        const oppBoard = document.getElementById('opp-board');
+        let oppMat = s.playmat || 'https://i.imgur.com/SSN1DUI.jpeg';
+
         // Opponent Franky dynamic stage & override check
         if(CARD_DB[oppLeaderUrl]?.name === "Franky") {
             document.getElementById('opp-stage-zone').classList.add('franky-active');
-            document.getElementById('opp-board').style.backgroundImage = "url('https://i.imgur.com/SSN1DUI.jpeg')"; 
+            oppMat = "https://i.imgur.com/SSN1DUI.jpeg"; 
         } else {
             document.getElementById('opp-stage-zone').classList.remove('franky-active');
-            if(s.playmat) document.getElementById('opp-board').style.backgroundImage = `url('${s.playmat}')`;
+        }
+
+        oppBoard.style.backgroundImage = `url('${oppMat}')`;
+        if (oppMat.includes('WjiUDr0')) {
+            oppBoard.classList.add('mat-white');
+        } else {
+            oppBoard.classList.remove('mat-white');
         }
 
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
