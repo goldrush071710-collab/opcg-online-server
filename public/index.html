@@ -183,12 +183,14 @@
         #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;}
         #context-menu div:hover { background: var(--op-blue); }
 
-        /* FIX: Mulligan visibility overlay sits at the top to expose the hand! */
+       /* FIX: Fully transparent, click-through overlay so you can inspect your hand during Mulligan! */
         #custom-modal-overlay, #sync-overlay { 
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999999; 
-            justify-content:flex-start; align-items:center; padding-top: 15vh; flex-direction:column; backdrop-filter: blur(3px);
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.1); z-index:9999999; 
+            justify-content:flex-start; align-items:center; padding-top: 5vh; flex-direction:column; pointer-events: none;
         }
-        #custom-modal-box { background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9);}
+        #custom-modal-box { 
+            pointer-events: auto; background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+        }
         #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px; line-height: 1.4;}
         #custom-modal-input { width:80%; padding:12px; margin-bottom:20px; text-align:center; background:rgba(0,0,0,0.6); color:#fff; border:1px solid var(--op-blue); font-size: 16px; border-radius: 6px;}
         .modal-btn { flex:1; padding:12px; font-size:14px; font-weight:bold; border-radius:6px; border:none; cursor:pointer; text-transform:uppercase; transition:0.2s;}
@@ -1625,3 +1627,4 @@
 </script>
 </body>
 </html>
+
