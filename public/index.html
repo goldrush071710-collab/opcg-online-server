@@ -2,18 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Stable Tabletop</title>
+    <title>OPCG Master Engine - Precision Tabletop</title>
     <style>
         :root { 
             /* BIG HAND CARDS */
             --hand-card-h: 15vh; 
             --hand-card-w: calc(var(--hand-card-h) * 0.71); 
             
-            /* BOARD CARDS (Synced perfectly to playmat box sizes) */
+            /* GLOBAL BOARD CARD SIZE (Controlled by Align Tool) */
             --board-card-w: 11.5%; 
             
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
+
+            /* DYNAMIC ALIGNMENT COORDINATES */
+            --lf-t: 6%; --lf-l: 4%; --lf-w: 11.5%; --lf-h: 60%;
+            --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%;
+            --ld-t: 40%; --ld-l: 47.8%;
+            --st-t: 40%; --st-l: 66%;
+            --dk-t: 40%; --dk-l: 84%;
+            --tr-t: 73%; --tr-l: 84%;
+            --dd-t: 73%; --dd-l: 4.5%;
+            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%;
         }
         
         /* THE WOOD TABLE */
@@ -35,7 +45,6 @@
             z-index: 100; box-sizing: border-box;
         }
         
-        /* Widened the left column slightly to accommodate the scrolling hand better */
         #left-col { width: 360px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
         #right-col { width: 330px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
@@ -50,44 +59,47 @@
             background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); 
         }
         
-        /* Dark overlay so cards pop against bright mats */
         .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
         
-        /* Invisible Hitboxes (Relies purely on exact absolute positioning over the art) */
-        .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
+        /* DEFAULT SUBTLE ZONES */
+        .slot, .flex-zone { 
+            position: absolute; z-index: 1; display: flex; box-sizing: border-box; 
+            border-radius: 8px; transition: all 0.2s ease;
+        }
         .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
         .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
         /* ========================================================
-           LAYOUT 1: STANDARD ANIME MATS (Yellow, Nami, Luffy, etc) 
+           DEV MODE VISIBILITY LIGHTS! (Triggered by 717 Code)
            ======================================================== */
-        .life-zone { top: 6%; left: 4%; width: 11.5%; height: 60%; align-items: flex-start; justify-content: flex-start; }
-        .char-zone { top: 5%; left: 20%; width: 62%; height: 28%; padding-left: 0; }
-        
-        .leader-zone { top: 40%; left: 47.8%; width: var(--board-card-w); aspect-ratio: 71/100; }
-        .stage-zone { top: 40%; left: 66%; width: var(--board-card-w); aspect-ratio: 71/100; }
-        
-        .drop-deck { top: 40%; left: 84%; width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
-        
-        /* Trash box completely invisible! */
-        .drop-trash { top: 73%; left: 84%; width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
-        
-        .don-deck { top: 73%; left: 4.5%; width: var(--board-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
-        .don-zone { top: 73%; left: 20%; width: 62%; height: 28%; align-items: flex-start; justify-content: flex-start; }
+        body.align-mode-active .slot, 
+        body.align-mode-active .flex-zone {
+            background-color: rgba(52, 152, 219, 0.3) !important; 
+            border: 2px dashed var(--op-gold) !important;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
+        }
 
-        /* ========================================================
-           LAYOUT 2: WHITE PLAIN MAT OVERRIDES 
-           ======================================================== */
-        .mat-white .life-zone { top: 15%; left: 5%; }
-        .mat-white .char-zone { top: 6%; left: 22%; width: 60%; }
-        .mat-white .leader-zone { top: 42%; left: 46%; }
-        .mat-white .stage-zone { top: 42%; left: 65%; }
-        .mat-white .drop-deck { top: 38%; left: 83%; }
-        .mat-white .don-deck { top: 74%; left: 5%; }
-        .mat-white .don-zone { top: 74%; left: 22%; width: 58%; }
-        .mat-white .drop-trash { top: 74%; left: 83%; }
-
+        /* HIGHLIGHTS THE SPECIFIC ZONE YOU ARE CURRENTLY MOVING */
+        body.align-mode-active .zone-is-selected {
+            background-color: rgba(231, 76, 60, 0.5) !important;
+            border: 3px solid var(--op-red) !important;
+            box-shadow: 0 0 20px var(--op-red) !important;
+            z-index: 1000 !important;
+        }
         /* ======================================================== */
+
+        /* DYNAMIC PLACEMENT (Driven by CSS Variables) */
+        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
+        .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
+        
+        /* Single slots are PERMANENTLY locked to var(--board-card-w) */
+        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--board-card-w); aspect-ratio: 71/100; }
+        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--board-card-w); aspect-ratio: 71/100; }
+        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
+        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
+        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
+        
+        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
 
         /* PERFECT FRANKY STAGE DIAGONAL STACK */
         .stage-zone.franky-active .card {
@@ -149,7 +161,6 @@
         
         /* FIX: NEW HORIZONTAL SCROLLING SINGLE-ROW HAND */
         #hand-bar { height: 26vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 10px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
-        /* Custom sleek scrollbar for the hand */
         #hand-bar::-webkit-scrollbar { height: 8px; }
         #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
         #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
@@ -184,6 +195,12 @@
         
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
+
+        /* THE DEV ALIGNMENT TOOL UI */
+        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 320px; color: white;}
+        #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
+        .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
+        .align-slider { width: 150px; cursor: pointer;}
 
         /* TRANSPARENT FLOATING SEARCH MODAL */
         #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; }
@@ -290,6 +307,41 @@
     </div>
 </div>
 
+<div id="align-tool">
+    <h3>ALIGNMENT TOOL</h3>
+    
+    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
+        <span style="color:var(--op-gold);">Card Scale %:</span> 
+        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateCardScale(this.value)"> 
+        <span id="val-card-w" style="width:40px; text-align:right;"></span>
+    </div>
+
+    <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
+        <option value="ld">Leader Area</option>
+        <option value="st">Stage Area</option>
+        <option value="dk">Deck Area</option>
+        <option value="tr">Trash Area</option>
+        <option value="dd">DON!! Deck</option>
+        <option value="ch">Character Row</option>
+        <option value="lf">Life Column</option>
+        <option value="dz">DON!! Area</option>
+    </select>
+
+    <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
+    
+    <div id="width-height-controls">
+        <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
+        <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+    </div>
+    
+    <div style="margin-top:20px; display:flex; gap:5px;">
+        <button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
+        <button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
+        <button onclick="closeAlignTool()" style="flex:1;">HIDE</button>
+    </div>
+</div>
+
 <div id="home-screen">
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
@@ -329,6 +381,8 @@
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
+
+    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
@@ -1372,7 +1426,7 @@
 
     function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
     
-    // FIX: Left aligned life cards snapping perfectly to the box edge!
+    // FIX: Life cards anchor perfectly flush to the Left Edge of the box!
     function updateLifePositions() { 
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
         lifeCards.forEach((c, i) => { 
