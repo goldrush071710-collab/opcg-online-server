@@ -5,7 +5,10 @@
     <title>OPCG Master Engine - Precision Tabletop</title>
     <style>
         :root { 
-            --card-w: 8.8%; /* Fully responsive card width relative to playmat */
+            /* UPSCALED CARD SIZES */
+            --card-h: 15vh; --card-w: calc(var(--card-h) * 0.71); 
+            --leader-h: 16.5vh; --leader-w: calc(var(--leader-h) * 0.71); 
+            --don-h: var(--card-h); --don-w: var(--card-w); 
             --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
         }
@@ -30,63 +33,51 @@
         }
         
         /* 3-COLUMN TABLETOP LAYOUT */
-        #left-col { width: 320px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
-        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 10px; overflow: hidden; position: relative; }
-        #right-col { width: 320px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
+        #left-col { width: 350px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
+        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
+        #right-col { width: 350px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
         /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
-            aspect-ratio: 16 / 9; 
-            width: 100%; max-width: 950px; max-height: 48vh;
+            aspect-ratio: 24 / 14; 
+            width: 100%; max-width: 1050px; max-height: 48vh;
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
-            border-radius: 10px; border: 2px solid #111; 
+            border-radius: 10px; border: 2px solid #000; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
-            background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); /* Default Yellow Mat */
+            background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); 
+            overflow: hidden;
         }
         
         /* Dark overlay so cards pop against bright mats */
-        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
+        .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; }
         
         /* Invisible Hitboxes (Relies purely on exact absolute positioning over the art) */
         .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; }
-        .slot { flex-direction: column; align-items: center; justify-content: center; }
-        .flex-zone { flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+        .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
+        .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
-        /* ========================================================
-           LAYOUT 1: STANDARD ANIME MATS (Yellow, Nami, Luffy, etc) 
-           ======================================================== */
-        .life-zone { top: 6%; left: 4%; width: 9%; height: 60%; align-items: flex-start; justify-content: flex-start; }
-        .char-zone { top: 4%; left: 21%; width: 58%; height: 25%; padding-left: 0; }
+        /* EXACT COORDINATES MATCHING THE PRINTED PLAYMAT BOXES */
+        .life-zone { top: 4%; left: 3%; width: 12%; height: 55%; align-items: center; padding-top: 10px; }
+        .char-zone { top: 4%; left: 18.5%; width: 78%; height: var(--card-h); padding-left: 0; }
         
-        .leader-zone { top: 38%; left: 41.5%; width: var(--card-w); aspect-ratio: 71/100; }
-        .stage-zone { top: 38%; left: 56.5%; width: var(--card-w); aspect-ratio: 71/100; }
+        .leader-zone { top: 37%; left: 47.5%; width: var(--leader-w); height: var(--leader-h); }
+        .stage-zone { top: 37%; left: 64.5%; width: var(--card-w); height: var(--card-h); }
+        .drop-deck { top: 37%; left: 81.5%; width: var(--card-w); height: var(--card-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
         
-        .drop-deck { top: 37%; right: 4.5%; width: var(--card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent;}
-        .drop-trash { bottom: 6%; right: 4.5%; width: var(--card-w); aspect-ratio: 71/100; background-size: 100% 100%; border-radius: 6px; background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+        .don-deck { bottom: 4%; left: 3.5%; width: var(--card-w); height: var(--card-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
+        .don-zone { bottom: 4%; left: 18.5%; width: 60%; height: var(--card-h); }
         
-        .don-deck { bottom: 6%; left: 4%; width: var(--card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); color: transparent; }
-        .don-zone { bottom: 4%; left: 21%; width: 58%; height: 25%; }
-
-        /* ========================================================
-           LAYOUT 2: WHITE PLAIN MAT OVERRIDES 
-           ======================================================== */
-        .mat-white .life-zone { top: 22%; left: 5%; }
-        .mat-white .char-zone { top: 5%; left: 23%; width: 54%; }
-        .mat-white .leader-zone { top: 36%; left: 46%; }
-        .mat-white .stage-zone { top: 36%; left: 63.5%; }
-        .mat-white .drop-deck { top: 35%; right: 6.5%; }
-        .mat-white .don-deck { bottom: 6%; left: 6.5%; }
-        .mat-white .don-zone { bottom: 6%; left: 23%; width: 54%; }
-        .mat-white .drop-trash { bottom: 7%; right: 6.5%; }
-
-        /* ======================================================== */
+        /* Removed Gray Trash Box completely! */
+        .drop-trash { bottom: 4%; left: 81.5%; width: var(--card-w); height: var(--card-h); background: transparent; border: none; box-shadow: none; }
 
         /* FRANKY STAGE FAN-OUT EFFECT */
         .stage-zone.franky-active {
-            width: 25%; display: flex; flex-direction: row; justify-content: center; align-items: center; z-index: 40;
+            width: var(--card-w); display: flex; flex-direction: row; justify-content: center; align-items: center; z-index: 40;
         }
         .stage-zone.franky-active .card {
-            position: relative !important; margin-left: -55%; box-shadow: -4px 0 12px rgba(0,0,0,0.9);
+            position: relative !important; 
+            margin-left: -4.5vw; /* Severe negative margin squeezes them all into the single box */
+            box-shadow: -4px 0 12px rgba(0,0,0,0.9);
         }
         .stage-zone.franky-active .card:first-child { margin-left: 0; }
         .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: scale(1.1) translateY(-15px); }
@@ -97,12 +88,16 @@
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
         /* CARDS */
-        .card { width: var(--card-w); aspect-ratio: 71/100; height: auto; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
+        .card { width: var(--card-w); height: var(--card-h); position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
-        .flex-zone .card, #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
+        #leader-zone .card, #opp-leader-zone .card { width: var(--leader-w); height: var(--leader-h); }
+        
+        /* DON CSS OVERRIDE FIX: Forces normal cards to stay side-by-side, but allows DONs to float absolutely underneath! */
+        .flex-zone .card:not([data-is-don="true"]), #hand-bar .card { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
+        
         .life-zone .card { position: absolute !important; left: 50% !important; transform: translateX(-50%); z-index: 20;}
-        .card[data-is-don="true"] { cursor: pointer !important; }
-        .card.rested { transform: rotate(90deg); filter: brightness(0.6); }
+        .card[data-is-don="true"] { width: var(--don-w); height: var(--don-h); cursor: pointer !important; }
+        .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
         .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
         
         .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; }
@@ -126,12 +121,12 @@
 
         #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
         #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; color: #ddd; }
-        #chat-form { display: flex; height: 30px; border-top: 1px solid rgba(255,255,255,0.1); }
-        #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 12px; outline: none;}
-        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 10px; font-size: 12px; }
+        #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); }
+        #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;}
+        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 10px; font-size: 13px; }
 
-        #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 14px; text-shadow: 0 2px 4px #000;}
-        #hand-bar { height: 28vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 10px; gap: 8px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
+        #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
+        #hand-bar { height: 32vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-content: flex-start; justify-content: center; padding: 15px; gap: 10px; overflow-y: auto; flex-wrap: wrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
 
         /* RIGHT COLUMN: INSPECTOR & END TURN */
         #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
@@ -162,8 +157,8 @@
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
         /* TRANSPARENT FLOATING SEARCH MODAL */
-        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.85); backdrop-filter: blur(15px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(3px); z-index: 99998; justify-content: center; align-items: center; }
+        #search-modal-container { background: rgba(20,20,25,0.85); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -619,13 +614,8 @@
         }
 
         board.style.backgroundImage = `url('${chosenMat}')`;
-        
-        // Triggers the special coordinate system if using the White mat
-        if (chosenMat.includes('WjiUDr0')) {
-            board.classList.add('mat-white');
-        } else {
-            board.classList.remove('mat-white');
-        }
+        if (chosenMat.includes('WjiUDr0')) board.classList.add('mat-white');
+        else board.classList.remove('mat-white');
     }
 
     function startDevMode() { 
@@ -927,11 +917,11 @@
                 if(d.rested) c.classList.add('rested'); if(d.frozen) c.classList.add('frozen'); if(d.frozenUntil) c.dataset.frozenUntil = d.frozenUntil; if(d.noRestand === "true") c.dataset.noRestand = "true"; if(d.noRestand) c.classList.add('no-restand'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
                 c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; 
                 c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
-                z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '50%'; c.style.transform = 'translateX(-50%)'; c.style.top = (z.children.length * 12) + 'px'; } 
+                z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '50%'; c.style.transform = 'translateX(-50%)'; c.style.top = (z.children.length * 15) + 'px'; } 
             }
         });
         
-        const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop - 20 - (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', 10 - idx, 'important'); d.style.opacity = "1"; } });
+        const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop - 20 - (idx * 20)) + 'px', 'important'); d.style.setProperty('z-index', 10 - idx, 'important'); d.style.opacity = "1"; } });
         document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
@@ -939,6 +929,7 @@
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
 
         const donZone = document.getElementById('don-zone');
+        // GHOST DON FIX: Finds ALL Dons on your side (even if they slipped) and resets them.
         document.querySelectorAll('.card[data-is-don="true"]').forEach(don => {
             if (don.id && don.id.startsWith('opp-')) return;
             don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
@@ -1366,9 +1357,19 @@
                     parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; 
                     const idx = parentCounts[d.dataset.parentId] - 1; 
                     if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
-                    d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', (10 - idx).toString(), 'important'); d.style.opacity = "1"; 
+                    
+                    // PERFECT ABSOLUTE DON SNAPPING
+                    d.style.setProperty('position', 'absolute', 'important'); 
+                    d.style.setProperty('left', p.offsetLeft + 'px', 'important'); 
+                    d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); 
+                    d.style.setProperty('z-index', (10 - idx).toString(), 'important'); 
+                    d.style.opacity = "1"; 
                 } 
-            } else { document.getElementById('don-zone').appendChild(d); d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index'); d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; } 
+            } else { 
+                document.getElementById('don-zone').appendChild(d); 
+                d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index'); 
+                d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; 
+            } 
         }); 
     }
     
