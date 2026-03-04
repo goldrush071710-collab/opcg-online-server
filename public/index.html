@@ -258,6 +258,14 @@
         
         .color-dots { display:flex; gap:6px; margin-bottom:10px; justify-content:center; } 
         .color-dot { width:16px; height:16px; border-radius:50%; border:1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        /* REPLACEMENT ZOOM OVERLAY CSS (Z-INDEX FIX) */
+        #zoom-overlay { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            z-index: 9999999 !important; /* Forces it over the Deck Builder */
+            justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(5px); 
+        }
+        #zoom-img { max-height: 85vh; max-width: 90vw; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,1); }
     </style>
 </head>
 <body>
@@ -267,7 +275,7 @@
     <ul style="line-height: 1.6;">
         <li><strong>New Leaders:</strong> Vinsmoke Judge (B/B), Morgans (R), Magellan (P)</li>
         <li><strong>New Engine:</strong> The Black/Blue GERMA 66 System</li>
-        <li><strong>Fixes:</strong> Deck builder right-click zoom restored, Franky Stage Zone added.</li>
+        <li><strong>Fixes:</strong> Deck builder zoom restored, Field zoom removed (use hover), Franky Zone added.</li>
     </ul>
     <button onclick="document.getElementById('news-modal').style.display='none'" style="margin-top: 15px; padding: 10px 20px; background: #0055ff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Acknowledge</button>
 </div>
@@ -529,7 +537,12 @@
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io();
+    window.addEventListener('DOMContentLoaded', () => {
+        const newsModal = document.getElementById('news-modal');
+        if(newsModal) newsModal.style.display = 'block';
+    });
+
+    const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
     let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
@@ -559,7 +572,6 @@
     let savedAlign = JSON.parse(localStorage.getItem('opcg_align') || "{}");
     for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
 
-    // Listens to the server. If anyone (like you) updates the alignment, it instantly applies it to everyone!
     socket.on('global_align_update', (alignData) => {
         if (alignData && Object.keys(alignData).length > 0) {
             savedAlign = alignData;
@@ -572,7 +584,7 @@
         showModal("Enter Dev Access Code:", "prompt", (val) => {
             if (val === "717") {
                 document.getElementById('align-tool').style.display = 'block';
-                document.body.classList.add('align-mode-active'); // TURN ON NEON LIGHTS
+                document.body.classList.add('align-mode-active'); 
                 
                 if(!isDevMode) {
                     activeLobbyDeckUrlArray = ["https://i.imgur.com/TwmysAX.png", DON_URL, DON_URL, DON_URL];
@@ -585,11 +597,10 @@
 
     window.closeAlignTool = function() {
         document.getElementById('align-tool').style.display = 'none';
-        document.body.classList.remove('align-mode-active'); // TURN OFF NEON LIGHTS
+        document.body.classList.remove('align-mode-active');
         document.querySelectorAll('.zone-is-selected').forEach(el => el.classList.remove('zone-is-selected'));
     };
 
-    // New Global Size Updater
     window.updateGlobalSize = function(prop, val) {
         root.style.setProperty(`--${prop}`, val + '%');
         if(prop === 'board-card-w') document.getElementById('val-card-w').innerText = val + '%';
@@ -600,7 +611,6 @@
         const z = document.getElementById('align-zone').value;
         const styles = getComputedStyle(root);
         
-        // Load Global Scales
         const boardW = parseFloat(styles.getPropertyValue('--board-card-w')) || 11.5;
         const donW = parseFloat(styles.getPropertyValue('--don-card-w')) || 11.5;
         document.getElementById('slider-card-w').value = boardW;
@@ -608,7 +618,6 @@
         document.getElementById('slider-don-w').value = donW;
         document.getElementById('val-don-w').innerText = donW + '%';
 
-        // Load specific X/Y/W/H for the box
         document.getElementById('slider-t').value = parseFloat(styles.getPropertyValue(`--${z}-t`)) || 0;
         document.getElementById('slider-l').value = parseFloat(styles.getPropertyValue(`--${z}-l`)) || 0;
         document.getElementById('val-t').innerText = document.getElementById('slider-t').value + '%';
@@ -619,7 +628,6 @@
         document.getElementById('val-w').innerText = document.getElementById('slider-w').value + '%';
         document.getElementById('val-h').innerText = document.getElementById('slider-h').value + '%';
 
-        // Smart Hide/Show for Inner Card Size (Only for Character and Don Zones)
         const icControl = document.getElementById('inner-card-control');
         const whControls = document.getElementById('width-height-controls');
         
@@ -637,7 +645,6 @@
             icControl.style.display = 'none';
         }
 
-        // Target the specific active zone for the Neon Red highlight
         document.querySelectorAll('.zone-is-selected').forEach(el => el.classList.remove('zone-is-selected'));
         let targetId = '';
         if(z==='lf') targetId='life-zone';
@@ -659,15 +666,13 @@
     };
 
     window.saveAlign = function() {
-        // Save Globals
         const bw = root.style.getPropertyValue('--board-card-w');
         if (bw) savedAlign['--board-card-w'] = bw;
         const dw = root.style.getPropertyValue('--don-card-w');
         if (dw) savedAlign['--don-card-w'] = dw;
 
-        // Save Zones
         const zones = ['lf', 'ch', 'ld', 'st', 'fz', 'dk', 'tr', 'dd', 'dz'];
-        const props = ['t', 'l', 'w', 'h', 'cw']; // Includes Inner Card Size
+        const props = ['t', 'l', 'w', 'h', 'cw'];
         zones.forEach(z => {
             props.forEach(p => {
                 const varName = `--${z}-${p}`;
@@ -723,27 +728,26 @@
         "https://i.imgur.com/PxaLb4K.jpeg": { name: "Dracule Mihawk (8c)", type: "Character", color: ["Green"], cost: 8, power: 8000, counter: 0, traits: ["Seven Warlords", "Muggy Kingdom"], blocker: true, hasOnPlay: true },
         "https://i.imgur.com/3L6BkzS.jpeg": { name: "Dracule Mihawk (9c)", type: "Character", color: ["Green"], cost: 9, power: 10000, counter: 0, traits: ["Seven Warlords"] },
         "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true },
-        "https://imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
-        "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
-        "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true },
+        "https://i.imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
+        "https://i.imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
+        "https://i.imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true },
 
-     // --- SHADOWS OF THE UNDERWORLD (SOTU ENGINE) ---
-        "PLACEHOLDER_URL_JUDGE_LEADER": { name: "Vinsmoke Judge", type: "Leader", color: ["Blue", "Black"], cost: 0, power: 5000, life: 5, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
-        "PLACEHOLDER_URL_MORGANS_LEADER": { name: "Morgans", type: "Leader", color: ["Red"], cost: 0, power: 5000, life: 5, traits: ["Big News"] },
-        "PLACEHOLDER_URL_MAGELLAN_LEADER": { name: "Magellan", type: "Leader", color: ["Purple"], cost: 0, power: 5000, life: 5, traits: ["Impel Down"] },
+        // --- SHADOWS OF THE UNDERWORLD (SOTU ENGINE) ---
+        "PLACEHOLDER_JUDGE_LEADER": { name: "Vinsmoke Judge", type: "Leader", color: ["Blue", "Black"], cost: 0, power: 5000, life: 5, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
+        "PLACEHOLDER_MORGANS_LEADER": { name: "Morgans", type: "Leader", color: ["Red"], cost: 0, power: 5000, life: 5, traits: ["Big News"] },
+        "PLACEHOLDER_MAGELLAN_LEADER": { name: "Magellan", type: "Leader", color: ["Purple"], cost: 0, power: 5000, life: 5, traits: ["Impel Down"] },
         
-        "PLACEHOLDER_URL_SORA_1C": { name: "Vinsmoke Sora", type: "Character", color: ["Blue"], cost: 1, power: 0, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"] },
-        "PLACEHOLDER_URL_YONJI_2C": { name: "Vinsmoke Yonji", type: "Character", color: ["Black"], cost: 2, power: 0, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "PLACEHOLDER_SORA_1C": { name: "Vinsmoke Sora", type: "Character", color: ["Blue"], cost: 1, power: 0, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "PLACEHOLDER_YONJI_2C": { name: "Vinsmoke Yonji", type: "Character", color: ["Black"], cost: 2, power: 0, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"] },
         "https://i.imgur.com/9a7nnEM.png": { name: "Vinsmoke Niji", type: "Character", color: ["Black"], cost: 5, power: 6000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
         "https://i.imgur.com/FM0eSD9.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 3, power: 4000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true, hasMain: true },
-        "PLACEHOLDER_URL_YONJI_9C": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
+        "https://i.imgur.com/OkT3RLn.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
         "https://i.imgur.com/eWSBnwt.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Black"], cost: 7, power: 8000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
-        "PLACEHOLDER_URL_YONJI_4C": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
+        "https://i.imgur.com/eYUoSKo.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
         "https://i.imgur.com/YNA0XRz.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
         "https://i.imgur.com/T0HV6Mm.png": { name: "Vinsmoke Judge", type: "Character", color: ["Blue"], cost: 6, power: 8000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
         "https://i.imgur.com/cUiteNd.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 7, power: 7000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true }
     };
-
     // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f", "Blue":"#3498db", "Black":"#34495e"}; return map[c] || "#fff"; }
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
@@ -859,6 +863,7 @@
         const sel = document.getElementById('playmat-selector');
         return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg';
     }
+
     function prepActiveDeck() {
         if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false;
         const d = savedDecks[activeDeckIndex];
@@ -965,8 +970,7 @@
             bindCardEvents(c); 
         } else { 
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
-            c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
-            c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
+            c.oncontextmenu = (e) => { e.preventDefault(); }; 
             c.onmouseenter = () => { if(!c.classList.contains('card-back')) document.getElementById('right-col-inspector').style.backgroundImage = `url('${c.dataset.url}')`; };
         } 
         
@@ -1031,13 +1035,10 @@
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
         
-        c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
-        
         c.oncontextmenu = (e) => { 
             e.preventDefault(); if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; rightClickedCard = c; const db = CARD_DB[c.dataset.url]; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             
             let h = ""; 
-            if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { h += `<div onclick="document.getElementById('zoom-img').src='${c.dataset.url}'; document.getElementById('zoom-overlay').style.display='flex'; hideMenu();">🔍 Inspect</div>`; }
             if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
             
             let canAttack = false; 
@@ -1182,6 +1183,7 @@
         oppBoard.style.backgroundImage = `url('${oppMat}')`;
         if (oppMat.includes('WjiUDr0')) oppBoard.classList.add('mat-white');
         else oppBoard.classList.remove('mat-white');
+
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
             // Target routing includes the new franky zone
@@ -1394,9 +1396,6 @@
             showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => {
                 openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora");
             });
-        }
-        if (cardName === "Vinsmoke Yonji") {
-            // Need to check cost, but name match is a good start if we pass the whole DB object instead
         }
     }
 
@@ -1877,4 +1876,3 @@
 </script>
 </body>
 </html>
-
