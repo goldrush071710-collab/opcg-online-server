@@ -262,6 +262,15 @@
 </head>
 <body>
 
+<div id="news-modal" style="display: none; position: fixed; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(10, 10, 10, 0.95); color: #fff; padding: 25px; border: 2px solid #0055ff; box-shadow: 0 0 20px rgba(0,85,255,0.5); z-index: 9999; border-radius: 10px; max-width: 500px; font-family: sans-serif;">
+    <h2 style="color: #00aaff; margin-top: 0;">📰 Big News! Shadows of the Underworld is LIVE!</h2>
+    <ul style="line-height: 1.6;">
+        <li><strong>New Leaders:</strong> Vinsmoke Judge (B/B), Morgans (R), Magellan (P)</li>
+        <li><strong>New Engine:</strong> The Black/Blue GERMA 66 System</li>
+        <li><strong>Fixes:</strong> Deck builder right-click zoom restored, Franky Stage Zone added.</li>
+    </ul>
+    <button onclick="document.getElementById('news-modal').style.display='none'" style="margin-top: 15px; padding: 10px 20px; background: #0055ff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Acknowledge</button>
+</div>
 <div id="sync-overlay">WAITING FOR OPPONENT...</div>
 <div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
@@ -520,7 +529,7 @@
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io(); 
+    const socket = io();
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
     
     let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
@@ -538,6 +547,12 @@
     window.sanjiUsedThisTurn = false; 
     window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
     window.tempSearchCallback = null; window.locked7Plus = false; window.stussyUsedThisTurn = false;
+
+    // --- SOTU GLOBAL STATE ---
+    window.sotuTurnState = {
+        vinsmokeCostDiscount: 0,
+        judgeGlobalPowerBuff: 0
+    };
 
     // --- GLOBAL ALIGNMENT TOOL LOGIC ---
     const root = document.documentElement;
@@ -708,15 +723,29 @@
         "https://i.imgur.com/PxaLb4K.jpeg": { name: "Dracule Mihawk (8c)", type: "Character", color: ["Green"], cost: 8, power: 8000, counter: 0, traits: ["Seven Warlords", "Muggy Kingdom"], blocker: true, hasOnPlay: true },
         "https://i.imgur.com/3L6BkzS.jpeg": { name: "Dracule Mihawk (9c)", type: "Character", color: ["Green"], cost: 9, power: 10000, counter: 0, traits: ["Seven Warlords"] },
         "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true },
-        
-        // --- NEW CARDS ---
         "https://imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
         "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
-        "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
+        "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true },
+
+        // --- SHADOWS OF THE UNDERWORLD (SOTU ENGINE) ---
+        "SotU-L01": { name: "Vinsmoke Judge", type: "Leader", color: ["Blue", "Black"], cost: 0, power: 5000, life: 5, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
+        "SotU-L02": { name: "Morgans", type: "Leader", color: ["Red"], cost: 0, power: 5000, life: 5, traits: ["Big News"] },
+        "SotU-L03": { name: "Magellan", type: "Leader", color: ["Purple"], cost: 0, power: 5000, life: 5, traits: ["Impel Down"] },
+        
+        "SotU-C01": { name: "Vinsmoke Sora", type: "Character", color: ["Blue"], cost: 1, power: 0, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "SotU-C02": { name: "Vinsmoke Yonji", type: "Character", color: ["Black"], cost: 2, power: 0, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "SotU-C03": { name: "Vinsmoke Niji", type: "Character", color: ["Black"], cost: 5, power: 6000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
+        "SotU-C04": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 3, power: 4000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true, hasMain: true },
+        "SotU-C05": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
+        "SotU-C06": { name: "Vinsmoke Reiju", type: "Character", color: ["Black"], cost: 7, power: 8000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
+        "SotU-C07": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
+        "SotU-C08": { name: "Vinsmoke Reiju", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
+        "SotU-C09": { name: "Vinsmoke Judge", type: "Character", color: ["Blue"], cost: 6, power: 8000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
+        "SotU-C10": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 7, power: 7000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true }
     };
 
     // --- DECK BUILDER LOGIC ---
-    function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f"}; return map[c] || "#fff"; }
+    function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f", "Blue":"#3498db", "Black":"#34495e"}; return map[c] || "#fff"; }
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
     function clearLeader() { editingDeck.leader = null; renderDeckList(); updateDeckBuilderPool(); }
     function updateDeckBuilderPool() { const pool = document.getElementById('db-pool'); pool.innerHTML = ''; const leaderColors = editingDeck.leader ? CARD_DB[editingDeck.leader].color : null; Object.keys(CARD_DB).forEach(url => { const db = CARD_DB[url]; if(db.type === 'Leader') { createPoolItem(url, pool); } else if (leaderColors && db.color.some(c => leaderColors.includes(c))) { createPoolItem(url, pool); } else if (!leaderColors) { createPoolItem(url, pool); } }); }
@@ -830,7 +859,6 @@
         const sel = document.getElementById('playmat-selector');
         return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg';
     }
-
     function prepActiveDeck() {
         if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false;
         const d = savedDecks[activeDeckIndex];
@@ -851,6 +879,10 @@
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; window.locked7Plus = false; window.stussyUsedThisTurn = false;
         
+        // --- SOTU STATE RESET ---
+        window.sotuTurnState.vinsmokeCostDiscount = 0;
+        window.sotuTurnState.judgeGlobalPowerBuff = 0;
+
         setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
 
         document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
@@ -887,6 +919,10 @@
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; window.locked7Plus = false; window.stussyUsedThisTurn = false;
         
+        // --- SOTU STATE RESET ---
+        window.sotuTurnState.vinsmokeCostDiscount = 0;
+        window.sotuTurnState.judgeGlobalPowerBuff = 0;
+
         setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
 
         DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
@@ -1028,6 +1064,11 @@
                 if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
                 if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
                 if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+
+                // --- SOTU HOOKS (Activate Main) ---
+                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
+                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
+                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
             }
 
             if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
@@ -1044,6 +1085,13 @@
     function updatePowerDisplay() {
         let hasGenFranky = Array.from(document.querySelectorAll('#char-zone-front .card')).some(c => CARD_DB[c.dataset.url]?.name === "General Franky");
         const luffy = Array.from(document.querySelectorAll('#char-zone-front .card')).find(c => CARD_DB[c.dataset.url]?.name === "Monkey D. Luffy");
+        
+        // SOTU Passive Checks
+        let is4cYonjiProtected = false;
+        const myBoard = Array.from(document.querySelectorAll('#char-zone-front .card'));
+        if(myBoard.length > 0) {
+            is4cYonjiProtected = myBoard.every(c => CARD_DB[c.dataset.url]?.traits?.includes("GERMA 66"));
+        }
         
         document.querySelectorAll('.card').forEach(c => { 
             const db = CARD_DB[c.dataset.url]; 
@@ -1065,6 +1113,12 @@
             if(db.name === "Spandam") hasBlocker = true;
             if(blockerT) blockerT.style.display = (onField && hasBlocker) ? 'block' : 'none';
 
+            // SOTU 4c Yonji Protection Highlight
+            if(!isOppCard && db.name === "Vinsmoke Yonji" && db.cost === 4 && is4cYonjiProtected) {
+                c.style.boxShadow = "0 0 20px #3498db";
+                c.style.outline = "2px solid #3498db";
+            }
+
             if(db.power !== undefined) { 
                 let base = db.power; 
                 let attachedDon = document.querySelectorAll(`[data-parent-id="${c.id}"]`).length; 
@@ -1079,6 +1133,12 @@
                     if(window.rogerBuffActive && !isOppCard) passiveBoost += 2000; 
                     if(luffy && luffy.dataset.luffyBuff === "true" && !isOppCard) passiveBoost += 2000; 
                 } 
+                
+                // SOTU Passive Buffs
+                if(!isOppCard && window.sotuTurnState.judgeGlobalPowerBuff > 0 && db.traits?.includes("GERMA 66")) {
+                    passiveBoost += window.sotuTurnState.judgeGlobalPowerBuff;
+                }
+
                 let totalBoost = donBoost + temp + passiveBoost;
                 c.dataset.currentPower = base + totalBoost; 
                 
@@ -1122,7 +1182,6 @@
         oppBoard.style.backgroundImage = `url('${oppMat}')`;
         if (oppMat.includes('WjiUDr0')) oppBoard.classList.add('mat-white');
         else oppBoard.classList.remove('mat-white');
-
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
             // Target routing includes the new franky zone
@@ -1181,6 +1240,11 @@
 
     socket.on('turn_passed', () => {
         isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); window.sanjiUsedThisTurn = false; window.locked7Plus = false; window.stussyUsedThisTurn = false;
+        
+        // --- SOTU STATE RESET ON NEW TURN ---
+        window.sotuTurnState.vinsmokeCostDiscount = 0;
+        window.sotuTurnState.judgeGlobalPowerBuff = 0;
+
         if(window.rogerBuffActive && turnNum >= window.rogerBuffExpiresTurn) window.rogerBuffActive = false;
         showModal("It's your turn!", "alert", () => refreshPhase() );
     });
@@ -1244,6 +1308,20 @@
         else if(selectConfig.mode === 'hattori_buff') { const db = CARD_DB[card.dataset.url]; if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !db.name.includes('Rob Lucci')) { showModal("Select one of your Rob Lucci characters", "alert"); return; } }
         else if(selectConfig.mode === 'trash_for_play_char') { if(card.parentElement.id !== 'char-zone-front') { showModal("Select a Character on your Front Line.", "alert"); return; } }
         else if(selectConfig.mode === 'trash_for_play_stage') { if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone') { showModal("Select a Stage on your field.", "alert"); return; } }
+        
+        // --- SOTU HOOKS (Selection Modes) ---
+        else if(selectConfig.mode === 'sotu_cost_minus') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select an opponent Character or Leader.", "alert"); return; } }
+        else if(selectConfig.mode === 'sotu_trash_low_cost') { 
+            const db = CARD_DB[card.dataset.url]; 
+            const currentCost = parseInt(card.dataset.tempCost || db?.cost || 0);
+            if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select an opponent Character.", "alert"); return; } 
+            if(currentCost > selectConfig.maxCostTarget) { showModal(`Target cost must be ${selectConfig.maxCostTarget} or less (Currently ${currentCost}).`, "alert"); return; }
+        }
+        else if(selectConfig.mode === 'sotu_play_free') { 
+            const db = CARD_DB[card.dataset.url]; 
+            if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5) { showModal("Select a character Cost 5 or less from hand.", "alert"); return; } 
+            if(selectConfig.excludeNiji && db.name === "Vinsmoke Niji") { showModal("Cannot select Vinsmoke Niji.", "alert"); return; }
+        }
 
         selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
         
@@ -1281,6 +1359,83 @@
     window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
     window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
 
+    // --- SOTU ABILITY TRIGGERS ---
+    window.judgeMainEffect = function() { 
+        hideMenu(); const c = rightClickedCard;
+        startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => {
+            const trashedName = CARD_DB[cards[0].dataset.url]?.name;
+            moveToTrash(cards[0]);
+            window.sotuTurnState.judgeGlobalPowerBuff += 1000;
+            updatePowerDisplay(); saveState();
+            appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db");
+            if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand");
+        });
+    }
+
+    window.ichijiMainRamp = function() { 
+        hideMenu(); const c = rightClickedCard;
+        c.classList.add('rested');
+        window.sotuTurnState.vinsmokeCostDiscount = 2;
+        saveState();
+        appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db");
+    }
+
+    window.yonjiUnrest = function() { 
+        hideMenu(); const c = rightClickedCard;
+        c.classList.remove('rested');
+        c.dataset.hasRush = "true";
+        c.querySelector('.rush-tag').style.display='block';
+        updatePowerDisplay(); saveState();
+        appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db");
+    }
+
+    function executeSotuTrashTriggers(cardName, origZone) {
+        if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) {
+            showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => {
+                openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora");
+            });
+        }
+        if (cardName === "Vinsmoke Yonji") {
+            // Need to check cost, but name match is a good start if we pass the whole DB object instead
+        }
+    }
+
+    // --- MODIFIED moveToTrash TO CATCH SOTU ---
+    window.moveToTrash = function(c) {
+        if (!c) return;
+        const db = CARD_DB[c.dataset.url];
+        const origZone = c.parentElement.id;
+        TRASH_ARR.push(c.dataset.url); 
+        document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; 
+        c.remove(); 
+        saveState();
+
+        if (db && db.name === "Vinsmoke Sora") {
+            executeSotuTrashTriggers(db.name, origZone);
+        } else if (db && db.name === "Vinsmoke Yonji" && db.cost === 2 && origZone === "char-zone-front") {
+            showModal("Yonji Trashed! Give Opp Character/Leader -3 Cost?", "confirm", () => {
+                startSelection('sotu_cost_minus', 1, "Give -3 Cost", (targets) => {
+                    targets[0].dataset.tempCost = parseInt(targets[0].dataset.tempCost || CARD_DB[targets[0].dataset.url]?.cost || 0) - 3;
+                    appendChat("Yonji gave target -3 Cost!", "#9b59b6");
+                    if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets[0].id});
+                });
+            });
+        } else if (db && db.name === "Vinsmoke Yonji" && db.cost === 9 && origZone === "char-zone-front") {
+            showModal("Yonji (9c) Trashed! Play him rested from Trash?", "confirm", () => {
+                const trIdx = TRASH_ARR.findIndex(u => u === c.dataset.url);
+                if(trIdx !== -1) {
+                    const revived = createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'});
+                    revived.classList.add('rested');
+                    revived.dataset.turnPlayed = myTurnCount;
+                    saveState();
+                    appendChat("Yonji (9c) Revived Rested!", "#3498db");
+                    if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`;
+                    else document.getElementById('drop-trash').style.backgroundImage = 'none';
+                }
+            });
+        }
+    }
+
     // --- COMBAT SYSTEM ---
     function sSnakeEffect(c, onComplete) { 
         const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); 
@@ -1314,6 +1469,15 @@
         if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
         
+        // SOTU 9c Yonji debuff
+        if(db.name === "Vinsmoke Yonji" && db.cost === 9) {
+            if(c.dataset.turnPlayed == myTurnCount) {
+                c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000;
+                updatePowerDisplay();
+                appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c");
+            }
+        }
+
         if(db.name === "S-Snake") { sSnakeEffect(c, () => execAttackPhase(c)); return; }
         execAttackPhase(c);
     }
@@ -1362,6 +1526,7 @@
                 else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
                 else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
                 else if(data.status === 'minus_power') { myTarget.dataset.tempPower = parseInt(myTarget.dataset.tempPower||0) - data.amount; updatePowerDisplay(); appendChat("Your card lost " + data.amount + " power!", "#e74c3c"); }
+                else if(data.status === 'minus_cost') { myTarget.dataset.tempCost = parseInt(myTarget.dataset.tempCost || CARD_DB[myTarget.dataset.url]?.cost || 0) - data.amount; appendChat("Your card received -" + data.amount + " Cost!", "#9b59b6"); }
                 saveState(); 
             } 
         }
@@ -1473,7 +1638,24 @@
     }
 
     // --- PLAYING CARDS & EFFECTS ---
-    function playCardConfirm(c) { if(!isDevMode && !isMyTurn) return; const db = CARD_DB[c.dataset.url]; let cost = db.cost; const lifeCount = document.getElementById('life-zone').children.length; if(db.name==="Monkey D. Luffy" && lifeCount<=1) cost-=1; if (window.locked7Plus && cost >= 7 && db.type === 'Character') { showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(false, cost); }); }
+    function playCardConfirm(c) { 
+        if(!isDevMode && !isMyTurn) return; 
+        const db = CARD_DB[c.dataset.url]; 
+        
+        let cost = db.cost; 
+        
+        // SOTU Passive Vinsmoke Ramp
+        if(window.sotuTurnState.vinsmokeCostDiscount > 0 && db.traits?.includes("Vinsmoke Family")) {
+            cost = Math.max(0, cost - window.sotuTurnState.vinsmokeCostDiscount);
+        }
+
+        const lifeCount = document.getElementById('life-zone').children.length; 
+        if(db.name==="Monkey D. Luffy" && lifeCount<=1) cost-=1; 
+        
+        if (window.locked7Plus && cost >= 7 && db.type === 'Character') { showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } 
+        
+        showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(false, cost); }); 
+    }
     
     // THE FRANKY STAGE FIX!
     window.playCard = function(isFree = false, customCost = null) { 
@@ -1516,6 +1698,74 @@
     }
     
     function triggerOnPlay(c, db) {
+        // SOTU On Play Handlers
+        if (db.name === "Vinsmoke Niji" && db.cost === 5) {
+            const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : "";
+            if (leaderName === "Vinsmoke Judge") {
+                showModal("Activate Niji's On Play effect?", "confirm", () => {
+                    startSelection('sotu_cost_minus', 1, "Target opponent for -3 Cost", (targets1) => {
+                        targets1[0].dataset.tempCost = parseInt(targets1[0].dataset.tempCost || CARD_DB[targets1[0].dataset.url]?.cost || 0) - 3;
+                        if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets1[0].id});
+                        
+                        selectConfig = { maxCostTarget: 1 };
+                        startSelection('sotu_trash_low_cost', 1, "Trash an Opponent Character Cost 1 or 0", (targets2) => {
+                            if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')});
+                            else trashCard(targets2[0]);
+                            
+                            selectConfig = { excludeNiji: true };
+                            startSelection('sotu_play_free', 1, "Play 5c or less Character from hand", (targets3) => {
+                                rightClickedCard = targets3[0];
+                                window.playCard(true); // Plays free
+                                appendChat("Niji triggered full sequence!", "#f39c12");
+                            });
+                        }, () => { appendChat("Niji effect stopped after debuff.", "#ccc"); });
+                    }, () => { appendChat("Niji effect skipped.", "#ccc"); });
+                });
+            }
+        }
+        else if (db.name === "Vinsmoke Reiju" && db.cost === 7) {
+            showModal("Activate 7c Reiju On Play effect?", "confirm", () => {
+                startSelection('sotu_cost_minus', 2, "Target up to 2 for -3 Cost", (targets1) => {
+                    targets1.forEach(t => {
+                        t.dataset.tempCost = parseInt(t.dataset.tempCost || CARD_DB[t.dataset.url]?.cost || 0) - 3;
+                        if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: t.id});
+                    });
+                    
+                    selectConfig = { maxCostTarget: 4 };
+                    startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 4 or less", (targets2) => {
+                        if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')});
+                        else trashCard(targets2[0]);
+                        
+                        selectConfig = { maxCostTarget: 1 };
+                        startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 1 or less", (targets3) => {
+                            if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets3[0].id.replace('opp-', '')});
+                            else trashCard(targets3[0]);
+                            appendChat("Reiju completely wiped the board!", "#f39c12");
+                        });
+                    });
+                });
+            });
+        }
+        else if (db.name === "Vinsmoke Reiju" && db.cost === 4) {
+            const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : "";
+            if (leaderName === "Vinsmoke Judge") { // Vinsmoke Family Leader
+                showModal("Activate 4c Reiju On Play effect?", "confirm", () => {
+                    openStructuredSearch(5, ["GERMA 66"], null, false, false, () => {
+                        // The callback fires after the player picks 1 card to hand.
+                        // We need to trash the rest of SEARCH_ARR before it gets put back in deck!
+                        while(SEARCH_ARR.length > 0) {
+                            const url = SEARCH_ARR.pop();
+                            TRASH_ARR.push(url);
+                        }
+                        document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`;
+                        appendChat("Reiju trashed the remaining search cards!", "#8e44ad");
+                        saveState();
+                    });
+                });
+            }
+        }
+
+
         const hasLogic = ["Franky (Char)", "Franky Family", "Nami", "Sanji & Pudding", "Bon Clay", "Gol D. Roger", "Brachio Tank V", "Kurosai Fr-U IV"].includes(db.name); 
         if (hasLogic) { showModal(`Activate On Play effect of ${db.name}?`, "confirm", () => { if(db.name === "Franky Family") { startSelection('hand_trash', 1, "Select 1 card from hand to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); spawnDonLocal(true); saveState(); appendChat("Trashed 1, added 1 rested DON!!", "#3498db"); }); } if(db.name === "Franky (Char)") { startSelection('rest_stage', 1, "Select Invention Stage to Rest", (cards) => { cards[0].classList.add('rested'); const sName = CARD_DB[cards[0].dataset.url]?.name; if(sName === "Waver") { spawnDonLocal(true); appendChat("Waver rested: Added 1 rested DON!!", "#3498db"); } else if(sName === "Mini Merry") { drawCardAction(); appendChat("Mini Merry rested: Drew 1 card.", "#3498db"); } saveState(); }); } if(db.name === "Nami") { openStructuredSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"], "Nami"); } if(db.name === "Sanji & Pudding") { if((10 - DON_DECK_COUNT) <= OPP_DON_TOTAL) drawCardAction(); } if(db.name === "Bon Clay") { spawnDonLocal(false); saveState(); } if(db.name === "Gol D. Roger") { if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length >= 10 || OPP_DON_TOTAL >= 10) { window.rogerBuffActive = true; window.rogerBuffExpiresTurn = turnNum + 2; updatePowerDisplay(); saveState(); appendChat("Gol D. Roger played: +2000 to Leader until End of Opp's Turn!", "#f39c12");} } if(db.name === "Brachio Tank V") { startSelection('give_rush', 1, "Select Character to give Rush", (cards) => { cards[0].dataset.hasRush = "true"; cards[0].querySelector('.rush-tag').style.display = 'block'; saveState(); appendChat("Gave Rush!", "#f1c40f"); }); } if(db.name === "Kurosai Fr-U IV") { startSelection('play_free_5', 1, "Select cost 5 or lower SHC/SHP to play", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); } }); }
         if(db.name === "Maha") { const top = document.getElementById('life-zone').lastElementChild; if(top) { top.classList.remove('card-back'); document.getElementById('zoom-img').src = top.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Maha: Put Life on Top (YES) or Bottom (NO)?", "confirm", () => { top.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha left card on Top of Life.", "#f1c40f"); saveState(); }, () => { top.classList.add('card-back'); document.getElementById('life-zone').prepend(top); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha moved card to Bottom of Life.", "#f1c40f"); saveState(); }); } }
@@ -1627,4 +1877,3 @@
 </script>
 </body>
 </html>
-
