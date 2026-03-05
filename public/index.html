@@ -63,7 +63,7 @@
             background-size: 100% 100%; 
             background-position: center; 
             background-repeat: no-repeat;
-            background-color: #111;
+            background-color: transparent;
             border-radius: 10px; 
             border: 2px solid #000; 
             box-shadow: 0 15px 35px rgba(0,0,0,0.8); 
@@ -302,7 +302,7 @@
         
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa;">SELECT ACTIVE DECK:</div>
         <div id="home-deck-list" style="height: 140px; overflow-y: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; display: flex; flex-direction: column; gap: 5px;"></div>
-        <button onclick="openDeckBuilder()" style="background:var(--op-gold); color:#000; padding: 12px; font-size: 14px;">+ CREATE NEW DECK</button>
+        <button onclick="window.openDeckBuilder()" style="background:var(--op-gold); color:#000; padding: 12px; font-size: 14px;">+ CREATE NEW DECK</button>
         
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa; margin-top:5px;">SELECT PLAYMAT:</div>
         <select id="playmat-selector" style="width:100%; padding:10px; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius:6px; font-size: 14px; outline:none; cursor:pointer;">
@@ -327,27 +327,27 @@
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         
         <div style="display:flex; gap:10px;">
-            <button onclick="createLobby()" style="flex:1; padding: 12px; background:#2ecc71; font-size:14px;">HOST LOBBY</button>
-            <button onclick="showJoinLobby()" style="flex:1; padding: 12px; background:#e67e22; font-size:14px;">JOIN LOBBY</button>
+            <button onclick="window.createLobby()" style="flex:1; padding: 12px; background:#2ecc71; font-size:14px;">HOST LOBBY</button>
+            <button onclick="window.showJoinLobby()" style="flex:1; padding: 12px; background:#e67e22; font-size:14px;">JOIN LOBBY</button>
         </div>
-        <button onclick="randomMatch()" style="width:100%; padding: 12px; background:var(--op-blue); font-size:14px; margin-top:5px;">RANDOM MATCH</button>
+        <button onclick="window.randomMatch()" style="width:100%; padding: 12px; background:var(--op-blue); font-size:14px; margin-top:5px;">RANDOM MATCH</button>
         
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
-        <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
+        <button onclick="window.startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
         <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="padding:12px; font-size:20px; text-align:center; text-transform:uppercase; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius: 6px;">
-        <button onclick="joinLobby()" style="background:#e67e22; padding: 12px; font-size: 16px;">JOIN</button>
-        <button onclick="backToMain()" style="background:transparent; color:#aaa; border-color:#555; padding: 12px; font-size: 14px;">BACK TO MENU</button>
+        <button onclick="window.joinLobby()" style="background:#e67e22; padding: 12px; font-size: 16px;">JOIN</button>
+        <button onclick="window.backToMain()" style="background:transparent; color:#aaa; border-color:#555; padding: 12px; font-size: 14px;">BACK TO MENU</button>
     </div>
 
     <div class="menu-box" id="menu-deck" style="display:none;">
         <h2 style="margin:0; color:var(--op-blue); display: flex; align-items: center; justify-content: center; font-size: 24px;">
             LOBBY: <span id="display-room-code" style="color:#e74c3c; margin-left: 15px; letter-spacing: 2px;">----</span> 
         </h2>
-        <button onclick="copyCode()" style="background:#3498db; padding:10px 20px; width: 60%; margin: 0 auto;">COPY CODE</button>
+        <button onclick="window.copyCode()" style="background:#3498db; padding:10px 20px; width: 60%; margin: 0 auto;">COPY CODE</button>
         <p id="lobby-status" style="font-size: 16px; color: #ccc; margin-top: 15px;">Waiting for opponent to join...</p>
     </div>
 </div>
@@ -385,12 +385,12 @@
 
 <div id="counter-controls">
     <div style="color:white; font-weight:bold; font-size: 18px; text-transform: uppercase;">Select Counters</div>
-    <button onclick="confirmCounter()" style="background:#2ecc71; padding:12px 25px; font-size:14px;">CONFIRM DEFENSE</button>
-    <button onclick="takeHit()" style="background:#e74c3c; padding:12px 25px; font-size:14px;">TAKE HIT (0)</button>
+    <button onclick="window.confirmCounter()" style="background:#2ecc71; padding:12px 25px; font-size:14px;">CONFIRM DEFENSE</button>
+    <button onclick="window.takeHit()" style="background:#e74c3c; padding:12px 25px; font-size:14px;">TAKE HIT (0)</button>
 </div>
 
 <div id="select-overlay"></div>
-<div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="cancelSelection()" style="background:#c0392b; border:2px solid #fff; padding:8px 16px;">CANCEL</button></div>
+<div id="select-msg" style="display:none;"><span id="select-text">SELECT A TARGET</span> <button onclick="window.cancelSelection()" style="background:#c0392b; border:2px solid #fff; padding:8px 16px;">CANCEL</button></div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal-box">
@@ -408,16 +408,16 @@
     
     <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom:10px;">
         <span style="color:var(--op-blue);">Standard Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('board-card-w', this.value)"> 
+        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('board-card-w', this.value)"> 
         <span id="val-card-w" style="width:40px; text-align:right;"></span>
     </div>
     <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
         <span style="color:var(--op-gold);">DON!! Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('don-card-w', this.value)"> 
+        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('don-card-w', this.value)"> 
         <span id="val-don-w" style="width:40px; text-align:right;"></span>
     </div>
 
-    <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
+    <select id="align-zone" onchange="window.loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
         <option value="ld">Leader Area</option>
         <option value="st">Stage Area</option>
         <option value="fz">Franky Extra Stages</option>
@@ -429,24 +429,24 @@
         <option value="dz">DON!! Area</option>
     </select>
 
-    <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
-    <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="window.updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
+    <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="window.updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
     
     <div id="width-height-controls">
-        <div class="align-group"><span>Box Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
-        <div class="align-group"><span>Box Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+        <div class="align-group"><span>Box Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="window.updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
+        <div class="align-group"><span>Box Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="window.updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
     </div>
     
     <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;">
         <span style="color:var(--op-blue);">Inner Card %:</span> 
-        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="updateAlign('cw', this.value)"> 
+        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="window.updateAlign('cw', this.value)"> 
         <span id="val-cw" style="width:40px; text-align:right;"></span>
     </div>
     
     <div style="margin-top:20px; display:flex; gap:5px;">
-        <button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
-        <button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
-        <button onclick="closeAlignTool()" style="flex:1;">HIDE</button>
+        <button onclick="window.saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
+        <button onclick="window.resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
+        <button onclick="window.closeAlignTool()" style="flex:1;">HIDE</button>
     </div>
 </div>
 
@@ -459,15 +459,15 @@
             <div style="font-size:12px; color:#aaa; margin-bottom:5px;">LEADER:</div>
             <div id="db-leader" style="color:#e74c3c; font-weight:bold; font-size:16px;">None</div>
             <div class="color-dots" id="db-leader-colors" style="margin-top:8px;"></div>
-            <button onclick="clearLeader()" style="background:#c0392b; padding:8px; margin-top:10px; width:100%; font-size:10px;">CLEAR LEADER</button>
+            <button onclick="window.clearLeader()" style="background:#c0392b; padding:8px; margin-top:10px; width:100%; font-size:10px;">CLEAR LEADER</button>
         </div>
         <div style="font-size:14px; font-weight:bold; color:#aaa;">MAIN DECK (<span id="db-count" style="color:#fff;">0</span>/50)</div>
         <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; flex-direction:column; gap:5px; border-radius:6px; background:rgba(0,0,0,0.3);"></div>
         <div style="display:flex; gap:5px;">
-            <button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button>
+            <button onclick="window.saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button>
         </div>
-        <button onclick="importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
-        <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
+        <button onclick="window.importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
+        <button onclick="window.closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
     </div>
 </div>
 
@@ -475,7 +475,7 @@
     <div id="search-modal-container">
         <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">
             <h2 id="insp-title" style="margin:0; color:var(--op-blue); font-size: 28px;">Search / Inspect</h2>
-            <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button>
+            <button onclick="window.closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button>
         </div>
         <div id="insp-grid" style="display:flex; flex-wrap: wrap; gap: 15px; width: 100%; justify-content: center;"></div>
     </div>
@@ -483,8 +483,8 @@
 
 <div id="left-col" class="glass-panel">
     <div class="stat-container">
-        <div class="stat-card" style="border-color:#2ecc71;" onclick="inspectDeck()">DECK: <span id="deck-count">0</span></div>
-        <div class="stat-card" style="border-color:#e67e22;" onclick="openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
+        <div class="stat-card" style="border-color:#2ecc71;" onclick="window.inspectDeck()">DECK: <span id="deck-count">0</span></div>
+        <div class="stat-card" style="border-color:#e67e22;" onclick="window.openInspector('trash')">TRASH: <span id="trash-count">0</span></div>
     </div>
     <div class="stat-container">
         <div class="stat-card" style="border-color:#e74c3c;">LIFE: <span id="life-count">0</span></div>
@@ -494,7 +494,7 @@
     
     <div id="chat-container">
         <div id="chat-messages"></div>
-        <form id="chat-form" onsubmit="sendChat(event)">
+        <form id="chat-form" onsubmit="window.sendChat(event)">
             <input type="text" id="chat-input" placeholder="Chat..." autocomplete="off">
             <button id="chat-btn" type="submit">SEND</button>
         </form>
@@ -504,10 +504,10 @@
     <div id="hand-bar" onwheel="this.scrollLeft += (event.deltaY > 0 ? 100 : -100); event.preventDefault();"></div>
 
     <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
-        <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
+        <button onclick="window.deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
         <div style="display:flex; gap:5px;">
-            <button onclick="spawnDonAction()" style="flex:1; padding: 8px;">+ DON!!</button>
-            <button onclick="killDon()" style="flex:1; background:#e67e22; padding: 8px;">- DON!!</button>
+            <button onclick="window.spawnDonAction()" style="flex:1; padding: 8px;">+ DON!!</button>
+            <button onclick="window.killDon()" style="flex:1; background:#e67e22; padding: 8px;">- DON!!</button>
         </div>
     </div>
 </div>
@@ -543,8 +543,8 @@
     <div id="right-col-inspector"></div>
     
     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-        <button id="btn-end-turn" onclick="endTurn()">END TURN</button>
-        <button id="btn-concede" onclick="concedeGame()">CONCEDE MATCH</button>
+        <button id="btn-end-turn" onclick="window.endTurn()">END TURN</button>
+        <button id="btn-concede" onclick="window.concedeGame()">CONCEDE MATCH</button>
     </div>
 </div>
 
@@ -552,9 +552,6 @@
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    // CRITICAL: Connects JS to the CSS variables so sliders actually move things!
-    const root = document.documentElement; 
-
     const CARD_DB = {
         "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", color: ["Red", "Purple"], traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Char)", type: "Character", color: ["Purple"], cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
@@ -650,6 +647,8 @@
         "https://i.imgur.com/yrPhCy7.png": { name: "Front Page Scoop!", type: "Event", color: ["Red"], cost: 2, traits: ["Big News"], hasMain: true, isCounter: true, counter: 2000 },
         "https://i.imgur.com/TQTkwn6.png": { name: "Shocking Revelation!", type: "Event", color: ["Red"], cost: 7, traits: ["Big News"], hasMain: true, isCounter: true, counter: 5000 }
     };
+    const root = document.documentElement; 
+
     window.addEventListener('DOMContentLoaded', () => {
         const newsModal = document.getElementById('news-modal');
         if (newsModal && document.getElementById('home-screen').style.display !== 'none') {
@@ -685,7 +684,6 @@
         donReturnedCount: 0, donReturnedThisTurn: false, magellanBuffActive: false, leaderCannotAttack: false, stussyRedEventBuffs: 0
     };
 
-    // --- SLIDER INITIALIZATION & ANTI-CRASH ROUTINE ---
     let savedAlign = JSON.parse(localStorage.getItem('opcg_align') || "{}");
     for (const [key, val] of Object.entries(savedAlign)) { root.style.setProperty(key, val); }
 
@@ -718,27 +716,23 @@
             console.log("Save file healed successfully.");
         }
     } catch (e) {
-        console.error("Deck storage severely corrupted. Resetting to prevent fatal crash.", e);
+        console.error("Deck storage corrupted. Resetting to prevent fatal crash.", e);
         savedDecks = [];
         localStorage.setItem('opcg_decks', "[]");
     }
 
-    // --- ALIGN TOOL EXPLICIT WINDOW BINDING ---
     window.openAlignAuth = function() {
         showModal("Enter Developer Code:", "prompt", (val) => {
             if (val === "717") {
                 document.getElementById('home-screen').style.display = 'none';
                 document.body.classList.add('align-mode-active');
                 document.getElementById('align-tool').style.display = 'block';
-                
                 createCard('https://i.imgur.com/TwmysAX.png', 0, 0, {zone: 'leader-zone'});
                 createCard('https://i.imgur.com/2lEVHJP.png', 0, 0, {zone: 'char-zone-front'});
                 createCard('https://i.imgur.com/KdMSz8v.png', 0, 0, {zone: 'stage-zone'});
                 createCard(DON_URL, 0, 0, {zone: 'don-zone'});
-                
                 const lf = createCard('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg', 0, 0, {zone: 'life-zone'});
                 lf.style.position = 'absolute';
-                
                 loadZoneAlign();
             } else {
                 showModal("Access Denied.", "alert");
@@ -760,7 +754,6 @@
         document.getElementById('slider-l').value = parseFloat(rs.getPropertyValue(`--${zoneId}-l`)) || 0;
         document.getElementById('slider-w').value = parseFloat(rs.getPropertyValue(`--${zoneId}-w`)) || 0;
         document.getElementById('slider-h').value = parseFloat(rs.getPropertyValue(`--${zoneId}-h`)) || 0;
-        
         document.getElementById('val-t').innerText = document.getElementById('slider-t').value + "%";
         document.getElementById('val-l').innerText = document.getElementById('slider-l').value + "%";
         document.getElementById('val-w').innerText = document.getElementById('slider-w').value + "%";
@@ -809,9 +802,8 @@
         });
     }
 
-    // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { 
-        const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f", "Blue":"#3498db", "Black":"#34495e"}; 
+        const map = { "Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f", "Blue":"#3498db", "Black":"#34495e" }; 
         return map[c] || "#fff"; 
     }
     
@@ -820,7 +812,7 @@
         document.getElementById('deck-builder-screen').style.display = 'flex'; 
         editingDeck = { name: "New Deck", leader: null, main: {} }; 
         document.getElementById('db-name').value = ""; 
-        clearLeader(); 
+        window.clearLeader(); 
     }
     
     window.clearLeader = function() { 
@@ -935,106 +927,50 @@
             if(!d || !d.name) return;
             const div = document.createElement('div'); 
             div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center"; div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "rgba(255,255,255,0.05)"; div.style.border = "1px solid rgba(255,255,255,0.1)"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
-            
             const nameSpan = document.createElement('span'); 
             nameSpan.innerText = d.name; nameSpan.style.fontWeight = "bold"; nameSpan.style.flex = "1"; 
             nameSpan.onclick = () => { activeDeckIndex = i; renderHomeDecks(); };
-            
-            const btnContainer = document.createElement('div'); 
-            btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
-            
-            const editBtn = document.createElement('button'); 
-            editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px"; 
+            const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
+            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px"; 
             editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
-            
-            const listBtn = document.createElement('button'); 
-            listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad"; 
+            const listBtn = document.createElement('button'); listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad"; 
             listBtn.onclick = (e) => { e.stopPropagation(); showVisualDecklist(i); };
-            
-            const delBtn = document.createElement('button'); 
-            delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c"; 
-            delBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                showModal("Delete this deck?", "confirm", () => { 
-                    savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); 
-                    if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; 
-                    renderHomeDecks(); 
-                }); 
-            };
+            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c"; 
+            delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
             btnContainer.appendChild(editBtn); btnContainer.appendChild(listBtn); btnContainer.appendChild(delBtn); div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
         });
         if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
     }
     
     function editSavedDeck(index) { 
-        editingDeckIndex = index; 
-        editingDeck = JSON.parse(JSON.stringify(savedDecks[index])); 
-        document.getElementById('home-screen').style.display = 'none'; 
-        document.getElementById('deck-builder-screen').style.display = 'flex'; 
-        document.getElementById('db-name').value = editingDeck.name; 
-        renderDeckList(); updateDeckBuilderPool(); 
+        editingDeckIndex = index; editingDeck = JSON.parse(JSON.stringify(savedDecks[index])); 
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool(); 
     }
     
     function showVisualDecklist(index) { 
-        const d = savedDecks[index]; 
-        document.getElementById('visual-decklist-title').innerText = d.name; 
-        const cont = document.getElementById('visual-decklist-content'); 
-        cont.innerHTML = ''; 
-        const leaderArr = [d.leader]; 
-        const chars = []; const events = []; const stages = []; let total = 0; 
-        
-        Object.keys(d.main).forEach(url => { 
-            total += d.main[url]; 
-            if(CARD_DB[url]?.type === 'Character') chars.push({url, count: d.main[url]}); 
-            else if(CARD_DB[url]?.type === 'Event') events.push({url, count: d.main[url]}); 
-            else if(CARD_DB[url]?.type === 'Stage') stages.push({url, count: d.main[url]}); 
-            else chars.push({url, count: d.main[url]}); 
-        }); 
-        
+        const d = savedDecks[index]; document.getElementById('visual-decklist-title').innerText = d.name; const cont = document.getElementById('visual-decklist-content'); cont.innerHTML = ''; 
+        const leaderArr = [d.leader]; const chars = []; const events = []; const stages = []; let total = 0; 
+        Object.keys(d.main).forEach(url => { total += d.main[url]; if(CARD_DB[url]?.type === 'Character') chars.push({url, count: d.main[url]}); else if(CARD_DB[url]?.type === 'Event') events.push({url, count: d.main[url]}); else if(CARD_DB[url]?.type === 'Stage') stages.push({url, count: d.main[url]}); else chars.push({url, count: d.main[url]}); }); 
         const createSection = (title, items) => { 
-            if(items.length === 0) return; 
-            const sec = document.createElement('div'); 
-            sec.innerHTML = `<h2 style="color:var(--op-blue); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h2>`; 
-            const grid = document.createElement('div'); 
-            grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '15px'; 
-            
-            items.forEach(item => { 
-                const url = item.url || item; const count = item.count || 1; 
-                const wrap = document.createElement('div'); 
-                wrap.style.position = 'relative'; wrap.style.width = '120px'; wrap.style.height = '168px'; wrap.style.backgroundImage = `url('${url}')`; wrap.style.backgroundSize = '100% 100%'; wrap.style.borderRadius = '8px'; wrap.style.cursor = 'pointer'; 
-                wrap.onclick = () => { document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
-                if(title !== 'Leader') { wrap.innerHTML = `<div style="position:absolute; bottom:-10px; right:-10px; background:#e74c3c; color:#fff; padding:5px 10px; border-radius:50%; font-weight:bold; border:2px solid #fff; font-size:16px;">x${count}</div>`; } 
-                grid.appendChild(wrap); 
-            }); 
-            sec.appendChild(grid); cont.appendChild(sec); 
+            if(items.length === 0) return; const sec = document.createElement('div'); sec.innerHTML = `<h2 style="color:var(--op-blue); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h2>`; const grid = document.createElement('div'); grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '15px'; 
+            items.forEach(item => { const url = item.url || item; const count = item.count || 1; const wrap = document.createElement('div'); wrap.style.position = 'relative'; wrap.style.width = '120px'; wrap.style.height = '168px'; wrap.style.backgroundImage = `url('${url}')`; wrap.style.backgroundSize = '100% 100%'; wrap.style.borderRadius = '8px'; wrap.style.cursor = 'pointer'; wrap.onclick = () => { document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; }; if(title !== 'Leader') { wrap.innerHTML = `<div style="position:absolute; bottom:-10px; right:-10px; background:#e74c3c; color:#fff; padding:5px 10px; border-radius:50%; font-weight:bold; border:2px solid #fff; font-size:16px;">x${count}</div>`; } grid.appendChild(wrap); }); sec.appendChild(grid); cont.appendChild(sec); 
         }; 
-        
         createSection('Leader', leaderArr); createSection('Characters', chars); createSection('Events', events); createSection('Stages', stages); 
         document.getElementById('btn-copy-deck-text').onclick = () => { 
-            let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown Leader'}\n\n`; 
-            Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name || 'Unknown Card'} x${d.main[url]}\n`; }); 
-            text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => { showModal("Decklist copied to clipboard!", "alert"); }); 
-        }; 
-        document.getElementById('visual-decklist-overlay').style.display = 'flex'; 
+            let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown Leader'}\n\n`; Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name || 'Unknown Card'} x${d.main[url]}\n`; }); text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => { showModal("Decklist copied to clipboard!", "alert"); }); 
+        }; document.getElementById('visual-decklist-overlay').style.display = 'flex'; 
     }
     
     window.onload = () => { renderHomeDecks(); };
 
-    function getSelectedPlaymat() { 
-        const sel = document.getElementById('playmat-selector'); return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg'; 
-    }
+    function getSelectedPlaymat() { const sel = document.getElementById('playmat-selector'); return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg'; }
     
     function prepActiveDeck() { 
-        if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false; 
-        const d = savedDecks[activeDeckIndex]; activeLobbyDeckUrlArray = [d.leader]; 
-        Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) { activeLobbyDeckUrlArray.push(url); } }); 
-        return true; 
+        if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false; const d = savedDecks[activeDeckIndex]; activeLobbyDeckUrlArray = [d.leader]; Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) { activeLobbyDeckUrlArray.push(url); } }); return true; 
     }
     
     function setupPlayerBoardVisuals() { 
-        const board = document.getElementById('my-board'); 
-        let chosenMat = getSelectedPlaymat(); 
-        board.style.backgroundImage = `url('${chosenMat}')`; 
+        const board = document.getElementById('my-board'); let chosenMat = getSelectedPlaymat(); board.style.backgroundImage = `url('${chosenMat}')`; 
         if (chosenMat.includes('WjiUDr0')) { board.classList.add('mat-white'); } else { board.classList.remove('mat-white'); }
     }
 
@@ -1045,20 +981,14 @@
         window.batchState.luffy6cBuffActive = false; window.batchState.extraTurnActive = false; window.batchState.blackMariaUsed = false; window.batchState.zoroFrozenDonCount = 0; window.batchState.donReturnedCount = 0; window.batchState.donReturnedThisTurn = false; window.batchState.magellanBuffActive = false; window.batchState.leaderCannotAttack = false; window.batchState.stussyRedEventBuffs = 0;
         
         setupPlayerBoardVisuals();
-        document.getElementById('home-screen').style.display = 'none'; 
-        document.getElementById('sidebar-manual-controls').style.display = 'block'; 
-        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
-        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
-        for(let i=0; i<leaderLife; i++) window.deckToLife(); 
-        for(let i=0; i<5; i++) window.drawCardAction(); 
+        document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
+        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) window.deckToLife(); for(let i=0; i<5; i++) window.drawCardAction(); 
     }
 
     window.createLobby = function() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
-        socket.emit('create_room', (res) => { 
-            document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); 
-        }); 
+        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }); 
     }
     
     window.showJoinLobby = function() { 
@@ -1067,25 +997,15 @@
     }
     
     window.joinLobby = function() { 
-        socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { 
-            if(res.success) { 
-                document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); 
-            } else { showModal("Invalid room.", "alert"); } 
-        }); 
+        socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); } else { showModal("Invalid room.", "alert"); } }); 
     }
     
-    window.backToMain = function() { 
-        document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; 
-    }
+    window.backToMain = function() { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; }
     
     window.randomMatch = function() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; 
-        socket.emit('join_random', (res) => { 
-            document.getElementById('display-room-code').innerText = res.roomId; 
-            if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } 
-            else { socket.emit('deck_selected', "custom"); } 
-        }); 
+        socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } else { socket.emit('deck_selected', "custom"); } }); 
     }
     
     window.copyCode = function() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=> { showModal("Code copied!", "alert"); }); }
@@ -1093,47 +1013,23 @@
     socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Connecting..."; });
 
     socket.on('game_start', (data) => {
-        document.getElementById('home-screen').style.display = 'none'; 
-        isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; window.locked7Plus = false; window.stussyUsedThisTurn = false;
+        document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; window.locked7Plus = false; window.stussyUsedThisTurn = false;
         window.sotuTurnState.vinsmokeCostDiscount = 0; window.sotuTurnState.judgeGlobalPowerBuff = 0;
         window.batchState.luffy6cBuffActive = false; window.batchState.extraTurnActive = false; window.batchState.blackMariaUsed = false; window.batchState.zoroFrozenDonCount = 0; window.batchState.donReturnedCount = 0; window.batchState.donReturnedThisTurn = false; window.batchState.magellanBuffActive = false; window.batchState.leaderCannotAttack = false; window.batchState.stussyRedEventBuffs = 0;
         
-        setupPlayerBoardVisuals();
-        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
-        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
-        for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } 
-        updateLifePositions();
-        for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); }
-        refreshStats();
-        
-        setTimeout(() => { 
-            showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { 
-                document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); 
-                shuffleArray(DECK_ARR); 
-                for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); }
-                socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; 
-            }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); 
-        }, 500);
+        setupPlayerBoardVisuals(); DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions(); for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); } refreshStats();
+        setTimeout(() => { showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); } socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); }, 500);
     });
 
-    socket.on('begin_game', () => { 
-        document.getElementById('sync-overlay').style.display = 'none'; 
-        isMyTurn = isFirst; if(isFirst) myTurnCount = 1; updateTurnUI(); 
-        if(isFirst) { OPP_DON_TOTAL = 0; spawnDonLocal(); } 
-        showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); 
-    });
+    socket.on('begin_game', () => { document.getElementById('sync-overlay').style.display = 'none'; isMyTurn = isFirst; if(isFirst) myTurnCount = 1; updateTurnUI(); if(isFirst) { OPP_DON_TOTAL = 0; spawnDonLocal(); } showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); });
 
-    // --- UI & UTILITY FUNCTIONS ---
     function showModal(msg, type, onConfirm, onCancel, defaultVal = "") { 
-        const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerHTML = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; 
-        const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2); 
-        if(type === 'alert') { inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; } 
-        else if(type === 'confirm') { inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
-        else if(type === 'prompt') { inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
+        const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerHTML = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2); 
+        if(type === 'alert') { inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; } else if(type === 'confirm') { inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } else if(type === 'prompt') { inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
     }
     
-    function sendChat(e) { e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg) return; appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = ''; } 
+    window.sendChat = function(e) { e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg) return; appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = ''; } 
     socket.on('chat_msg', (msg) => { appendChat("Opp: " + msg, "#e74c3c"); }); 
     function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
     
@@ -1158,7 +1054,6 @@
             if (e.button !== 0 || combatState.step === 'wait_counter') return; 
             if (selectConfig) { handleSelection(c); return; }
             const db = CARD_DB[c.dataset.url] || {}; 
-
             if (combatState.step === 'counter') { 
                 if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
                     if (db.name === "Divine Departure") {
@@ -1176,10 +1071,7 @@
                         if(selectedCounterCards.includes(c)) return;
                         startSelection('hand_trash', 1, "Trash 1 card to give +3000 Power", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 3000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Bad Manners Kick Course provided +3000 Defense!", "#e74c3c"); }); return;
                     }
-                    
-                    let cv = db.counter || 0; 
-                    if (db.isCounter && !db.counter) { if (db.name === "Gum Gum Giant") cv = 4000; else cv = 2000; }
-                    
+                    let cv = db.counter || 0; if (db.isCounter && !db.counter) { if (db.name === "Gum Gum Giant") cv = 4000; else cv = 2000; }
                     if (selectedCounterCards.includes(c)) { 
                         selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= cv; 
                         if(db.type === 'Event') { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); for(let i=0; i<db.cost; i++) if(restedDons[i]) restedDons[i].classList.remove('rested'); }
@@ -1195,19 +1087,14 @@
             if (c.dataset.isDon === "true" && c.dataset.parentId) { e.stopPropagation(); return; }
             const locked = ['leader-zone', 'char-zone-front', 'stage-zone', 'franky-extra-zone']; 
             if(c.dataset.isDon !== "true" && locked.includes(c.parentElement.id) && !isDevMode) return; 
-            
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
         
         c.oncontextmenu = (e) => { 
             e.preventDefault(); 
             if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
-            
-            rightClickedCard = c; const db = CARD_DB[c.dataset.url] || {}; const menu = document.getElementById('context-menu'); 
-            menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
-            
+            rightClickedCard = c; const db = CARD_DB[c.dataset.url] || {}; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
             let h = ""; if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
-            
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
                 if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -1217,42 +1104,122 @@
                     if (window.batchState.leaderCannotAttack && c.parentElement.id === 'leader-zone') canAttack = false;
                 } 
             }
-            
-            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
+            if(canAttack) h += `<div onclick="window.simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
                 if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack Unavailable</div>`;
             }
 
             if (!c.classList.contains('frozen')) {
-                const customMains = ["Franky", "Hattori", "Stussy", "Vinsmoke Judge", "Vinsmoke Ichiji", "Vinsmoke Yonji", "Monkey D. Luffy (Extra Turn)", "Black Maria", "Roronoa Zoro", "Vinsmoke Reiju (5c)", "Vinsmoke Sanji", "Impel Down", "Domino", "Magellan (10c)", "We News", "Morgans (5c)", "Morgans", "Rob Lucci (Y)", "Kaku"];
-                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && !customMains.includes(db?.name)) { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-                if (db?.type === "Stage" && db?.traits?.includes("Invention") && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-                if (db?.name === "Stussy" && db.type === "Leader" && (isMyTurn || isDevMode) && !window.stussyUsedThisTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
-                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
-                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
-                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
-                if (db?.name === "Monkey D. Luffy (Extra Turn)" && db.cost === 10 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="luffy10cMain()" style="background:#f39c12; color:#000">Main: Rest 1 DON!! -> Add 1 Active DON!!</div>`;
-                if (db?.name === "Black Maria" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="blackMariaMain()" style="background:#f39c12; color:#000">Main: Add up to 5 Rested DON!!</div>`;
-                if (db?.name === "Roronoa Zoro" && db.cost === 1 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="zoro1cMain()" style="background:#f39c12; color:#000">Main: Add 1 Rested DON!! (Freeze 1 next turn)</div>`;
-                if (db?.name === "Vinsmoke Reiju (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="reiju5cMain()" style="background:#f39c12; color:#000">Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost</div>`;
-                if (db?.name === "Vinsmoke Sanji" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="sanji3cMain()" style="background:#f39c12; color:#000">Main: Attach 1 Rested DON!!</div>`;
-                if (db?.name === "Impel Down" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="impelStageMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> Search Top 3</div>`;
-                if (db?.name === "Domino" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="dominoMain()" style="background:#f39c12; color:#000">Main: If DON returned this turn, Draw 1 Trash 1</div>`;
-                if (db?.name === "Magellan (10c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="magellan10cMain()" style="background:#f39c12; color:#000">Main: Rest & Give Jailer Beasts +1000 per returned DON</div>`;
-                if (db?.name === "We News" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="weNewsMain()" style="background:#f39c12; color:#000">Main: Rest Stage & Trash 2 -> Play Lackey</div>`;
-                if ((db?.name === "Morgans (5c)" || db?.name === "Morgans") && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="morgansCharMain()" style="background:#f39c12; color:#000">Main: Rest & Search Top 6 for Red 5c+</div>`;
+                const customMains = ["Franky", "Hattori", "Stussy", "Vinsmoke Judge", "Vinsmoke Ichiji", "Vinsmoke Yonji", "Monkey D. Luffy (Extra Turn)", "Black Maria", "Roronoa Zoro", "Vinsmoke Reiju (5c)", "Vinsmoke Sanji", "Impel Down", "Domino", "Magellan (10c)", "We News", "Morgans (5c)", "Morgans", "Rob Lucci (Y)", "Kaku", "Magellan"];
+                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && !customMains.includes(db?.name)) { h += `<div onclick="window.activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+                if (db?.type === "Stage" && (db?.traits||[]).includes("Invention") && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="window.stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                
+                // LEADER ABILITIES
+                if (db?.type === "Leader" && (isMyTurn || isDevMode)) {
+                    if (db.name === "Franky") h += `<div onclick="window.frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`;
+                    if (db.name === "Stussy" && !window.stussyUsedThisTurn) h += `<div onclick="window.stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                    if (db.name === "Morgans" && !c.classList.contains('rested')) h += `<div onclick="window.morgansLeaderMain()" style="background:#f39c12; color:#000">Main: Rest -> Look at top 6</div>`;
+                    if (db.name === "Magellan" && !c.classList.contains('rested')) h += `<div onclick="window.magellanLeaderMain()" style="background:#f39c12; color:#000">Main: Rest & DON -1 -> +1000 & Draw 1</div>`;
+                    if (db.name === "Vinsmoke Judge" && !c.classList.contains('rested')) h += `<div onclick="window.judgeLeaderMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> GERMA +1000</div>`;
+                }
+
+                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
+                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
+                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
+                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
+                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
+                if (db?.name === "Monkey D. Luffy (Extra Turn)" && db.cost === 10 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.luffy10cMain()" style="background:#f39c12; color:#000">Main: Rest 1 DON!! -> Add 1 Active DON!!</div>`;
+                if (db?.name === "Black Maria" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.blackMariaMain()" style="background:#f39c12; color:#000">Main: Add up to 5 Rested DON!!</div>`;
+                if (db?.name === "Roronoa Zoro" && db.cost === 1 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.zoro1cMain()" style="background:#f39c12; color:#000">Main: Add 1 Rested DON!! (Freeze 1 next turn)</div>`;
+                if (db?.name === "Vinsmoke Reiju (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.reiju5cMain()" style="background:#f39c12; color:#000">Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost</div>`;
+                if (db?.name === "Vinsmoke Sanji" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.sanji3cMain()" style="background:#f39c12; color:#000">Main: Attach 1 Rested DON!!</div>`;
+                if (db?.name === "Impel Down" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.impelStageMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> Search Top 3</div>`;
+                if (db?.name === "Domino" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.dominoMain()" style="background:#f39c12; color:#000">Main: If DON returned this turn, Draw 1 Trash 1</div>`;
+                if (db?.name === "Magellan (10c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.magellan10cMain()" style="background:#f39c12; color:#000">Main: Rest & Give Jailer Beasts +1000 per returned DON</div>`;
+                if (db?.name === "We News" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.weNewsMain()" style="background:#f39c12; color:#000">Main: Rest Stage & Trash 2 -> Play Lackey</div>`;
+                if (db?.name === "Morgans (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.morgansCharMain()" style="background:#f39c12; color:#000">Main: Rest & Search Top 6 for Red 5c+</div>`;
             }
 
-            if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`; 
-            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
-            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
-            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone' || c.parentElement.id === 'opp-franky-extra-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="window.bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
+            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="window.moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone' || c.parentElement.id === 'opp-franky-extra-zone')) { h += `<div onclick="window.requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
             menu.innerHTML = h; 
         }; 
+    }
+
+    window.playCardConfirm = function(c) { 
+        if(!isDevMode && !isMyTurn) return; 
+        const db = CARD_DB[c.dataset.url]; 
+        if(!db) return;
+        let cost = db.cost; 
+        
+        if(window.sotuTurnState.vinsmokeCostDiscount > 0 && (db.traits||[]).includes("Vinsmoke Family")) { cost = Math.max(0, cost - window.sotuTurnState.vinsmokeCostDiscount); }
+        const lifeCount = document.getElementById('life-zone').children.length; 
+        if(db.name==="Monkey D. Luffy" && lifeCount<=1) cost-=1; 
+        
+        const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : "";
+        if(leaderName === "Morgans") {
+            if(db.name === "Front Page Scoop!") cost = 1;
+            if(db.name === "Shocking Revelation!") cost = 4;
+            if(db.name === "Unprecedented Bounties") cost = 8;
+        }
+        if(db.name === "Uta" && db.cost === 6) {
+            const has10k = Array.from(document.querySelectorAll('#char-zone-front .card')).some(fc => parseInt(fc.dataset.currentPower||0) >= 10000);
+            if(has10k) cost = Math.max(0, cost - 4);
+        }
+
+        if (window.locked7Plus && cost >= 7 && db.type === 'Character') { showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } 
+        showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(false, cost); }); 
+    }
+    
+    window.playCard = function(isFree = false, customCost = null) { 
+        const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; window.hideMenu(); let cost = customCost !== null ? customCost : db.cost; 
+        if (db.name === "Divine Departure" && !isFree) {
+            const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
+            if(activeDons.length < 5) { showModal("Need 5 active DON!! to use Main.", "alert"); return; }
+            showModal("Rest 5 DON!! to use Main effect?", "confirm", () => {
+                for(let i=0; i<5; i++) activeDons[i].classList.add('rested');
+                TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
+                if(document.querySelectorAll('[data-parent-id]').length > 0) {
+                    startSelection('divine_depart_minus', 1, "Give -8000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 8000; updatePowerDisplay(); saveState(); appendChat("Divine Departure gave -8000 power!", "#8e44ad"); });
+                } else { appendChat("No attached DON. Effect fails.", "#ccc"); }
+            });
+            return;
+        }
+
+        if(!isFree) { 
+            const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); 
+            if(activeDons.length < cost) { showModal(`Need ${cost} active DON!!`, "alert"); return; } 
+            for(let i=0; i<cost; i++) activeDons[i].classList.add('rested'); 
+        } 
+        
+        c.classList.remove('card-back'); c.dataset.isLife = "false"; c.style.position = 'relative'; c.dataset.turnPlayed = myTurnCount; 
+        
+        if(db.type === 'Event') { 
+            TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); 
+            if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } 
+            if((db.color||[]).includes("Red")) {
+                const hasStussy = Array.from(document.querySelectorAll('#char-zone-front .card')).some(fc => CARD_DB[fc.dataset.url]?.name === "Stussy");
+                if(hasStussy) { window.batchState.stussyRedEventBuffs++; updatePowerDisplay(); appendChat("Stussy gained +2000 from Red Event!", "#e74c3c"); }
+            }
+            if(db.name === "Front Page Scoop!") { openStructuredSearch(5, ["Big News"], null, false, false, () => { appendChat("Front Page Scoop searched!", "#e74c3c"); }); }
+            if(db.name === "Shocking Revelation!") { 
+                document.querySelectorAll('#char-zone-front .card').forEach(fc => {
+                    const fcdb = CARD_DB[fc.dataset.url];
+                    if((fcdb?.traits||[]).includes("Big News")) { fc.dataset.tempPower = parseInt(fc.dataset.tempPower||0) + 2000; fc.dataset.hasRush = "true"; fc.querySelector('.rush-tag').style.display = 'block'; }
+                }); updatePowerDisplay(); appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c");
+            }
+            if(db.name === "Unprecedented Bounties") { startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
+        } else if(db.type === 'Stage') { 
+            const bz = document.getElementById('stage-zone'); const fz = document.getElementById('franky-extra-zone'); const leaderCard = document.querySelector('#leader-zone .card'); const leaderName = leaderCard ? CARD_DB[leaderCard.dataset.url]?.name : "";
+            if (bz.children.length === 0) { bz.appendChild(c); } else if (leaderName === "Franky" && fz.children.length < 4) { fz.appendChild(c); } else { const maxStages = (leaderName === "Franky") ? 5 : 1; showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => { startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { window.trashCard(cards[0]); if(bz.children.length === 0) bz.appendChild(c); else fz.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; }
+        } else { 
+            const charZ = document.getElementById('char-zone-front'); 
+            if(charZ.children.length >= 5) { showModal("Front line is full! Trash a Character to play this.", "confirm", () => { startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { window.trashCard(cards[0]); charZ.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; } else { charZ.appendChild(c); }
+        } 
+        saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); 
     }
 
     function updatePowerDisplay() {
@@ -1260,7 +1227,7 @@
         const luffy = Array.from(document.querySelectorAll('#char-zone-front .card')).find(c => CARD_DB[c.dataset.url]?.name === "Monkey D. Luffy");
         let is4cYonjiProtected = false; 
         const myBoard = Array.from(document.querySelectorAll('#char-zone-front .card'));
-        if(myBoard.length > 0) { is4cYonjiProtected = myBoard.every(c => CARD_DB[c.dataset.url]?.traits?.includes("GERMA 66")); }
+        if(myBoard.length > 0) { is4cYonjiProtected = myBoard.every(c => (CARD_DB[c.dataset.url]?.traits||[]).includes("GERMA 66")); }
         
         document.querySelectorAll('.card').forEach(c => { 
             const db = CARD_DB[c.dataset.url] || {}; 
@@ -1279,7 +1246,7 @@
 
             if(db.power !== undefined) { 
                 let base = db.power; 
-                if(!isOppCard && zone === 'leader-zone' && db.traits?.includes("Straw Hat Crew") && window.batchState.luffy6cBuffActive) { base = Math.max(base, 7000); }
+                if(!isOppCard && zone === 'leader-zone' && (db.traits||[]).includes("Straw Hat Crew") && window.batchState.luffy6cBuffActive) { base = Math.max(base, 7000); }
                 let attachedDon = document.querySelectorAll(`[data-parent-id="${c.id}"]`).length; 
                 let donBoost = 0; if (!isOppCard && isMyTurn) donBoost = attachedDon * 1000; if (isOppCard && !isMyTurn) donBoost = attachedDon * 1000;
                 let temp = parseInt(c.dataset.tempPower || 0); let passiveBoost = 0;
@@ -1289,7 +1256,7 @@
                     if(window.rogerBuffActive && !isOppCard) passiveBoost += 2000; 
                     if(luffy && luffy.dataset.luffyBuff === "true" && !isOppCard) passiveBoost += 2000; 
                 } 
-                if(!isOppCard && window.sotuTurnState.judgeGlobalPowerBuff > 0 && db.traits?.includes("GERMA 66")) { passiveBoost += window.sotuTurnState.judgeGlobalPowerBuff; }
+                if(!isOppCard && window.sotuTurnState.judgeGlobalPowerBuff > 0 && (db.traits||[]).includes("GERMA 66")) { passiveBoost += window.sotuTurnState.judgeGlobalPowerBuff; }
                 if(db.name === "Tony Tony Chopper" && db.cost === 4) { if((!isOppCard && !isMyTurn) || (isOppCard && isMyTurn)) passiveBoost += 2000; }
                 if(db.name === "Vinsmoke Family" && db.cost === 4 && onField && !isOppCard && isMyTurn) { let trashFactor = Math.floor(TRASH_ARR.length / 5); passiveBoost += (trashFactor * 1000); }
                 if(db.name === "Stussy" && db.cost === 6 && !isOppCard && isMyTurn) { passiveBoost += (window.batchState.stussyRedEventBuffs * 2000); }
@@ -1297,7 +1264,7 @@
                 if(onField && isOppCard && isMyTurn) { const hasShanks = Array.from(document.querySelectorAll('#char-zone-front .card')).some(fc => CARD_DB[fc.dataset.url]?.name === "Shanks"); if(hasShanks) passiveBoost -= 1000; }
                 if(onField && !isOppCard && !isMyTurn) { const oppHasShanks = Array.from(document.querySelectorAll('#opp-char-zone-front .card')).some(fc => CARD_DB[fc.dataset.url]?.name === "Shanks"); if(oppHasShanks) passiveBoost -= 1000; }
                 if(c.dataset.rayleighDebuff && turnNum < parseInt(c.dataset.rayleighExpires)) { passiveBoost -= parseInt(c.dataset.rayleighDebuff); }
-                if(db.traits?.includes("Jailer Beast") || db.traits?.includes("Jailer Beasts")) { if(window.batchState.magellanBuffActive) { passiveBoost += (window.batchState.donReturnedCount * 1000); } }
+                if((db.traits||[]).includes("Jailer Beast") || (db.traits||[]).includes("Jailer Beasts")) { if(window.batchState.magellanBuffActive) { passiveBoost += (window.batchState.donReturnedCount * 1000); } }
 
                 let totalBoost = donBoost + temp + passiveBoost;
                 c.dataset.currentPower = base + totalBoost; 
@@ -1394,7 +1361,7 @@
             if(hasExodia && DECK_ARR.length > 0) { 
                 eotQueue.push(() => { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if(idx !== -1) { showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", () => { document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s=>s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; processQueue(eotQueue); }, () => { processQueue(eotQueue); }); } else { processQueue(eotQueue); } }); 
             } else if (DECK_ARR.length >= 1) { 
-                eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { openStructuredSearch(Math.min(5, DECK_ARR.length), ["Straw Hat Pirates", "Straw Hat Crew"], null, false, false, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); }); 
+                eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { window.openStructuredSearch(Math.min(5, DECK_ARR.length), ["Straw Hat Pirates", "Straw Hat Crew"], null, false, false, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); }); 
             } 
         }
         
@@ -1479,31 +1446,35 @@
     }
 
     // --- CONTEXT MENU ABILITIES ---
+    window.morgansLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); saveState(); }
+    window.magellanLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('don_minus', 1, "Return 1 DON!! to gain +1000 and Draw", (dons) => { dons[0].remove(); DON_DECK_COUNT++; organizeDon(); rightClickedCard.dataset.tempPower = (parseInt(rightClickedCard.dataset.tempPower || 0) + 1000); window.drawCardAction(); updatePowerDisplay(); saveState(); appendChat("Magellan: -1 DON, +1000 Power, Draw 1!", "#8e44ad"); }); }
+    window.judgeLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand"); }); }
+
     window.stussyLeaderFlip = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); window.stussyUsedThisTurn = true; cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Stussy flipped life & froze target!", "#34dbdb"); }); }
     window.lucciYellowMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
     window.kakuMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
     window.hattoriMain = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { c.classList.remove('rested'); saveState(); }); }
     window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s => s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
     window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
-    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
+    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); window.drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
     window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
     window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
 
-    window.judgeMainEffect = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand"); }); }
+    window.judgeMainEffect = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand"); }); }
     window.ichijiMainRamp = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); window.sotuTurnState.vinsmokeCostDiscount = 2; saveState(); appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db"); }
     window.yonjiUnrest = function() { hideMenu(); const c = rightClickedCard; c.classList.remove('rested'); c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); saveState(); appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db"); }
     window.luffy10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('rest_active_don', 1, "Select 1 Active DON!! to Rest", (cards) => { cards[0].classList.add('rested'); spawnDonLocal(false); saveState(); appendChat("10c Luffy swapped a rested DON for an active one!", "#8e44ad"); }); }
     window.blackMariaMain = function() { hideMenu(); const hasOther = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Black Maria").length > 1; if(hasOther) { showModal("Cannot use if you have other Black Marias.", "alert"); return; } rightClickedCard.classList.add('rested'); window.batchState.blackMariaUsed = true; showModal("How many rested DON!! to add? (Max 5)", "prompt", (val) => { let num = Math.min(5, parseInt(val) || 0); for(let i=0; i<num; i++) spawnDonLocal(true); saveState(); appendChat(`Black Maria generated ${num} rested DON!!`, "#8e44ad"); }, null, "5"); }
     window.zoro1cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); spawnDonLocal(true); window.batchState.zoroFrozenDonCount++; saveState(); appendChat("Zoro generated 1 rested DON!! (1 DON will not refresh next turn).", "#8e44ad"); }
-    window.reiju5cMain = function() { hideMenu(); rightClickedCard.dataset.reijuBuffExpires = turnNum + 3; drawCardAction(); drawCardAction(); showModal("Trash 3 cards from hand.", "alert", () => { startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); updatePowerDisplay(); saveState(); appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
+    window.reiju5cMain = function() { hideMenu(); rightClickedCard.dataset.reijuBuffExpires = turnNum + 3; window.drawCardAction(); window.drawCardAction(); showModal("Trash 3 cards from hand.", "alert", () => { startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); updatePowerDisplay(); saveState(); appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
     window.sanji3cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; updateBadges(targets[0].id); organizeDon(); saveState(); appendChat("Sanji attached DON!!", "#3498db"); } }); }
-    window.impelStageMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); openStructuredSearch(3, ["Impel Down"], null); appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
-    window.dominoMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { showModal("No DON returned this turn!", "alert"); return; } drawCardAction(); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); saveState(); appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
+    window.impelStageMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
+    window.dominoMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { showModal("No DON returned this turn!", "alert"); return; } window.drawCardAction(); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); saveState(); appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
     window.magellan10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); window.batchState.magellanBuffActive = true; updatePowerDisplay(); saveState(); appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
     window.weNewsMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); if(trIdx !== -1) { createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); window.batchState.leaderCannotAttack = true; appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); } else { appendChat("No News Lackey in trash.", "#ccc"); } saveState(); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; }); }
-    window.morgansCharMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); openStructuredSearch(6, null, null, false, true); }); }
+    window.morgansCharMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); }
 
-    function executeSotuTrashTriggers(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
+    function executeSotuTrashTriggers(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { window.openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
 
     window.moveToTrash = function(c) {
         if (!c) return; const db = CARD_DB[c.dataset.url]; const origZone = c.parentElement.id;
@@ -1524,7 +1495,7 @@
         
         if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
         if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
-        if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
+        if(db.name === "Chopper") { window.drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
         if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
         if(db.name === "Vinsmoke Yonji" && db.cost === 9) { if(c.dataset.turnPlayed == myTurnCount) { c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000; updatePowerDisplay(); appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c"); } }
         if(db.name === "Monkey D. Luffy (Unblockable)") { if(document.querySelectorAll(`[data-parent-id="${c.id}"]`).length >= 2) { c.dataset.unblockable = "true"; appendChat("Luffy attacks with 2 DON!! -> Unblockable!", "#e74c3c"); } }
@@ -1547,27 +1518,54 @@
         if(combatState.active && combatState.step === 'select_blocker') { const target = e.target.closest('.valid-blocker'); if(target) { target.classList.add('rested'); saveState(); combatState.defenderId = target.id; document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id}); drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase..."); askCounterPhase(); } else if (e.button === 2) { document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); askCounterPhase(); } return; }
     });
 
+    window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { 
+        SEARCH_ARR = DECK_ARR.splice(-val).reverse(); 
+        const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; 
+        document.getElementById('insp-title').innerText = `Pick 1 Target`; window.tempSearchCallback = callback; 
+        SEARCH_ARR.forEach((url, i) => { 
+            const db = CARD_DB[url]; let canTake = true; 
+            if(filterTraits && !filterTraits.some(t => (db.traits||[]).includes(t))) canTake = false; 
+            if(isTriggerOnly && !db.hasTrigger) canTake = false; 
+            if(isCost4Plus && db.cost < 5) canTake = false; 
+            if(excludeName && db.name === excludeName) canTake = false; 
+            const div = document.createElement('div'); div.style.textAlign = 'center'; 
+            div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'}; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" onclick="${canTake ? `window.resolveStructuredSearch(${i})` : ''}"></div>`; 
+            grid.appendChild(div); 
+        }); 
+        const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="window.resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('search-modal').style.display = 'flex'; 
+    }
+    
+    window.resolveStructuredSearch = function(index) { 
+        if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); appendChat(`Searched: ${CARD_DB[url].name}`, "#2ecc71"); } 
+        while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); 
+        document.getElementById('search-modal').style.display = 'none'; saveState(); 
+        if (window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null; } 
+    }
+
     window.openInspector = function(mode, action = 'hand', filterList = null) {
         const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = '';
         list.forEach((url, i) => {
-            const db = CARD_DB[url]; let isValid = true; if (filterList) { isValid = filterList.some(t => db?.traits?.includes(t)); }
+            const db = CARD_DB[url]; let isValid = true; if (filterList) { isValid = filterList.some(t => (db?.traits||[]).includes(t)); }
             const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; img.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
             if (!isValid) img.style.filter = 'grayscale(100%) opacity(0.5)';
             if(isDevMode && isValid) {
                 img.style.cursor='pointer';
                 img.onclick = () => {
                     if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1);
-                    if (action === 'play_rested') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.classList.add('rested'); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
-                    else if (action === 'play_active') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
+                    if (action === 'play_rested') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.classList.add('rested'); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
+                    else if (action === 'play_active') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
                     else { createCard(url, 0, 0, {inHand: true}); }
-                    closeInspector(); saveState();
+                    window.closeInspector(); saveState();
                 };
             }
             grid.appendChild(img);
         });
         document.getElementById('search-modal').style.display = 'flex';
     }
-    window.closeInspector = function() { if(SEARCH_ARR.length > 0) resolveStructuredSearch(-1); else { document.getElementById('search-modal').style.display = 'none'; refreshStats(); } }
+    
+    window.inspectDeck = function() { if(!isDevMode) return; window.openInspector('deck'); };
+    
+    window.closeInspector = function() { if(SEARCH_ARR.length > 0) window.resolveStructuredSearch(-1); else { document.getElementById('search-modal').style.display = 'none'; refreshStats(); } }
 
     window.addEventListener('mousedown', (e) => { if(!e.target.closest('#context-menu') && !e.target.closest('#search-modal') && !e.target.closest('#custom-modal-box')) hideMenu(); if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } }, true);
     function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
@@ -1580,12 +1578,31 @@
     window.addEventListener('mouseup', (e) => { 
         if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
         const c = dragged; dragged = null; 
-        if(!isDragging) { if(c.parentElement.id === 'hand-bar' && !isDevMode) playCardConfirm(c); return; } 
+        
+        if(!isDragging) { if(c.parentElement.id === 'hand-bar') window.playCardConfirm(c); return; } 
+        
         if (c.dataset.isDon === "true") {
             let attached = false; const targets = document.querySelectorAll('#char-zone-front .card, #leader-zone .card');
             targets.forEach(t => { if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) { const r = t.getBoundingClientRect(); if (isInside(e, r)) { c.dataset.parentId = t.id; updateBadges(t.id); organizeDon(); saveState(); attached = true; } } });
             if (attached) return; 
         }
+        
+        // --- DEV MODE DRAG-TO-BOARD FEATURE ---
+        if (isDevMode && c.dataset.isDon !== "true") {
+            const charR = document.getElementById('char-zone-front').getBoundingClientRect();
+            const stageR = document.getElementById('stage-zone').getBoundingClientRect();
+            if (isInside(e, charR)) {
+                document.getElementById('char-zone-front').appendChild(c);
+                c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0';
+                saveState(); return;
+            }
+            if (isInside(e, stageR)) {
+                document.getElementById('stage-zone').appendChild(c);
+                c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0';
+                saveState(); return;
+            }
+        }
+        
         c.style.zIndex = 20; const handR = document.getElementById('hand-bar').getBoundingClientRect(); 
         if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
     });
