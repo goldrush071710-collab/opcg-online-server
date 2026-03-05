@@ -334,7 +334,7 @@
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
 
-    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
+<button onclick="openAlignAuth()" style="position:absolute; bottom:15px; left:15px; background:rgba(0,0,0,0.8); color:var(--op-gold); border:2px solid var(--op-gold); font-size:14px; z-index: 9999999; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">🛠 ALIGN TOOL</button>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
@@ -1264,7 +1264,7 @@
         showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); 
     });
 
-    // --- ALIGN TOOL LOGIC ---
+   // --- ALIGN TOOL LOGIC ---
     function openAlignAuth() {
         showModal("Enter Developer Code:", "prompt", (val) => {
             if (val === "717") {
@@ -1272,6 +1272,7 @@
                 document.body.classList.add('align-mode-active');
                 document.getElementById('align-tool').style.display = 'block';
                 
+                // Spawns dummy target cards so you can see what you are moving!
                 createCard('https://i.imgur.com/TwmysAX.png', 0, 0, {zone: 'leader-zone'});
                 createCard('https://i.imgur.com/2lEVHJP.png', 0, 0, {zone: 'char-zone-front'});
                 createCard('https://i.imgur.com/KdMSz8v.png', 0, 0, {zone: 'stage-zone'});
@@ -3186,3 +3187,4 @@
 </script>
 </body>
 </html>
+
