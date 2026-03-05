@@ -2,20 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Precision Tabletop</title>
+    <title>OPCG Master Engine - Modular Architecture</title>
     <style>
         :root { 
-            --hand-card-h: 18vh; 
-            --hand-card-w: calc(var(--hand-card-h) * 0.71); 
-            
-            --board-card-w: 11.5%; 
-            --don-card-w: 11.5%;
-            
-            --op-blue: #3498db; 
-            --op-gold: #f1c40f; 
-            --op-red: #e74c3c;
+            --hand-card-h: 22vh; --hand-card-w: calc(var(--hand-card-h) * 0.71); 
+            --board-card-w: 11.5%; --don-card-w: 11.5%;
+            --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
             --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
-
             --lf-t: 6%; --lf-l: 4%; --lf-w: 11.5%; --lf-h: 60%;
             --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%; --ch-cw: 11.5%;
             --ld-t: 40%; --ld-l: 47.8%; --ld-w: 11.5%; --ld-h: 16.2%;
@@ -27,76 +20,22 @@
             --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%; --dz-cw: 11.5%;
         }
         
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; 
-            background-size: cover;
-            color: #f0f0f0; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            width: 100vw; 
-            display: flex; 
-            user-select: none; 
-        }
-
-        .glass-panel {
-            background: rgba(20, 20, 25, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100; 
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; background-size: cover; color: #f0f0f0; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; user-select: none; }
+        .glass-panel { background: rgba(20, 20, 25, 0.85); backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 100; box-sizing: border-box; }
         
         #left-col { width: 440px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); height: 100vh; box-sizing: border-box; }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; padding: 10px; overflow: hidden; position: relative; }
         #right-col { width: 330px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
-        .board-section { 
-            aspect-ratio: 24 / 14; 
-            height: 43vh; 
-            width: auto;
-            max-width: 95%; 
-            background-size: 100% 100%; 
-            background-position: center; 
-            background-repeat: no-repeat;
-            background-color: transparent;
-            border-radius: 10px; 
-            border: 2px solid #000; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8); 
-            position: relative;
-            background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); 
-        }
-        
+        .board-section { aspect-ratio: 24 / 14; height: 43vh; width: auto; max-width: 95%; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: transparent; border-radius: 10px; border: 2px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative; background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); }
         .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
         
-        .slot, .flex-zone { 
-            position: absolute; 
-            z-index: 1; 
-            display: flex; 
-            box-sizing: border-box; 
-            border-radius: 8px; 
-            transition: all 0.2s ease; 
-        }
+        .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; border-radius: 8px; transition: all 0.2s ease; }
         .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
         .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
-        body.align-mode-active .slot, 
-        body.align-mode-active .flex-zone {
-            background-color: rgba(52, 152, 219, 0.3) !important; 
-            border: 2px dashed var(--op-gold) !important;
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
-        }
-
-        body.align-mode-active .zone-is-selected {
-            background-color: rgba(231, 76, 60, 0.5) !important;
-            border: 3px solid var(--op-red) !important;
-            box-shadow: 0 0 20px var(--op-red) !important;
-            z-index: 1000 !important;
-        }
+        body.align-mode-active .slot, body.align-mode-active .flex-zone { background-color: rgba(52, 152, 219, 0.3) !important; border: 2px dashed var(--op-gold) !important; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important; }
+        body.align-mode-active .zone-is-selected { background-color: rgba(231, 76, 60, 0.5) !important; border: 3px solid var(--op-red) !important; box-shadow: 0 0 20px var(--op-red) !important; z-index: 1000 !important; }
 
         .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
         .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
@@ -108,9 +47,7 @@
         .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
         .franky-extra-zone { top: var(--fz-t); left: var(--fz-l); width: var(--fz-w); height: var(--fz-h); flex-direction: row-reverse; justify-content: flex-start; gap: 8px; flex-wrap: nowrap; }
 
-        #opp-board { transform: rotate(180deg); }
-        #opp-board .card { transform: rotate(180deg); } 
-        #opp-board .card.rested { transform: rotate(270deg); }
+        #opp-board { transform: rotate(180deg); } #opp-board .card { transform: rotate(180deg); } #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
         .board-section .card { position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
@@ -120,176 +57,55 @@
         .don-zone .card, #opp-don-zone .card { width: var(--dz-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;}
         .franky-extra-zone .card { width: var(--board-card-w) !important; height: 100% !important; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0; }
         .life-zone .card, #opp-life-zone .card { width: 100%; aspect-ratio: 71/100; height: auto; position: absolute !important; left: 0 !important; transform: none !important;}
-        
-        .leader-zone .card, #opp-leader-zone .card, .stage-zone .card, #opp-stage-zone .card, 
-        .drop-deck .card, #opp-drop-deck .card, .drop-trash .card, #opp-drop-trash .card, 
-        .don-deck .card, #opp-don-deck .card { 
-            width: 100%; height: auto !important; aspect-ratio: 71/100 !important; 
-        }
+        .leader-zone .card, #opp-leader-zone .card, .stage-zone .card, #opp-stage-zone .card, .drop-deck .card, #opp-drop-deck .card, .drop-trash .card, #opp-drop-trash .card, .don-deck .card, #opp-don-deck .card { width: 100%; height: auto !important; aspect-ratio: 71/100 !important; }
 
-        .card[data-is-don="true"] { cursor: pointer !important; }
-        .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
-        .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
-        
-        .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; }
-        .no-restand { outline: 3px dashed #9b59b6 !important; }
+        .card[data-is-don="true"] { cursor: pointer !important; } .card.rested { transform: rotate(90deg); filter: brightness(0.65); } .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
+        .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; } .no-restand { outline: 3px dashed #9b59b6 !important; }
 
-        .power-badge { display: flex !important; position: absolute; top: -8px; right: -8px; background: #e74c3c; border: 2px solid #fff; color: white; border-radius: 12px; padding: 2px 6px; font-size: 1.3vh; font-weight: bold; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.8); }
-        .power-badge.hidden { display: none !important; }
-        .don-badge { display: none !important; }
+        .power-badge { display: flex !important; position: absolute; top: -8px; right: -8px; background: #e74c3c; border: 2px solid #fff; color: white; border-radius: 12px; padding: 2px 6px; font-size: 1.3vh; font-weight: bold; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.8); } .power-badge.hidden { display: none !important; } .don-badge { display: none !important; }
+        .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; } .kw-tag { display:none; font-size:1vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); } .blocker-tag { background:#3498db; color:#fff; } .rush-tag { background:#f39c12; color:#000; } .banish-tag { background:#8e44ad; color:#fff; } .double-attack-tag { background:#e74c3c; color:#fff; }
 
-        .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; }
-        .kw-tag { display:none; font-size:1vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        .blocker-tag { background:#3498db; color:#fff; }
-        .rush-tag { background:#f39c12; color:#000; }
-        .banish-tag { background:#8e44ad; color:#fff; }
-        .double-attack-tag { background:#e74c3c; color:#fff; }
-
-        .stat-container { display: flex; gap: 8px; margin-bottom: 5px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.4vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
-        .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
-
-        #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
-        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; color: #ddd; }
-        #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); }
-        #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;}
-        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
+        .stat-container { display: flex; gap: 8px; margin-bottom: 5px; } .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.4vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);} .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
+        #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; } #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; color: #ddd; } #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); } #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;} #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
 
         #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
-        
-        #hand-bar { 
-            flex: 1; 
-            min-height: 25vh; 
-            background: rgba(0,0,0,0.4); 
-            border-radius: 8px; 
-            border: 1px solid rgba(255,255,255,0.1); 
-            display: flex; 
-            align-items: center; 
-            justify-content: flex-start; 
-            padding: 15px 30px; 
-            overflow-x: auto; 
-            overflow-y: hidden; 
-            flex-wrap: nowrap; 
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-        }
-        #hand-bar::-webkit-scrollbar { height: 8px; }
-        #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
-
-        #hand-bar .card { 
-            position: relative !important; 
-            width: var(--hand-card-w) !important; 
-            height: var(--hand-card-h) !important; 
-            border-radius: 6px; 
-            border: 1px solid #000; 
-            box-shadow: -5px 0 15px rgba(0,0,0,0.9); 
-            background-size: 100% 100%; 
-            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), margin 0.2s ease; 
-            flex-shrink: 0;
-            margin-left: -2vw; 
-            transform-origin: bottom center;
-        }
-        #hand-bar .card:first-child { margin-left: 0; }
-        #hand-bar .card:hover { 
-            transform: translateY(-25px) scale(1.15); 
-            z-index: 9999 !important; 
-            margin-right: 1vw; 
-        }
+        #hand-bar { flex: 1; min-height: 25vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px 30px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); } #hand-bar::-webkit-scrollbar { height: 8px; } #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; } #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
+        #hand-bar .card { position: relative !important; width: var(--hand-card-w) !important; height: var(--hand-card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: -5px 0 15px rgba(0,0,0,0.9); background-size: 100% 100%; transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), margin 0.2s ease; flex-shrink: 0; margin-left: -2vw; transform-origin: bottom center; }
+        #hand-bar .card:first-child { margin-left: 0; } #hand-bar .card:hover { transform: translateY(-25px) scale(1.15); z-index: 9999 !important; margin-right: 1vw; }
 
         #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
-        
-        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;}
-        #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); }
-        #btn-end-turn:disabled { background: rgba(85,85,85,0.8) !important; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
-        
-        #btn-concede { width: 100%; background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        #btn-concede:hover { background: #e74c3c; color: #fff; }
+        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;} #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); } #btn-end-turn:disabled { background: rgba(85,85,85,0.8) !important; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
+        #btn-concede { width: 100%; background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; } #btn-concede:hover { background: #e74c3c; color: #fff; }
 
-        #context-menu { position: absolute; display: none; background: rgba(15,15,20,0.95); border: 1px solid var(--op-blue); z-index: 999999; border-radius: 6px; width: 220px; box-shadow: 0 15px 30px rgba(0,0,0,0.9); backdrop-filter: blur(5px);}
-        #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;}
-        #context-menu div:hover { background: var(--op-blue); }
+        #context-menu { position: absolute; display: none; background: rgba(15,15,20,0.95); border: 1px solid var(--op-blue); z-index: 999999; border-radius: 6px; width: 220px; box-shadow: 0 15px 30px rgba(0,0,0,0.9); backdrop-filter: blur(5px);} #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;} #context-menu div:hover { background: var(--op-blue); }
+        #custom-modal-overlay, #sync-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.1); z-index:9999999; justify-content:flex-start; align-items:center; padding-top: 5vh; flex-direction:column; pointer-events: none; } #custom-modal-box { pointer-events: auto; background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9); } #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px; line-height: 1.4;} #custom-modal-input { width:80%; padding:12px; margin-bottom:20px; text-align:center; background:rgba(0,0,0,0.6); color:#fff; border:1px solid var(--op-blue); font-size: 16px; border-radius: 6px;} .modal-btn { flex:1; padding:12px; font-size:14px; font-weight:bold; border-radius:6px; border:none; cursor:pointer; text-transform:uppercase; transition:0.2s;}
 
-        #custom-modal-overlay, #sync-overlay { 
-            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.1); z-index:9999999; 
-            justify-content:flex-start; align-items:center; padding-top: 5vh; flex-direction:column; pointer-events: none; 
-        }
-        #custom-modal-box { 
-            pointer-events: auto; background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9); 
-        }
-        #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px; line-height: 1.4;}
-        #custom-modal-input { width:80%; padding:12px; margin-bottom:20px; text-align:center; background:rgba(0,0,0,0.6); color:#fff; border:1px solid var(--op-blue); font-size: 16px; border-radius: 6px;}
-        .modal-btn { flex:1; padding:12px; font-size:14px; font-weight:bold; border-radius:6px; border:none; cursor:pointer; text-transform:uppercase; transition:0.2s;}
+        #home-screen { position: fixed; inset: 0; background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center; background-size: cover; z-index: 999999; display: flex; align-items: center; justify-content: center; } #home-screen::before { content:''; position:absolute; inset:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 0; } .menu-box { position: relative; z-index: 1; background: rgba(15,15,20,0.85); backdrop-filter: blur(15px); padding:40px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 30px 60px rgba(0,0,0,0.9);}
+        button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; } button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
-        #home-screen { position: fixed; inset: 0; background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center; background-size: cover; z-index: 999999; display: flex; align-items: center; justify-content: center; }
-        #home-screen::before { content:''; position:absolute; inset:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 0; }
-        .menu-box { position: relative; z-index: 1; background: rgba(15,15,20,0.85); backdrop-filter: blur(15px); padding:40px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 30px 60px rgba(0,0,0,0.9);}
-        
-        button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
-        button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
+        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;} #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; } .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;} .align-slider { width: 150px; cursor: pointer;}
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; } #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;} #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;} #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
 
-        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;}
-        #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
-        .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
-        .align-slider { width: 150px; cursor: pointer;}
-
-        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
-        #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;}
-        #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
-
-        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
-        #combat-arena { position: fixed; top: 15vh; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 800px; height: 35vh; background: linear-gradient(135deg, rgba(20,20,25,0.98), rgba(60,20,20,0.98)); border: 3px solid #e74c3c; border-radius: 15px; z-index: 90000; display: none; align-items: center; justify-content: space-between; padding: 20px 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); color: white; box-sizing: border-box; }
-        .arena-side { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 140px;}
-        .arena-img { width: 120px; height: 168px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); background-size: 100% 100%;}
-        .arena-power { font-size: 32px; font-weight: 900; background: #000; padding: 5px 15px; border-radius: 8px; border: 2px solid var(--op-gold); color: var(--op-gold); text-align: center; width: 100%; box-sizing: border-box; text-shadow: 0 2px 4px rgba(0,0,0,1);}
-        .arena-center { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; }
-        .arena-center h1 { font-size: 60px; margin: 0; color: #e74c3c; text-shadow: 2px 2px 0 #000, 0 0 20px #e74c3c; font-style: italic;}
-        .arena-status { font-size: 22px; margin-top: 10px; color: #34dbdb; font-weight: bold; text-transform: uppercase;}
-        .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 15px;}
-
+        #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));} #combat-arena { position: fixed; top: 15vh; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 800px; height: 35vh; background: linear-gradient(135deg, rgba(20,20,25,0.98), rgba(60,20,20,0.98)); border: 3px solid #e74c3c; border-radius: 15px; z-index: 90000; display: none; align-items: center; justify-content: space-between; padding: 20px 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); color: white; box-sizing: border-box; } .arena-side { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 140px;} .arena-img { width: 120px; height: 168px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); background-size: 100% 100%;} .arena-power { font-size: 32px; font-weight: 900; background: #000; padding: 5px 15px; border-radius: 8px; border: 2px solid var(--op-gold); color: var(--op-gold); text-align: center; width: 100%; box-sizing: border-box; text-shadow: 0 2px 4px rgba(0,0,0,1);} .arena-center { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; } .arena-center h1 { font-size: 60px; margin: 0; color: #e74c3c; text-shadow: 2px 2px 0 #000, 0 0 20px #e74c3c; font-style: italic;} .arena-status { font-size: 22px; margin-top: 10px; color: #34dbdb; font-weight: bold; text-transform: uppercase;} .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 15px;}
         #counter-controls { display:none; position:fixed; bottom:10vh; left:50%; transform:translateX(-50%); background:rgba(15,15,20,0.95); border:2px solid var(--op-blue); padding:15px 30px; border-radius:12px; z-index:90000; align-items:center; gap:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); backdrop-filter: blur(10px);}
         
-        #select-overlay { position: fixed; inset: 0; background: rgba(231,76,60,0.15); z-index: 89999; display: none; pointer-events: none; }
-        #select-msg { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2.2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.7); border: 2px solid #fff;}
+        #select-overlay { position: fixed; inset: 0; background: rgba(231,76,60,0.15); z-index: 89999; display: none; pointer-events: none; } #select-msg { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2.2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.7); border: 2px solid #fff;}
 
-        body.combat-target-mode { cursor: crosshair !important; }
-        body.combat-target-mode #opp-board .card { pointer-events: none !important; }
-        body.combat-target-mode #opp-leader-zone .card, body.combat-target-mode #opp-char-zone-front .card.rested { pointer-events: auto !important; cursor: crosshair !important; outline: 4px solid #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; z-index: 100 !important; transform: scale(1.05) !important;}
-        
-        body.bon-clay-mode { cursor: crosshair !important; }
-        body.bon-clay-mode #opp-board .card { pointer-events: none !important; }
-        body.bon-clay-mode #opp-char-zone-front .card { pointer-events: auto !important; cursor: crosshair !important; outline: 4px solid var(--op-gold) !important; box-shadow: 0 0 25px var(--op-gold) !important; z-index: 100 !important; transform: scale(1.05) !important;}
-        
-        body.blocker-target-mode { cursor: crosshair !important; }
-        body.blocker-target-mode #my-board .card { pointer-events: none !important; }
-        body.blocker-target-mode #char-zone-front .valid-blocker { pointer-events: auto !important; cursor: pointer !important; outline: 4px solid var(--op-blue) !important; box-shadow: 0 0 25px var(--op-blue) !important; z-index: 100 !important; transform: scale(1.05) !important;}
-        
-        body.counter-mode .card { cursor: crosshair !important; }
-        body.select-mode { cursor: crosshair !important; }
-        body.select-mode .card { cursor: crosshair !important; pointer-events: auto !important; }
-        body.select-mode .card:hover { outline: 4px dashed var(--op-gold); transform: scale(1.1); z-index: 100; box-shadow: 0 0 30px var(--op-gold); }
+        body.combat-target-mode { cursor: crosshair !important; } body.combat-target-mode #opp-board .card { pointer-events: none !important; } body.combat-target-mode #opp-leader-zone .card, body.combat-target-mode #opp-char-zone-front .card.rested { pointer-events: auto !important; cursor: crosshair !important; outline: 4px solid #e74c3c !important; box-shadow: 0 0 25px #e74c3c !important; z-index: 100 !important; transform: scale(1.05) !important;}
+        body.bon-clay-mode { cursor: crosshair !important; } body.bon-clay-mode #opp-board .card { pointer-events: none !important; } body.bon-clay-mode #opp-char-zone-front .card { pointer-events: auto !important; cursor: crosshair !important; outline: 4px solid var(--op-gold) !important; box-shadow: 0 0 25px var(--op-gold) !important; z-index: 100 !important; transform: scale(1.05) !important;}
+        body.blocker-target-mode { cursor: crosshair !important; } body.blocker-target-mode #my-board .card { pointer-events: none !important; } body.blocker-target-mode #char-zone-front .valid-blocker { pointer-events: auto !important; cursor: pointer !important; outline: 4px solid var(--op-blue) !important; box-shadow: 0 0 25px var(--op-blue) !important; z-index: 100 !important; transform: scale(1.05) !important;}
+        body.counter-mode .card { cursor: crosshair !important; } body.select-mode { cursor: crosshair !important; } body.select-mode .card { cursor: crosshair !important; pointer-events: auto !important; } body.select-mode .card:hover { outline: 4px dashed var(--op-gold); transform: scale(1.1); z-index: 100; box-shadow: 0 0 30px var(--op-gold); }
 
         #turn-indicator { position:fixed; top:20px; left:50%; transform:translateX(-50%); padding:12px 30px; font-weight:900; font-size:20px; border-radius:8px; z-index:1000; display:none; border: 2px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.8); text-transform: uppercase; letter-spacing: 2px;}
 
-        #deck-builder-screen { display:none; position:fixed; inset:0; background:rgba(15,15,20,0.98); z-index:999999; flex-direction:row; color:#fff; backdrop-filter: blur(10px);}
-        .db-card-pool { flex: 2; padding: 30px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start;}
-        .db-sidebar { flex: 1; padding: 30px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 15px; }
-        .db-card-item { width: 85px; height: 119px; background-size: 100% 100%; border-radius: 6px; cursor: pointer; transition: 0.15s; border: 1px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
-        .db-card-item:hover { border-color: var(--op-blue); transform: scale(1.1); box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4); z-index: 10;}
-        .db-list-item { display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s;}
-        .db-list-item:hover { background: rgba(231, 76, 60, 0.3); border-color: #e74c3c; }
-        
-        .color-dots { display:flex; gap:6px; margin-bottom:10px; justify-content:center; } 
-        .color-dot { width:16px; height:16px; border-radius:50%; border:1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
-        #zoom-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999999 !important; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(5px); }
-        #zoom-img { max-height: 85vh; max-width: 90vw; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,1); }
+        #deck-builder-screen { display:none; position:fixed; inset:0; background:rgba(15,15,20,0.98); z-index:999999; flex-direction:row; color:#fff; backdrop-filter: blur(10px);} .db-card-pool { flex: 2; padding: 30px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start;} .db-sidebar { flex: 1; padding: 30px; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 15px; } .db-card-item { width: 85px; height: 119px; background-size: 100% 100%; border-radius: 6px; cursor: pointer; transition: 0.15s; border: 1px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.5);} .db-card-item:hover { border-color: var(--op-blue); transform: scale(1.1); box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4); z-index: 10;} .db-list-item { display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s;} .db-list-item:hover { background: rgba(231, 76, 60, 0.3); border-color: #e74c3c; }
+        .color-dots { display:flex; gap:6px; margin-bottom:10px; justify-content:center; } .color-dot { width:16px; height:16px; border-radius:50%; border:1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        #zoom-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999999 !important; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(5px); } #zoom-img { max-height: 85vh; max-width: 90vw; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,1); }
     </style>
 </head>
 <body>
 
 <div id="home-screen">
-    
     <button onclick="window.openAlignAuth()" style="position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.9); color:var(--op-gold); border:2px solid var(--op-gold); font-size:14px; z-index: 99999999; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">🛠 ALIGN TOOL</button>
 
     <div id="news-modal" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
@@ -299,11 +115,9 @@
 
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
-        
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa;">SELECT ACTIVE DECK:</div>
         <div id="home-deck-list" style="height: 140px; overflow-y: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; display: flex; flex-direction: column; gap: 5px;"></div>
         <button onclick="window.openDeckBuilder()" style="background:var(--op-gold); color:#000; padding: 12px; font-size: 14px;">+ CREATE NEW DECK</button>
-        
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa; margin-top:5px;">SELECT PLAYMAT:</div>
         <select id="playmat-selector" style="width:100%; padding:10px; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius:6px; font-size: 14px; outline:none; cursor:pointer;">
             <option value="https://i.imgur.com/SSN1DUI.jpeg">Yellow OP Sim</option>
@@ -323,15 +137,12 @@
             <option value="https://i.imgur.com/ZKhKrMl.jpeg">Luffy Gear 5</option>
             <option value="https://i.imgur.com/0hrCVS6.jpeg">Enel</option>
         </select>
-        
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
-        
         <div style="display:flex; gap:10px;">
             <button onclick="window.createLobby()" style="flex:1; padding: 12px; background:#2ecc71; font-size:14px;">HOST LOBBY</button>
             <button onclick="window.showJoinLobby()" style="flex:1; padding: 12px; background:#e67e22; font-size:14px;">JOIN LOBBY</button>
         </div>
         <button onclick="window.randomMatch()" style="width:100%; padding: 12px; background:var(--op-blue); font-size:14px; margin-top:5px;">RANDOM MATCH</button>
-        
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         <button onclick="window.startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
@@ -405,48 +216,26 @@
 
 <div id="align-tool">
     <h3>ALIGNMENT TOOL</h3>
-    
     <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom:10px;">
-        <span style="color:var(--op-blue);">Standard Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('board-card-w', this.value)"> 
-        <span id="val-card-w" style="width:40px; text-align:right;"></span>
+        <span style="color:var(--op-blue);">Standard Card Size %:</span> <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('board-card-w', this.value)"> <span id="val-card-w" style="width:40px; text-align:right;"></span>
     </div>
     <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
-        <span style="color:var(--op-gold);">DON!! Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('don-card-w', this.value)"> 
-        <span id="val-don-w" style="width:40px; text-align:right;"></span>
+        <span style="color:var(--op-gold);">DON!! Card Size %:</span> <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="window.updateGlobalSize('don-card-w', this.value)"> <span id="val-don-w" style="width:40px; text-align:right;"></span>
     </div>
-
     <select id="align-zone" onchange="window.loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
-        <option value="ld">Leader Area</option>
-        <option value="st">Stage Area</option>
-        <option value="fz">Franky Extra Stages</option>
-        <option value="dk">Deck Area</option>
-        <option value="tr">Trash Area</option>
-        <option value="dd">DON!! Deck</option>
-        <option value="lf">Life Column</option>
-        <option value="ch">Character Row</option>
-        <option value="dz">DON!! Area</option>
+        <option value="ld">Leader Area</option><option value="st">Stage Area</option><option value="fz">Franky Extra Stages</option><option value="dk">Deck Area</option><option value="tr">Trash Area</option><option value="dd">DON!! Deck</option><option value="lf">Life Column</option><option value="ch">Character Row</option><option value="dz">DON!! Area</option>
     </select>
-
     <div class="align-group"><span>Top (Y) %:</span> <input type="range" class="align-slider" id="slider-t" min="0" max="100" step="0.1" oninput="window.updateAlign('t', this.value)"> <span id="val-t" style="width:40px; text-align:right;"></span></div>
     <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="window.updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
-    
     <div id="width-height-controls">
         <div class="align-group"><span>Box Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="window.updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
         <div class="align-group"><span>Box Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="window.updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
     </div>
-    
     <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;">
-        <span style="color:var(--op-blue);">Inner Card %:</span> 
-        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="window.updateAlign('cw', this.value)"> 
-        <span id="val-cw" style="width:40px; text-align:right;"></span>
+        <span style="color:var(--op-blue);">Inner Card %:</span> <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="window.updateAlign('cw', this.value)"> <span id="val-cw" style="width:40px; text-align:right;"></span>
     </div>
-    
     <div style="margin-top:20px; display:flex; gap:5px;">
-        <button onclick="window.saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button>
-        <button onclick="window.resetAlign()" style="flex:1; background:#e74c3c;">RESET</button>
-        <button onclick="window.closeAlignTool()" style="flex:1;">HIDE</button>
+        <button onclick="window.saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button><button onclick="window.resetAlign()" style="flex:1; background:#e74c3c;">RESET</button><button onclick="window.closeAlignTool()" style="flex:1;">HIDE</button>
     </div>
 </div>
 
@@ -463,9 +252,7 @@
         </div>
         <div style="font-size:14px; font-weight:bold; color:#aaa;">MAIN DECK (<span id="db-count" style="color:#fff;">0</span>/50)</div>
         <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; flex-direction:column; gap:5px; border-radius:6px; background:rgba(0,0,0,0.3);"></div>
-        <div style="display:flex; gap:5px;">
-            <button onclick="window.saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button>
-        </div>
+        <div style="display:flex; gap:5px;"><button onclick="window.saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button></div>
         <button onclick="window.importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
         <button onclick="window.closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
     </div>
@@ -541,7 +328,6 @@
 
 <div id="right-col" class="glass-panel">
     <div id="right-col-inspector"></div>
-    
     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
         <button id="btn-end-turn" onclick="window.endTurn()">END TURN</button>
         <button id="btn-concede" onclick="window.concedeGame()">CONCEDE MATCH</button>
@@ -552,113 +338,441 @@
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+    // --- NEW MODULAR EVENT HOOK DATABASE ---
     const CARD_DB = {
-        "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", color: ["Red", "Purple"], traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
-        "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Char)", type: "Character", color: ["Purple"], cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
-        "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", color: ["Purple"], cost: 3, traits: ["Water Seven"], hasOnPlay: true, power: 4000, counter: 1000, blocker: true },
-        "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates"], power: 5000, counter: 2000 },
-        "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", color: ["Red"], cost: 11, traits: ["Straw Hat Pirates", "Invention"], power: 13000, counter: 0, blocker: true, banish: true },
-        "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 2000, counter: 1000 },
-        "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Crew"], power: 4000, counter: 1000 },
-        "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", color: ["Purple"], cost: 5, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 7000, counter: 0 },
-        "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", color: ["Purple"], cost: 4, traits: ["Alabasta"], hasOnPlay: true, power: 1000, counter: 0 },
-        "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", color: ["Purple"], cost: 8, traits: ["Roger Pirates"], hasOnPlay: true, power: 10000, counter: 0 },
+        // FRANKY ENGINE
+        "https://i.imgur.com/TwmysAX.png": { 
+            name: "Franky", type: "Leader", color: ["Red", "Purple"], traits: ["Straw Hat Pirates", "Invention"], life: 4, power: 5000,
+            mainText: "Activate Main: Return 2 DON!! to play 5c Stage",
+            main: function(c) {
+                const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; 
+                if(totalDon < 2) { window.showModal("Need 2 DON!! to return", "alert"); return; } 
+                window.showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { 
+                    window.returnDonAndCheckSanji(2, () => { 
+                        window.startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { 
+                            window.rightClickedCard = cards[0]; window.playCard(true); window.appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); 
+                        }); 
+                    }); 
+                });
+            }
+        },
+        "https://i.imgur.com/2lEVHJP.png": { 
+            name: "Franky (Char)", type: "Character", color: ["Purple"], cost: 1, traits: ["Straw Hat Pirates"], power: 0, counter: 2000,
+            onPlay: function(c) {
+                window.startSelection('rest_stage', 1, "Select Invention Stage to Rest", (cards) => { 
+                    cards[0].classList.add('rested'); 
+                    const sName = CARD_DB[cards[0].dataset.url]?.name; 
+                    if(sName === "Waver") { window.spawnDonLocal(true); window.appendChat("Waver rested: Added 1 rested DON!!", "#3498db"); } 
+                    else if(sName === "Mini Merry") { window.drawCardAction(); window.appendChat("Mini Merry rested: Drew 1 card.", "#3498db"); } 
+                    window.saveState(); 
+                });
+            }
+        },
+        "https://i.imgur.com/f6TtmW9.png": { 
+            name: "Franky Family", type: "Character", color: ["Purple"], cost: 3, traits: ["Water Seven"], power: 4000, counter: 1000, blocker: true,
+            onPlay: function(c) {
+                window.startSelection('hand_trash', 1, "Select 1 card from hand to trash", (cards) => { 
+                    TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; 
+                    cards[0].remove(); window.spawnDonLocal(true); window.saveState(); window.appendChat("Franky Family trashed 1, added 1 rested DON!!", "#3498db"); 
+                });
+            }
+        },
+        "https://i.imgur.com/bzg3Xpr.png": { 
+            name: "Chopper", type: "Character", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates"], power: 5000, counter: 2000,
+            onAttack: function(c, proceed) {
+                window.drawCardAction(); window.appendChat("Chopper attacked: Drew 1 card.", "#3498db"); 
+                const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); 
+                if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); window.appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } 
+                window.updatePowerDisplay(); window.saveState();
+                proceed();
+            }
+        },
+        "https://i.imgur.com/zmZCFVB.png": { 
+            name: "General Franky", type: "Character", color: ["Red"], cost: 11, traits: ["Straw Hat Pirates", "Invention"], power: 13000, counter: 0, blocker: true, banish: true,
+            mainText: "Activate Main (Hand): Bottom Deck & Draw 1",
+            main: function(c) {
+                if (c.parentElement.id !== 'hand-bar') return;
+                DECK_ARR.unshift(c.dataset.url); c.remove(); window.drawCardAction(); window.saveState(); 
+                window.appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); 
+                socket.emit('game_action', {type: 'reveal_card', url: c.dataset.url});
+            }
+        },
+        "https://i.imgur.com/WCFtQ4V.png": { 
+            name: "Nami", type: "Character", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], power: 2000, counter: 1000,
+            onPlay: function(c) { window.openStructuredSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"], "Nami"); }
+        },
+        "https://i.imgur.com/5LAj93m.png": { 
+            name: "Zoro-juurou", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Crew"], power: 4000, counter: 1000,
+            onAttack: function(c, proceed) {
+                if(document.querySelectorAll('#life-zone .card').length <= 3) { window.spawnDonLocal(true); window.saveState(); window.appendChat("Zoro-juurou ramped 1 DON!", "#8e44ad"); }
+                proceed();
+            }
+        },
+        "https://i.imgur.com/XzXandk.png": { 
+            name: "Sanji & Pudding", type: "Character", color: ["Purple"], cost: 5, traits: ["Straw Hat Crew"], power: 7000, counter: 0,
+            onPlay: function(c) { if((10 - DON_DECK_COUNT) <= OPP_DON_TOTAL) { window.drawCardAction(); window.appendChat("Sanji & Pudding drew 1 card!", "#3498db"); } }
+        },
+        "https://i.imgur.com/l16quan.png": { 
+            name: "Bon Clay", type: "Character", color: ["Purple"], cost: 4, traits: ["Alabasta"], power: 1000, counter: 0,
+            onPlay: function(c) { window.spawnDonLocal(false); window.saveState(); window.appendChat("Bon Clay generated 1 active DON!", "#8e44ad"); },
+            onAttack: function(c, proceed) {
+                combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); 
+                window.appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f");
+            }
+        },
+        "https://i.imgur.com/gAedzn3.png": { 
+            name: "Gol D. Roger", type: "Character", color: ["Purple"], cost: 8, traits: ["Roger Pirates"], power: 10000, counter: 0,
+            onPlay: function(c) {
+                if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length >= 10 || OPP_DON_TOTAL >= 10) { 
+                    window.rogerBuffActive = true; window.rogerBuffExpiresTurn = turnNum + 2; window.updatePowerDisplay(); window.saveState(); 
+                    window.appendChat("Gol D. Roger played: +2000 to Leader until End of Opp's Turn!", "#f39c12");
+                }
+            }
+        },
         "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Pirates"], power: 3000, counter: 2000 },
-        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
-        "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", color: ["Purple"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
-        "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
-        "https://i.imgur.com/L3W1rAw.png": { name: "Kurosai Fr-U IV", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
-        "https://i.imgur.com/NAjePQD.png": { name: "Shark Submerge III", type: "Stage", color: ["Purple"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
+        "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"] },
+        "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", color: ["Purple"], cost: 5, traits: ["Straw Hat Pirates", "Invention"] },
+        "https://i.imgur.com/YRa5DDx.png": { 
+            name: "Brachio Tank V", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"],
+            onPlay: function(c) { window.startSelection('give_rush', 1, "Select Character to give Rush", (cards) => { cards[0].dataset.hasRush = "true"; cards[0].querySelector('.rush-tag').style.display = 'block'; window.saveState(); window.appendChat("Brachio Tank gave Rush!", "#f1c40f"); }); }
+        },
+        "https://i.imgur.com/L3W1rAw.png": { 
+            name: "Kurosai Fr-U IV", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"],
+            onPlay: function(c) { window.startSelection('play_free_5', 1, "Select cost 5 or lower SHC/SHP to play", (cards) => { window.rightClickedCard = cards[0]; window.playCard(true); }); }
+        },
+        "https://i.imgur.com/NAjePQD.png": { name: "Shark Submerge III", type: "Stage", color: ["Purple"], cost: 5, traits: ["Straw Hat Pirates", "Invention"] },
         "https://i.imgur.com/cdHtYcm.png": { name: "Gum Gum Giant", type: "Event", color: ["Purple"], cost: 1, traits: ["Straw Hat Crew"], isCounter: true },
-        "https://i.imgur.com/A8Z5aKe.png": { name: "Unblockable", type: "Event", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], hasTrigger: true },
+        "https://i.imgur.com/A8Z5aKe.png": { 
+            name: "Unblockable", type: "Event", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], hasTrigger: true,
+            onPlay: function(c) { window.showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); }
+        },
         
-        "https://i.imgur.com/ENZQA05.jpeg": { name: "Stussy", type: "Leader", color: ["Green", "Yellow"], traits: ["Egghead", "CP0"], hasMain: true, life: 4, power: 5000 },
-        "https://i.imgur.com/VjdhIHW.jpeg": { name: "Rob Lucci (Y)", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 1000, traits: ["Egghead", "CP0"], hasMain: true, hasTrigger: true },
-        "https://i.imgur.com/nryVoOY.jpeg": { name: "Kaku", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "CP0"], hasMain: true, hasTrigger: true },
-        "https://i.imgur.com/suHCUeG.jpeg": { name: "Maha", type: "Character", color: ["Yellow"], cost: 2, power: 0, counter: 2000, traits: ["Egghead", "CP0"], hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/LmimdKC.jpeg": { name: "Rob Lucci (G)", type: "Character", color: ["Green"], cost: 7, power: 8000, counter: 0, traits: ["CP0"], hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/2xOIdR4.jpeg": { name: "Doflamingo", type: "Character", color: ["Green"], cost: 10, power: 10000, counter: 0, traits: ["Seven Warlords", "Donquixote Pirates"], hasOnPlay: true },
-        "https://i.imgur.com/cKmoMz4.jpeg": { name: "Stussy (Char)", type: "Character", color: ["Yellow"], cost: 7, power: 7000, counter: 0, traits: ["Egghead", "CP0"], blocker: true, hasOnPlay: true },
-        "https://i.imgur.com/VYkv7x7.jpeg": { name: "Monkey D. Luffy", type: "Character", color: ["Yellow"], cost: 10, power: 12000, counter: 0, traits: ["Egghead", "Four Emperors", "Straw Hat Crew"], hasOnPlay: true },
-        "https://i.imgur.com/OnotZyR.jpeg": { name: "Lilith", type: "Character", color: ["Yellow"], cost: 1, power: 2000, counter: 1000, traits: ["Scientist", "Egghead"], hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/HvEcqZB.jpeg": { name: "Seraphim", type: "Character", color: ["Yellow"], cost: 6, power: 7000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/NcbAdsG.jpeg": { name: "Atlas", type: "Character", color: ["Green"], cost: 3, power: 5000, counter: 0, traits: ["Scientist", "Egghead"], hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/PxaLb4K.jpeg": { name: "Dracule Mihawk (8c)", type: "Character", color: ["Green"], cost: 8, power: 8000, counter: 0, traits: ["Seven Warlords", "Muggy Kingdom"], blocker: true, hasOnPlay: true },
-        "https://i.imgur.com/3L6BkzS.jpeg": { name: "Dracule Mihawk (9c)", type: "Character", color: ["Green"], cost: 9, power: 10000, counter: 0, traits: ["Seven Warlords"] },
-        "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true },
-        "https://i.imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
-        "https://i.imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
-        "https://i.imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true },
-
-        "https://i.imgur.com/9mEhAX9.png": { name: "Vinsmoke Judge", type: "Leader", color: ["Blue", "Black"], cost: 0, power: 5000, life: 5, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
-        "https://i.imgur.com/KhZ3xG1.png": { name: "Morgans", type: "Leader", color: ["Red"], cost: 0, power: 5000, life: 5, traits: ["Big News"] },
-        "https://i.imgur.com/iGpn0zP.png": { name: "Magellan", type: "Leader", color: ["Purple"], cost: 0, power: 5000, life: 5, traits: ["Impel Down"] },
-        "https://i.imgur.com/NqohQkN.png": { name: "Vinsmoke Sora", type: "Character", color: ["Blue"], cost: 1, power: 0, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"] },
-        "https://i.imgur.com/jWEMBOT.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Black"], cost: 2, power: 0, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"] },
-        "https://i.imgur.com/9a7nnEM.png": { name: "Vinsmoke Niji", type: "Character", color: ["Black"], cost: 5, power: 6000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
-        "https://i.imgur.com/FM0eSD9.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 3, power: 4000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true, hasMain: true },
-        "https://i.imgur.com/OkT3RLn.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
-        "https://i.imgur.com/eWSBnwt.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Black"], cost: 7, power: 8000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
-        "https://i.imgur.com/eYUoSKo.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
-        "https://i.imgur.com/YNA0XRz.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
-        "https://i.imgur.com/T0HV6Mm.png": { name: "Vinsmoke Judge", type: "Character", color: ["Blue"], cost: 6, power: 8000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
-        "https://i.imgur.com/cUiteNd.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 7, power: 7000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
-
-        "https://i.imgur.com/wKssAMn.png": { name: "Monkey D. Luffy (Unblockable)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Supernovas", "Straw Hat Crew"], rush: true },
-        "https://i.imgur.com/2TJLOO7.png": { name: "Monkey D. Luffy (Don Ramp)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Four Emperors", "Straw Hat Pirates"], rush: true },
-        "https://i.imgur.com/sdkbg84.png": { name: "Tony Tony Chopper", type: "Character", color: ["Red"], cost: 4, power: 6000, counter: 2000, traits: ["Animal", "Straw Hat Crew"], blocker: true },
-        "https://i.imgur.com/VOkIvOk.png": { name: "Franky (Draw)", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Straw Hat Crew"], blocker: true, hasOnPlay: true },
-        "https://i.imgur.com/IxoXBFT.png": { name: "Monkey D. Luffy (Leader Buff)", type: "Character", color: ["Purple"], cost: 6, power: 7000, counter: 0, traits: ["Straw Hat Crew"], hasOnPlay: true },
-        "https://i.imgur.com/tT9J9OP.png": { name: "Monkey D. Luffy (Extra Turn)", type: "Character", color: ["Purple"], cost: 10, power: 12000, counter: 0, traits: ["Four Emperors", "Straw Hat Crew"], hasOnPlay: true, hasMain: true },
-        "https://i.imgur.com/PpZxxZY.png": { name: "Luffytaro", type: "Character", color: ["Purple"], cost: 7, power: 8000, counter: 0, traits: ["Straw Hat Crew"], hasOnPlay: true },
-        "https://i.imgur.com/bMFRC2k.png": { name: "Black Maria", type: "Character", color: ["Purple"], cost: 3, power: 2000, counter: 2000, traits: ["Animal Kingdom Pirates"], hasMain: true },
-        "https://i.imgur.com/e0eCxUi.png": { name: "Roronoa Zoro", type: "Character", color: ["Purple"], cost: 1, power: 0, counter: 1000, traits: ["Straw Hat Pirates"], hasMain: true },
-        "https://i.imgur.com/EDgfwDo.png": { name: "Kuzan", type: "Character", color: ["Black"], cost: 10, power: 10000, counter: 0, traits: ["Former Navy"], hasOnPlay: true },
-        "https://i.imgur.com/qr4ZGbm.png": { name: "Vinsmoke Family", type: "Character", color: ["Black"], cost: 4, power: 4000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"], blocker: true },
+        // BIG NEWS / STUSSY ENGINE
+        "https://i.imgur.com/ENZQA05.jpeg": { 
+            name: "Stussy", type: "Leader", color: ["Green", "Yellow"], traits: ["Egghead", "CP0"], life: 4, power: 5000,
+            mainText: "Activate Main: Flip Life & Freeze",
+            main: function(c) {
+                if(window.stussyUsedThisTurn) { window.showModal("Already used this turn!", "alert"); return; }
+                const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); 
+                const top = lifeCards[lifeCards.length-1]; 
+                if(!top || !top.classList.contains('card-back')) { window.showModal("Top Life must be face down.", "alert"); return; } 
+                window.startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { 
+                    top.classList.remove('card-back'); window.stussyUsedThisTurn = true; cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; 
+                    if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); 
+                    window.saveState(); window.appendChat("Stussy flipped life & froze target!", "#34dbdb"); 
+                }); 
+            }
+        },
+        "https://i.imgur.com/z56wQSN.png": { name: "Stussy", type: "Character", color: ["Red"], cost: 6, power: 5000, counter: 1000, traits: ["Big News", "CP0"] },
+        "https://i.imgur.com/wWZmGiS.png": { 
+            name: "We News", type: "Stage", color: ["Red"], cost: 2, traits: ["Big News"],
+            mainText: "Main: Rest & Trash 2 -> Play Lackey from Trash",
+            main: function(c) {
+                c.classList.add('rested'); 
+                window.startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { 
+                    cards.forEach(card => { TRASH_ARR.push(card.dataset.url); card.remove(); }); 
+                    const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); 
+                    if(trIdx !== -1) { 
+                        window.createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); 
+                        window.batchState.leaderCannotAttack = true; 
+                        window.appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); 
+                    } else { window.appendChat("No News Lackey in trash.", "#ccc"); } 
+                    window.saveState(); 
+                    if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; 
+                    else document.getElementById('drop-trash').style.backgroundImage = 'none'; 
+                }); 
+            }
+        },
+        "https://i.imgur.com/AYmBkdJ.png": { 
+            name: "News Lackey", type: "Character", color: ["Red"], cost: 4, power: 5000, counter: 0, traits: ["Big News"],
+            onPlay: function(c) {
+                window.startSelection('play_free_bignews', 1, "Play 7c or less Big News card", (cards) => { 
+                    window.rightClickedCard = cards[0]; window.batchState.leaderCannotAttack = true; window.playCard(true); 
+                    window.appendChat("News Lackey played an event. Leader cannot attack.", "#f39c12"); 
+                }); 
+            }
+        },
+        "https://i.imgur.com/APAxBbf.png": { 
+            name: "Morgans (5c)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Big News"],
+            onPlay: function(c) {
+                window.showModal("Play 7c Event (YES) or Shocking Revelation from Trash (NO)?", "confirm", () => { 
+                    window.startSelection('play_free_bignews', 1, "Play Event from Hand", (cards) => { window.rightClickedCard = cards[0]; window.drawCardAction(); window.playCard(true); }); 
+                }, () => { window.openInspector('trash'); }); 
+            },
+            mainText: "Main: Rest & Trash 1 -> Search Top 6",
+            main: function(c) {
+                c.classList.add('rested'); window.startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); 
+            }
+        },
+        "https://i.imgur.com/KhZ3xG1.png": { 
+            name: "Morgans", type: "Leader", color: ["Red"], cost: 0, power: 5000, life: 5, traits: ["Big News"],
+            mainText: "Main: Rest -> Search Top 6",
+            main: function(c) { c.classList.add('rested'); window.openStructuredSearch(6, null, null, false, true); window.saveState(); window.appendChat("Morgans checked top 6 cards.", "#e74c3c"); }
+        },
+        "https://i.imgur.com/C5woU7a.png": { name: "Unprecedented Bounties", type: "Event", color: ["Red"], cost: 10, traits: ["Big News"], isCounter: true, onPlay: function(c){ window.startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { window.rightClickedCard = cards[0]; window.playCard(true); }); } },
+        "https://i.imgur.com/yrPhCy7.png": { name: "Front Page Scoop!", type: "Event", color: ["Red"], cost: 2, traits: ["Big News"], isCounter: true, counter: 2000, onPlay: function(c){ window.openStructuredSearch(5, ["Big News"], null, false, false, () => { window.appendChat("Front Page Scoop searched!", "#e74c3c"); }); } },
+        "https://i.edu/TQTkwn6.png": { name: "Shocking Revelation!", type: "Event", color: ["Red"], cost: 7, traits: ["Big News"], isCounter: true, counter: 5000, onPlay: function(c){ document.querySelectorAll('#char-zone-front .card').forEach(fc => { const fcdb = CARD_DB[fc.dataset.url]; if((fcdb?.traits||[]).includes("Big News")) { fc.dataset.tempPower = parseInt(fc.dataset.tempPower||0) + 2000; fc.dataset.hasRush = "true"; fc.querySelector('.rush-tag').style.display = 'block'; } }); window.updatePowerDisplay(); window.appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c"); } },
         
-        "https://i.imgur.com/TCU8vES.png": { name: "Vinsmoke Reiju (5c)", type: "Character", color: ["Blue"], cost: 5, power: 5000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"], hasOnPlay: true, hasMain: true },
-        "https://i.imgur.com/77AXsjF.png": { name: "Vinsmoke Sanji", type: "Character", color: ["Blue"], cost: 3, power: 3000, counter: 1000, traits: ["Vinsmoke Family", "Straw Hat Crew"], hasOnPlay: true, hasMain: true },
-        "https://i.imgur.com/JcEFvwl.png": { name: "Hanyabal", type: "Character", color: ["Purple"], cost: 1, power: 2000, counter: 1000, traits: ["Impel Down"], hasOnPlay: true },
+        // IMPEL DOWN ENGINE
+        "https://i.imgur.com/iGpn0zP.png": { 
+            name: "Magellan", type: "Leader", color: ["Purple"], cost: 0, power: 5000, life: 5, traits: ["Impel Down"],
+            mainText: "Main: Rest & DON -1 -> +1000 & Draw 1",
+            main: function(c) {
+                c.classList.add('rested'); 
+                window.startSelection('don_minus', 1, "Return 1 DON!! to gain +1000 and Draw", (dons) => { 
+                    dons[0].remove(); DON_DECK_COUNT++; window.organizeDon(); 
+                    c.dataset.tempPower = (parseInt(c.dataset.tempPower || 0) + 1000); window.drawCardAction(); window.updatePowerDisplay(); window.saveState(); window.appendChat("Magellan: -1 DON, +1000 Power, Draw 1!", "#8e44ad"); 
+                }); 
+            }
+        },
+        "https://i.imgur.com/tFrRtBl.png": { 
+            name: "Magellan (10c)", type: "Character", color: ["Purple"], cost: 10, power: 10000, counter: 0, traits: ["Impel Down"],
+            onPlay: function(c) {
+                const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); 
+                if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); 
+                window.showModal("Play 1 Jailer Beast from Trash rested?", "confirm", () => { window.openInspector('trash', 'play_rested', ['Jailer Beast', 'Jailer Beasts']); }); 
+            },
+            mainText: "Main: Rest & Give Jailer Beasts +1000 per returned DON",
+            main: function(c) { c.classList.add('rested'); window.batchState.magellanBuffActive = true; window.updatePowerDisplay(); window.saveState(); window.appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
+        },
+        "https://i.imgur.com/bN15uwT.png": { 
+            name: "Impel Down", type: "Stage", color: ["Purple"], cost: 1, traits: ["Impel Down"],
+            mainText: "Main: Rest & Trash 1 -> Search Top 3",
+            main: function(c) { c.classList.add('rested'); window.startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); window.appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
+        },
+        "https://i.imgur.com/uJo6yE1.png": { 
+            name: "Domino", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 1000, traits: ["Impel Down"],
+            mainText: "Main: Rest & If DON returned this turn, Draw 1 Trash 1",
+            main: function(c) { 
+                c.classList.add('rested'); 
+                if(!window.batchState.donReturnedThisTurn) { window.showModal("No DON returned this turn!", "alert"); return; } 
+                window.drawCardAction(); window.startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.saveState(); window.appendChat("Domino cycled 1 card!", "#8e44ad"); }); 
+            }
+        },
+        "https://i.imgur.com/JcEFvwl.png": { name: "Hanyabal", type: "Character", color: ["Purple"], cost: 1, power: 2000, counter: 1000, traits: ["Impel Down"], onPlay: function(c) { window.openStructuredSearch(5, ["Impel Down"], "Hanyabal"); } },
         "https://i.imgur.com/xjIgpuI.png": { name: "Minokoala", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beast"], blocker: true },
         "https://i.imgur.com/zzqVszl.png": { name: "Minotaur", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beast"], doubleAttack: true },
         "https://i.imgur.com/AdFVwYn.png": { name: "Minozebra", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beasts"], banish: true },
         "https://i.imgur.com/xQTJg9V.png": { name: "Minochihuahua", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 0, traits: ["Impel Down", "Jailer Beast"], rush: true },
         "https://i.imgur.com/sMWpwvH.png": { name: "Hell's Judgement", type: "Event", color: ["Purple"], cost: 2, traits: ["Impel Down"], isCounter: true, hasTrigger: true },
-        "https://i.imgur.com/bN15uwT.png": { name: "Impel Down", type: "Stage", color: ["Purple"], cost: 1, traits: ["Impel Down"], hasMain: true },
-        "https://i.imgur.com/uJo6yE1.png": { name: "Domino", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 1000, traits: ["Impel Down"], hasMain: true },
-        "https://i.imgur.com/QUMflyp.png": { name: "Saldeath", type: "Character", color: ["Purple"], cost: 2, power: 0, counter: 0, traits: ["Impel Down"], blocker: true, hasOnPlay: true },
-        "https://i.imgur.com/kJDJNAX.png": { name: "Sadi", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 2000, traits: ["Impel Down"], hasOnPlay: true },
-        "https://i.imgur.com/tFrRtBl.png": { name: "Magellan (10c)", type: "Character", color: ["Purple"], cost: 10, power: 10000, counter: 0, traits: ["Impel Down"], hasOnPlay: true, hasMain: true },
-        "https://i.imgur.com/WUeOJgn.png": { name: "Donquixote Rosinante", type: "Character", color: ["Purple"], cost: 5, power: 6000, counter: 1000, traits: ["Navy", "Donquixote Pirates"], hasOnPlay: true },
-        "https://i.imgur.com/Yz9wfSW.png": { name: "Divine Departure", type: "Event", color: ["Purple"], cost: 0, traits: ["Pirate King", "Roger Pirates"], hasMain: true, isCounter: true },
+        "https://i.imgur.com/QUMflyp.png": { name: "Saldeath", type: "Character", color: ["Purple"], cost: 2, power: 0, counter: 0, traits: ["Impel Down"], blocker: true, onPlay: function(c) { window.startSelection('hand_trash', 1, "Trash 1 card to add 1 rested DON", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.spawnDonLocal(true); window.appendChat("Saldeath ramped 1 DON!", "#8e44ad"); }); } },
+        "https://i.imgur.com/kJDJNAX.png": { name: "Sadi", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 2000, traits: ["Impel Down"], onPlay: function(c) { window.startSelection('play_free_jailer', 1, "Play 1 Jailer Beast from hand", (cards) => { window.rightClickedCard = cards[0]; window.playCard(true); }); } },
+
+        // VINSMOKE ENGINE
+        "https://i.imgur.com/9mEhAX9.png": { 
+            name: "Vinsmoke Judge", type: "Leader", color: ["Blue", "Black"], cost: 0, power: 5000, life: 5, traits: ["GERMA 66", "Vinsmoke Family"],
+            mainText: "Main: Rest & Trash 1 -> GERMA +1000",
+            main: function(c) {
+                c.classList.add('rested'); window.startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; window.updatePowerDisplay(); window.saveState(); window.appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") window.executeSotuTrashTriggers(trashedName, "hand"); });
+            }
+        },
+        "https://i.imgur.com/T0HV6Mm.png": { 
+            name: "Vinsmoke Judge", type: "Character", color: ["Blue"], cost: 6, power: 8000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"],
+            mainText: "Main: Trash Hand -> +1000 GERMA",
+            main: function(c) { window.startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; window.updatePowerDisplay(); window.saveState(); window.appendChat("Judge (Char): Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") window.executeSotuTrashTriggers(trashedName, "hand"); }); }
+        },
+        "https://i.imgur.com/NqohQkN.png": { name: "Vinsmoke Sora", type: "Character", color: ["Blue"], cost: 1, power: 0, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "https://i.imgur.com/jWEMBOT.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Black"], cost: 2, power: 0, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"] },
+        "https://i.imgur.com/9a7nnEM.png": { 
+            name: "Vinsmoke Niji", type: "Character", color: ["Black"], cost: 5, power: 6000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"],
+            onPlay: function(c) {
+                const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : ""; 
+                if (leaderName === "Vinsmoke Judge") { 
+                    window.showModal("Activate Niji's On Play effect?", "confirm", () => { 
+                        window.startSelection('sotu_cost_minus', 1, "Target opponent for -3 Cost", (targets1) => { 
+                            targets1[0].dataset.tempCost = parseInt(targets1[0].dataset.tempCost || CARD_DB[targets1[0].dataset.url]?.cost || 0) - 3; 
+                            if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets1[0].id}); 
+                            selectConfig = { maxCostTarget: 1 }; 
+                            window.startSelection('sotu_trash_low_cost', 1, "Trash an Opponent Character Cost 1 or 0", (targets2) => { 
+                                if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')}); 
+                                else window.trashCard(targets2[0]); 
+                                selectConfig = { excludeNiji: true }; 
+                                window.startSelection('sotu_play_free', 1, "Play 5c or less Character from hand", (targets3) => { 
+                                    window.rightClickedCard = targets3[0]; window.playCard(true); window.appendChat("Niji triggered full sequence!", "#f39c12"); 
+                                }); 
+                            }, () => { window.appendChat("Niji effect stopped after debuff.", "#ccc"); }); 
+                        }, () => { window.appendChat("Niji effect skipped.", "#ccc"); }); 
+                    }); 
+                } 
+            }
+        },
+        "https://i.imgur.com/FM0eSD9.png": { 
+            name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 3, power: 4000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true,
+            mainText: "Main: Rest -> Vinsmoke in Hand -2 Cost",
+            main: function(c) { c.classList.add('rested'); window.sotuTurnState.vinsmokeCostDiscount = 2; window.saveState(); window.appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db"); }
+        },
+        "https://i.imgur.com/OkT3RLn.png": { 
+            name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"],
+            mainText: "Main: Unrest & Gain RUSH",
+            main: function(c) { c.classList.remove('rested'); c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; window.updatePowerDisplay(); window.saveState(); window.appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db"); },
+            onAttack: function(c, proceed) { if(c.dataset.turnPlayed == myTurnCount) { c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000; window.updatePowerDisplay(); window.appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c"); } proceed(); }
+        },
+        "https://i.imgur.com/eWSBnwt.png": { 
+            name: "Vinsmoke Reiju", type: "Character", color: ["Black"], cost: 7, power: 8000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"],
+            onPlay: function(c) {
+                window.showModal("Activate 7c Reiju On Play effect?", "confirm", () => { 
+                    window.startSelection('sotu_cost_minus', 2, "Target up to 2 for -3 Cost", (targets1) => { 
+                        targets1.forEach(t => { t.dataset.tempCost = parseInt(t.dataset.tempCost || CARD_DB[t.dataset.url]?.cost || 0) - 3; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: t.id}); }); 
+                        selectConfig = { maxCostTarget: 4 }; 
+                        window.startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 4 or less", (targets2) => { 
+                            if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')}); 
+                            else window.trashCard(targets2[0]); 
+                            selectConfig = { maxCostTarget: 1 }; 
+                            window.startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 1 or less", (targets3) => { 
+                                if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets3[0].id.replace('opp-', '')}); 
+                                else window.trashCard(targets3[0]); 
+                                window.appendChat("Reiju completely wiped the board!", "#f39c12"); 
+                            }); 
+                        }); 
+                    }); 
+                }); 
+            }
+        },
+        "https://i.imgur.com/eYUoSKo.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
+        "https://i.imgur.com/YNA0XRz.png": { 
+            name: "Vinsmoke Reiju", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"],
+            onPlay: function(c) {
+                const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : ""; 
+                if (leaderName === "Vinsmoke Judge") { 
+                    window.showModal("Activate 4c Reiju On Play effect?", "confirm", () => { 
+                        window.openStructuredSearch(5, ["GERMA 66"], null, false, false, () => { 
+                            while(SEARCH_ARR.length > 0) { const url = SEARCH_ARR.pop(); TRASH_ARR.push(url); } 
+                            document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; 
+                            window.appendChat("Reiju trashed the remaining search cards!", "#8e44ad"); window.saveState(); 
+                        }); 
+                    }); 
+                } 
+            }
+        },
+        "https://i.imgur.com/cUiteNd.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 7, power: 7000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
+        "https://i.imgur.com/TCU8vES.png": { 
+            name: "Vinsmoke Reiju (5c)", type: "Character", color: ["Blue"], cost: 5, power: 5000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"],
+            onPlay: function(c) { window.showModal("Play 5c or less Vinsmoke from Trash?", "confirm", () => { window.openInspector('trash', 'play_active', ['Vinsmoke Family', 'GERMA 66']); }); },
+            mainText: "Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost",
+            main: function(c) { c.dataset.reijuBuffExpires = turnNum + 3; window.drawCardAction(); window.drawCardAction(); window.showModal("Trash 3 cards from hand.", "alert", () => { window.startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(card => { TRASH_ARR.push(card.dataset.url); card.remove(); }); window.updatePowerDisplay(); window.saveState(); window.appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
+        },
+        "https://i.imgur.com/77AXsjF.png": { 
+            name: "Vinsmoke Sanji", type: "Character", color: ["Blue"], cost: 3, power: 3000, counter: 1000, traits: ["Vinsmoke Family", "Straw Hat Crew"],
+            onPlay: function(c) { window.openStructuredSearch(5, ["Vinsmoke Family", "GERMA 66"], "Vinsmoke Sanji"); },
+            mainText: "Main: Attach 1 Rested DON!!",
+            main: function(c) { c.classList.add('rested'); window.startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = window.createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; window.updateBadges(targets[0].id); window.organizeDon(); window.saveState(); window.appendChat("Sanji attached DON!!", "#3498db"); } }); }
+        },
+        "https://i.imgur.com/qr4ZGbm.png": { name: "Vinsmoke Family", type: "Character", color: ["Black"], cost: 4, power: 4000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"], blocker: true }
+    };
+    // --- NEW BATCH: BLUE/PURPLE/RED MASSIVE EXPANSION & BIG NEWS (MODULARIZED) ---
+        "https://i.imgur.com/TCU8vES.png": { 
+            name: "Vinsmoke Reiju (5c)", type: "Character", color: ["Blue"], cost: 5, power: 5000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"],
+            onPlay: function(c) { window.showModal("Play 5c or less Vinsmoke from Trash?", "confirm", () => { window.openInspector('trash', 'play_active', ['Vinsmoke Family', 'GERMA 66']); }); },
+            mainText: "Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost",
+            main: function(c) { c.dataset.reijuBuffExpires = turnNum + 3; window.drawCardAction(); window.drawCardAction(); window.showModal("Trash 3 cards from hand.", "alert", () => { window.startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(card => { TRASH_ARR.push(card.dataset.url); card.remove(); }); window.updatePowerDisplay(); window.saveState(); window.appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
+        },
+        "https://i.imgur.com/77AXsjF.png": { 
+            name: "Vinsmoke Sanji", type: "Character", color: ["Blue"], cost: 3, power: 3000, counter: 1000, traits: ["Vinsmoke Family", "Straw Hat Crew"],
+            onPlay: function(c) { window.openStructuredSearch(5, ["Vinsmoke Family", "GERMA 66"], "Vinsmoke Sanji"); },
+            mainText: "Main: Attach 1 Rested DON!!",
+            main: function(c) { c.classList.add('rested'); window.startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = window.createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; window.updateBadges(targets[0].id); window.organizeDon(); window.saveState(); window.appendChat("Sanji attached DON!!", "#3498db"); } }); }
+        },
+        "https://i.imgur.com/JcEFvwl.png": { 
+            name: "Hanyabal", type: "Character", color: ["Purple"], cost: 1, power: 2000, counter: 1000, traits: ["Impel Down"], 
+            onPlay: function(c) { window.openStructuredSearch(5, ["Impel Down"], "Hanyabal"); } 
+        },
+        "https://i.imgur.com/xjIgpuI.png": { name: "Minokoala", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beast"], blocker: true },
+        "https://i.imgur.com/zzqVszl.png": { name: "Minotaur", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beast"], doubleAttack: true },
+        "https://i.imgur.com/AdFVwYn.png": { name: "Minozebra", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 1000, traits: ["Impel Down", "Jailer Beasts"], banish: true },
+        "https://i.imgur.com/xQTJg9V.png": { name: "Minochihuahua", type: "Character", color: ["Purple"], cost: 4, power: 5000, counter: 0, traits: ["Impel Down", "Jailer Beast"], rush: true },
+        "https://i.imgur.com/sMWpwvH.png": { name: "Hell's Judgement", type: "Event", color: ["Purple"], cost: 2, traits: ["Impel Down"], isCounter: true, hasTrigger: true },
+        "https://i.imgur.com/bN15uwT.png": { 
+            name: "Impel Down", type: "Stage", color: ["Purple"], cost: 1, traits: ["Impel Down"],
+            mainText: "Main: Rest & Trash 1 -> Search Top 3",
+            main: function(c) { c.classList.add('rested'); window.startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); window.appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
+        },
+        "https://i.imgur.com/uJo6yE1.png": { 
+            name: "Domino", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 1000, traits: ["Impel Down"],
+            mainText: "Main: Rest & If DON returned this turn, Draw 1 Trash 1",
+            main: function(c) { c.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { window.showModal("No DON returned this turn!", "alert"); return; } window.drawCardAction(); window.startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.saveState(); window.appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
+        },
+        "https://i.imgur.com/QUMflyp.png": { 
+            name: "Saldeath", type: "Character", color: ["Purple"], cost: 2, power: 0, counter: 0, traits: ["Impel Down"], blocker: true, 
+            onPlay: function(c) { window.startSelection('hand_trash', 1, "Trash 1 card to add 1 rested DON", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.spawnDonLocal(true); window.appendChat("Saldeath ramped 1 DON!", "#8e44ad"); }); } 
+        },
+        "https://i.imgur.com/kJDJNAX.png": { 
+            name: "Sadi", type: "Character", color: ["Purple"], cost: 3, power: 3000, counter: 2000, traits: ["Impel Down"], 
+            onPlay: function(c) { window.startSelection('play_free_jailer', 1, "Play 1 Jailer Beast from hand", (cards) => { window.rightClickedCard = cards[0]; window.playCard(true); }); } 
+        },
+        "https://i.imgur.com/tFrRtBl.png": { 
+            name: "Magellan (10c)", type: "Character", color: ["Purple"], cost: 10, power: 10000, counter: 0, traits: ["Impel Down"],
+            onPlay: function(c) { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); window.showModal("Play 1 Jailer Beast from Trash rested?", "confirm", () => { window.openInspector('trash', 'play_rested', ['Jailer Beast', 'Jailer Beasts']); }); },
+            mainText: "Main: Rest & Give Jailer Beasts +1000 per returned DON",
+            main: function(c) { c.classList.add('rested'); window.batchState.magellanBuffActive = true; window.updatePowerDisplay(); window.saveState(); window.appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
+        },
+        
+        "https://i.imgur.com/WUeOJgn.png": { 
+            name: "Donquixote Rosinante", type: "Character", color: ["Purple"], cost: 5, power: 6000, counter: 1000, traits: ["Navy", "Donquixote Pirates"],
+            onPlay: function(c) { window.startSelection('hand_trash', 1, "Trash 1 Event to Draw 2", (cards) => { if(CARD_DB[cards[0].dataset.url]?.type === 'Event') { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.drawCardAction(); window.drawCardAction(); window.appendChat("Rosinante drew 2 cards!", "#8e44ad"); } }); }
+        },
+        "https://i.imgur.com/Yz9wfSW.png": { 
+            name: "Divine Departure", type: "Event", color: ["Purple"], cost: 0, traits: ["Pirate King", "Roger Pirates"], isCounter: true,
+            mainText: "Main: Rest 5 DON!! to give -8000 Power",
+            main: function(c) {
+                const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
+                if(activeDons.length < 5) { window.showModal("Need 5 active DON!! to use Main.", "alert"); return; }
+                window.showModal("Rest 5 DON!! to use Main effect?", "confirm", () => {
+                    for(let i=0; i<5; i++) activeDons[i].classList.add('rested');
+                    TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
+                    if(document.querySelectorAll('[data-parent-id]').length > 0) {
+                        window.startSelection('divine_depart_minus', 1, "Give -8000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 8000; window.updatePowerDisplay(); window.saveState(); window.appendChat("Divine Departure gave -8000 power!", "#8e44ad"); });
+                    } else { window.appendChat("No attached DON. Effect fails.", "#ccc"); }
+                });
+            }
+        },
         "https://i.imgur.com/QmZic7L.png": { name: "NoroNoro Beam Sword", type: "Event", color: ["Purple"], cost: 2, traits: ["Foxy Pirates"], isCounter: true, hasTrigger: true },
         "https://i.imgur.com/qPqd7Cq.png": { name: "Charlotte Katakuri (8c)", type: "Character", color: ["Purple"], cost: 8, power: 8000, counter: 0, traits: ["Big Mom Pirates"], blocker: true },
+        
         "https://i.imgur.com/CmnZDMO.png": { name: "Shanks", type: "Character", color: ["Red"], cost: 10, power: 12000, counter: 0, traits: ["Four Emperors", "Red Hair Pirates"], rush: true },
-        "https://i.imgur.com/UWoDh2g.png": { name: "Silvers Rayleigh", type: "Character", color: ["Red"], cost: 8, power: 8000, counter: 0, traits: ["Former Roger Pirates"], hasOnPlay: true },
-        "https://i.imgur.com/KmWSYcT.png": { name: "Benn Beckman", type: "Character", color: ["Red"], cost: 7, power: 7000, counter: 1000, traits: ["Red Hair Pirates"], hasOnPlay: true },
+        "https://i.imgur.com/UWoDh2g.png": { 
+            name: "Silvers Rayleigh", type: "Character", color: ["Red"], cost: 8, power: 8000, counter: 0, traits: ["Former Roger Pirates"],
+            onPlay: function(c) { window.startSelection('sotu_cost_minus', 1, "Select Character for -3000 Power", (c1) => { c1[0].dataset.rayleighDebuff = "3000"; c1[0].dataset.rayleighExpires = turnNum + 3; window.startSelection('sotu_cost_minus', 1, "Select Character for -2000 Power", (c2) => { c2[0].dataset.rayleighDebuff = "2000"; c2[0].dataset.rayleighExpires = turnNum + 3; window.updatePowerDisplay(); window.startSelection('sotu_cost_minus', 1, "Select 3000 power or less to K.O.", (c3) => { if(parseInt(c3[0].dataset.currentPower || 0) <= 3000) { window.trashCard(c3[0]); window.appendChat("Rayleigh shattered a weakened enemy!", "#e74c3c"); } }); }); }); }
+        },
+        "https://i.imgur.com/KmWSYcT.png": { 
+            name: "Benn Beckman", type: "Character", color: ["Red"], cost: 7, power: 7000, counter: 1000, traits: ["Red Hair Pirates"],
+            onPlay: function(c) { window.startSelection('sotu_cost_minus', 1, "Select 6000 power or less to K.O.", (cards) => { if(parseInt(cards[0].dataset.currentPower || 0) <= 6000) { window.trashCard(cards[0]); window.appendChat("Beckman K.O.'d an enemy!", "#e74c3c"); } }); }
+        },
         "https://i.imgur.com/FJ5uvIh.png": { name: "Uta", type: "Character", color: ["Red"], cost: 6, power: 4000, counter: 2000, traits: ["FILM"], blocker: true },
         "https://i.imgur.com/ZmnCJgc.png": { name: "Gol D. Roger", type: "Character", color: ["Red"], cost: 10, power: 13000, counter: 0, traits: ["Pirate King", "Roger Pirates"], rush: true },
         "https://i.imgur.com/SCUNtja.png": { name: "Bad Manners Kick Course", type: "Event", color: ["Red"], cost: 0, traits: ["Alabasta Kingdom", "Straw Hat Crew"], isCounter: true, hasTrigger: true },
+        
         "https://i.imgur.com/z56wQSN.png": { name: "Stussy", type: "Character", color: ["Red"], cost: 6, power: 5000, counter: 1000, traits: ["Big News", "CP0"] },
-        "https://i.imgur.com/wWZmGiS.png": { name: "We News", type: "Stage", color: ["Red"], cost: 2, traits: ["Big News"], hasMain: true },
-        "https://i.imgur.com/AYmBkdJ.png": { name: "News Lackey", type: "Character", color: ["Red"], cost: 4, power: 5000, counter: 0, traits: ["Big News"], hasOnPlay: true },
-        "https://i.imgur.com/APAxBbf.png": { name: "Morgans (5c)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Big News"], hasOnPlay: true, hasMain: true },
-        "https://i.imgur.com/C5woU7a.png": { name: "Unprecedented Bounties", type: "Event", color: ["Red"], cost: 10, traits: ["Big News"], hasMain: true, isCounter: true },
-        "https://i.imgur.com/yrPhCy7.png": { name: "Front Page Scoop!", type: "Event", color: ["Red"], cost: 2, traits: ["Big News"], hasMain: true, isCounter: true, counter: 2000 },
-        "https://i.imgur.com/TQTkwn6.png": { name: "Shocking Revelation!", type: "Event", color: ["Red"], cost: 7, traits: ["Big News"], hasMain: true, isCounter: true, counter: 5000 }
-    };
-    const root = document.documentElement; 
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const newsModal = document.getElementById('news-modal');
-        if (newsModal && document.getElementById('home-screen').style.display !== 'none') {
-            newsModal.style.display = 'flex';
+        "https://i.imgur.com/wWZmGiS.png": { 
+            name: "We News", type: "Stage", color: ["Red"], cost: 2, traits: ["Big News"],
+            mainText: "Main: Rest Stage & Trash 2 -> Play Lackey from Trash",
+            main: function(c) { c.classList.add('rested'); window.startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { cards.forEach(card => { TRASH_ARR.push(card.dataset.url); card.remove(); }); const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); if(trIdx !== -1) { window.createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); window.batchState.leaderCannotAttack = true; window.appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); } else { window.appendChat("No News Lackey in trash.", "#ccc"); } window.saveState(); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; }); }
+        },
+        "https://i.imgur.com/AYmBkdJ.png": { 
+            name: "News Lackey", type: "Character", color: ["Red"], cost: 4, power: 5000, counter: 0, traits: ["Big News"],
+            onPlay: function(c) { window.startSelection('play_free_bignews', 1, "Play 7c or less Big News card", (cards) => { window.rightClickedCard = cards[0]; window.batchState.leaderCannotAttack = true; window.playCard(true); window.appendChat("News Lackey played an event. Leader cannot attack.", "#f39c12"); }); }
+        },
+        "https://i.imgur.com/APAxBbf.png": { 
+            name: "Morgans (5c)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Big News"],
+            onPlay: function(c) { window.showModal("Play 7c Event (YES) or Shocking Revelation from Trash (NO)?", "confirm", () => { window.startSelection('play_free_bignews', 1, "Play Event from Hand", (cards) => { window.rightClickedCard = cards[0]; window.drawCardAction(); window.playCard(true); }); }, () => { window.openInspector('trash'); }); },
+            mainText: "Main: Rest & Trash 1 -> Search Top 6",
+            main: function(c) { c.classList.add('rested'); window.startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); }
+        },
+        "https://i.imgur.com/C5woU7a.png": { 
+            name: "Unprecedented Bounties", type: "Event", color: ["Red"], cost: 10, traits: ["Big News"], isCounter: true,
+            onPlay: function(c) { window.startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { window.rightClickedCard = cards[0]; window.playCard(true); }); }
+        },
+        "https://i.imgur.com/yrPhCy7.png": { 
+            name: "Front Page Scoop!", type: "Event", color: ["Red"], cost: 2, traits: ["Big News"], isCounter: true, counter: 2000,
+            onPlay: function(c) { window.openStructuredSearch(5, ["Big News"], null, false, false, () => { window.appendChat("Front Page Scoop searched!", "#e74c3c"); }); }
+        },
+        "https://i.imgur.com/TQTkwn6.png": { 
+            name: "Shocking Revelation!", type: "Event", color: ["Red"], cost: 7, traits: ["Big News"], isCounter: true, counter: 5000,
+            onPlay: function(c) { document.querySelectorAll('#char-zone-front .card').forEach(fc => { const fcdb = CARD_DB[fc.dataset.url]; if((fcdb?.traits||[]).includes("Big News")) { fc.dataset.tempPower = parseInt(fc.dataset.tempPower||0) + 2000; fc.dataset.hasRush = "true"; fc.querySelector('.rush-tag').style.display = 'block'; } }); window.updatePowerDisplay(); window.appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c"); }
         }
     });
 
-    const socket = io(); 
-    const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
-    
+    // --- MODULAR CORE ENGINE ---
+    const root = document.documentElement; 
     let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
     let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
     let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
@@ -716,24 +830,28 @@
             console.log("Save file healed successfully.");
         }
     } catch (e) {
-        console.error("Deck storage corrupted. Resetting to prevent fatal crash.", e);
+        console.error("Deck storage severely corrupted. Resetting to prevent fatal crash.", e);
         savedDecks = [];
         localStorage.setItem('opcg_decks', "[]");
     }
 
+    // --- ALIGN TOOL EXPLICIT WINDOW BINDING ---
     window.openAlignAuth = function() {
         showModal("Enter Developer Code:", "prompt", (val) => {
             if (val === "717") {
                 document.getElementById('home-screen').style.display = 'none';
                 document.body.classList.add('align-mode-active');
                 document.getElementById('align-tool').style.display = 'block';
+                
                 createCard('https://i.imgur.com/TwmysAX.png', 0, 0, {zone: 'leader-zone'});
                 createCard('https://i.imgur.com/2lEVHJP.png', 0, 0, {zone: 'char-zone-front'});
                 createCard('https://i.imgur.com/KdMSz8v.png', 0, 0, {zone: 'stage-zone'});
                 createCard(DON_URL, 0, 0, {zone: 'don-zone'});
+                
                 const lf = createCard('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg', 0, 0, {zone: 'life-zone'});
                 lf.style.position = 'absolute';
-                loadZoneAlign();
+                
+                window.loadZoneAlign();
             } else {
                 showModal("Access Denied.", "alert");
             }
@@ -742,7 +860,7 @@
     
     window.closeAlignTool = function() { window.location.reload(); }
 
-    function loadZoneAlign() {
+    window.loadZoneAlign = function() {
         const zoneId = document.getElementById('align-zone').value;
         const targetIds = { 'ld': 'leader-zone', 'st': 'stage-zone', 'fz': 'franky-extra-zone', 'dk': 'drop-deck', 'tr': 'drop-trash', 'dd': 'don-deck', 'lf': 'life-zone', 'ch': 'char-zone-front', 'dz': 'don-zone' };
         const target = document.getElementById(targetIds[zoneId]);
@@ -754,6 +872,7 @@
         document.getElementById('slider-l').value = parseFloat(rs.getPropertyValue(`--${zoneId}-l`)) || 0;
         document.getElementById('slider-w').value = parseFloat(rs.getPropertyValue(`--${zoneId}-w`)) || 0;
         document.getElementById('slider-h').value = parseFloat(rs.getPropertyValue(`--${zoneId}-h`)) || 0;
+        
         document.getElementById('val-t').innerText = document.getElementById('slider-t').value + "%";
         document.getElementById('val-l').innerText = document.getElementById('slider-l').value + "%";
         document.getElementById('val-w').innerText = document.getElementById('slider-w').value + "%";
@@ -1054,6 +1173,8 @@
             if (e.button !== 0 || combatState.step === 'wait_counter') return; 
             if (selectConfig) { handleSelection(c); return; }
             const db = CARD_DB[c.dataset.url] || {}; 
+            
+            // --- COUNTER PHASE LOGIC ---
             if (combatState.step === 'counter') { 
                 if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
                     if (db.name === "Divine Departure") {
@@ -1090,11 +1211,16 @@
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
         
+        // --- NEW MODULAR CONTEXT MENU ---
         c.oncontextmenu = (e) => { 
             e.preventDefault(); 
             if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
-            rightClickedCard = c; const db = CARD_DB[c.dataset.url] || {}; const menu = document.getElementById('context-menu'); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            
+            rightClickedCard = c; const db = CARD_DB[c.dataset.url] || {}; const menu = document.getElementById('context-menu'); 
+            menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; 
+            
             let h = ""; if(isDevMode) { h += `<div onclick="setPower(1000)">+1000 Power</div><div onclick="setPower(0)">Reset Power</div>`; }
+            
             let canAttack = false; 
             if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
                 if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -1104,50 +1230,41 @@
                     if (window.batchState.leaderCannotAttack && c.parentElement.id === 'leader-zone') canAttack = false;
                 } 
             }
+            
             if(canAttack) h += `<div onclick="window.simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
                 if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack Unavailable</div>`;
             }
 
-            if (!c.classList.contains('frozen')) {
-                const customMains = ["Franky", "Hattori", "Stussy", "Vinsmoke Judge", "Vinsmoke Ichiji", "Vinsmoke Yonji", "Monkey D. Luffy (Extra Turn)", "Black Maria", "Roronoa Zoro", "Vinsmoke Reiju (5c)", "Vinsmoke Sanji", "Impel Down", "Domino", "Magellan (10c)", "We News", "Morgans (5c)", "Morgans", "Rob Lucci (Y)", "Kaku", "Magellan"];
-                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && !customMains.includes(db?.name)) { h += `<div onclick="window.activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-                if (db?.type === "Stage" && (db?.traits||[]).includes("Invention") && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="window.stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
-                
-                // LEADER ABILITIES
-                if (db?.type === "Leader" && (isMyTurn || isDevMode)) {
-                    if (db.name === "Franky") h += `<div onclick="window.frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`;
-                    if (db.name === "Stussy" && !window.stussyUsedThisTurn) h += `<div onclick="window.stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-                    if (db.name === "Morgans" && !c.classList.contains('rested')) h += `<div onclick="window.morgansLeaderMain()" style="background:#f39c12; color:#000">Main: Rest -> Look at top 6</div>`;
-                    if (db.name === "Magellan" && !c.classList.contains('rested')) h += `<div onclick="window.magellanLeaderMain()" style="background:#f39c12; color:#000">Main: Rest & DON -1 -> +1000 & Draw 1</div>`;
-                    if (db.name === "Vinsmoke Judge" && !c.classList.contains('rested')) h += `<div onclick="window.judgeLeaderMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> GERMA +1000</div>`;
+            if (!c.classList.contains('frozen') && (isMyTurn || isDevMode)) {
+                if (db.main && !c.classList.contains('rested') && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone') {
+                    h += `<div onclick="window.triggerMain('${c.id}')" style="background:#f39c12; color:#000">${db.mainText || 'Activate Main'}</div>`;
                 }
-
-                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
-                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
-                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
-                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
-                if (db?.name === "Monkey D. Luffy (Extra Turn)" && db.cost === 10 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.luffy10cMain()" style="background:#f39c12; color:#000">Main: Rest 1 DON!! -> Add 1 Active DON!!</div>`;
-                if (db?.name === "Black Maria" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.blackMariaMain()" style="background:#f39c12; color:#000">Main: Add up to 5 Rested DON!!</div>`;
-                if (db?.name === "Roronoa Zoro" && db.cost === 1 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.zoro1cMain()" style="background:#f39c12; color:#000">Main: Add 1 Rested DON!! (Freeze 1 next turn)</div>`;
-                if (db?.name === "Vinsmoke Reiju (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.reiju5cMain()" style="background:#f39c12; color:#000">Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost</div>`;
-                if (db?.name === "Vinsmoke Sanji" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.sanji3cMain()" style="background:#f39c12; color:#000">Main: Attach 1 Rested DON!!</div>`;
-                if (db?.name === "Impel Down" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.impelStageMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> Search Top 3</div>`;
-                if (db?.name === "Domino" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.dominoMain()" style="background:#f39c12; color:#000">Main: If DON returned this turn, Draw 1 Trash 1</div>`;
-                if (db?.name === "Magellan (10c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.magellan10cMain()" style="background:#f39c12; color:#000">Main: Rest & Give Jailer Beasts +1000 per returned DON</div>`;
-                if (db?.name === "We News" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.weNewsMain()" style="background:#f39c12; color:#000">Main: Rest Stage & Trash 2 -> Play Lackey</div>`;
-                if (db?.name === "Morgans (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.morgansCharMain()" style="background:#f39c12; color:#000">Main: Rest & Search Top 6 for Red 5c+</div>`;
+                if (db.hasMain && !db.main && !c.classList.contains('rested') && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone') {
+                    h += `<div onclick="window.activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`;
+                }
+                if (db.type === "Stage" && (db.traits || []).includes("Invention") && c.parentElement.id !== 'hand-bar') {
+                    h += `<div onclick="window.stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                }
+                if (db.name === "General Franky" && c.parentElement.id === 'hand-bar' && db.main) {
+                    h += `<div onclick="window.triggerMain('${c.id}')" style="background:#8e44ad; color:#fff">${db.mainText}</div>`;
+                }
             }
 
-            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="window.bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
             if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="window.moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
             if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone' || c.parentElement.id === 'opp-franky-extra-zone')) { h += `<div onclick="window.requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            
             menu.innerHTML = h; 
         }; 
     }
+
+    // CORE MODULAR EXECUTION TRIGGER
+    window.triggerMain = function(id) {
+        hideMenu(); const c = document.getElementById(id); if(!c) return;
+        rightClickedCard = c; const db = CARD_DB[c.dataset.url];
+        if(db && db.main) db.main(c);
+    };
 
     window.playCardConfirm = function(c) { 
         if(!isDevMode && !isMyTurn) return; 
@@ -1176,19 +1293,7 @@
     
     window.playCard = function(isFree = false, customCost = null) { 
         const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; window.hideMenu(); let cost = customCost !== null ? customCost : db.cost; 
-        if (db.name === "Divine Departure" && !isFree) {
-            const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
-            if(activeDons.length < 5) { showModal("Need 5 active DON!! to use Main.", "alert"); return; }
-            showModal("Rest 5 DON!! to use Main effect?", "confirm", () => {
-                for(let i=0; i<5; i++) activeDons[i].classList.add('rested');
-                TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
-                if(document.querySelectorAll('[data-parent-id]').length > 0) {
-                    startSelection('divine_depart_minus', 1, "Give -8000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 8000; updatePowerDisplay(); saveState(); appendChat("Divine Departure gave -8000 power!", "#8e44ad"); });
-                } else { appendChat("No attached DON. Effect fails.", "#ccc"); }
-            });
-            return;
-        }
-
+        
         if(!isFree) { 
             const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); 
             if(activeDons.length < cost) { showModal(`Need ${cost} active DON!!`, "alert"); return; } 
@@ -1199,27 +1304,14 @@
         
         if(db.type === 'Event') { 
             TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); 
-            if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } 
-            if((db.color||[]).includes("Red")) {
-                const hasStussy = Array.from(document.querySelectorAll('#char-zone-front .card')).some(fc => CARD_DB[fc.dataset.url]?.name === "Stussy");
-                if(hasStussy) { window.batchState.stussyRedEventBuffs++; updatePowerDisplay(); appendChat("Stussy gained +2000 from Red Event!", "#e74c3c"); }
-            }
-            if(db.name === "Front Page Scoop!") { openStructuredSearch(5, ["Big News"], null, false, false, () => { appendChat("Front Page Scoop searched!", "#e74c3c"); }); }
-            if(db.name === "Shocking Revelation!") { 
-                document.querySelectorAll('#char-zone-front .card').forEach(fc => {
-                    const fcdb = CARD_DB[fc.dataset.url];
-                    if((fcdb?.traits||[]).includes("Big News")) { fc.dataset.tempPower = parseInt(fc.dataset.tempPower||0) + 2000; fc.dataset.hasRush = "true"; fc.querySelector('.rush-tag').style.display = 'block'; }
-                }); updatePowerDisplay(); appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c");
-            }
-            if(db.name === "Unprecedented Bounties") { startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
         } else if(db.type === 'Stage') { 
             const bz = document.getElementById('stage-zone'); const fz = document.getElementById('franky-extra-zone'); const leaderCard = document.querySelector('#leader-zone .card'); const leaderName = leaderCard ? CARD_DB[leaderCard.dataset.url]?.name : "";
-            if (bz.children.length === 0) { bz.appendChild(c); } else if (leaderName === "Franky" && fz.children.length < 4) { fz.appendChild(c); } else { const maxStages = (leaderName === "Franky") ? 5 : 1; showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => { startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { window.trashCard(cards[0]); if(bz.children.length === 0) bz.appendChild(c); else fz.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; }
+            if (bz.children.length === 0) { bz.appendChild(c); } else if (leaderName === "Franky" && fz.children.length < 4) { fz.appendChild(c); } else { const maxStages = (leaderName === "Franky") ? 5 : 1; showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => { startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { window.trashCard(cards[0]); if(bz.children.length === 0) bz.appendChild(c); else fz.appendChild(c); saveState(); setTimeout(() => { if(db.onPlay) db.onPlay(c); }, 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; }
         } else { 
             const charZ = document.getElementById('char-zone-front'); 
-            if(charZ.children.length >= 5) { showModal("Front line is full! Trash a Character to play this.", "confirm", () => { startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { window.trashCard(cards[0]); charZ.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; } else { charZ.appendChild(c); }
+            if(charZ.children.length >= 5) { showModal("Front line is full! Trash a Character to play this.", "confirm", () => { startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { window.trashCard(cards[0]); charZ.appendChild(c); saveState(); setTimeout(() => { if(db.onPlay) db.onPlay(c); }, 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; } else { charZ.appendChild(c); }
         } 
-        saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); 
+        saveState(); setTimeout(() => { if(db.onPlay) db.onPlay(c); }, 100); 
     }
 
     function updatePowerDisplay() {
@@ -1332,7 +1424,7 @@
             if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) { c.classList.remove('frozen'); delete c.dataset.frozenUntil; }
             updateBadges(c.id); const badge = c.querySelector('.don-badge'); if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
-        organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
+        organizeDon(); window.drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
     }
 
     socket.on('turn_passed', () => {
@@ -1375,7 +1467,7 @@
         katakuris.forEach(k => { eotQueue.push(() => { showModal("Katakuri: Set 2 Big Mom Pirates (3c+) active and add 1 rested DON?", "confirm", () => { startSelection('katakuri_active', 2, "Select up to 2 Big Mom Characters to set Active", (cards) => { cards.forEach(c => c.classList.remove('rested')); spawnDonLocal(true); saveState(); appendChat("Katakuri restood allies and ramped DON!", "#8e44ad"); processQueue(eotQueue); }, () => { spawnDonLocal(true); saveState(); appendChat("Katakuri ramped DON!", "#8e44ad"); processQueue(eotQueue); }); }, () => processQueue(eotQueue)); }); });
 
         eotQueue.push(() => {
-            if (window.batchState.blackMariaUsed) { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (myDon > OPP_DON_TOTAL) { let toReturn = myDon - OPP_DON_TOTAL; returnDonAndCheckSanji(toReturn, () => { window.batchState.blackMariaUsed = false; appendChat(`Black Maria returned ${toReturn} DON!!`, "#8e44ad"); processQueue(eotQueue); }); return; } } 
+            if (window.batchState.blackMariaUsed) { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (myDon > OPP_DON_TOTAL) { let toReturn = myDon - OPP_DON_TOTAL; window.returnDonAndCheckSanji(toReturn, () => { window.batchState.blackMariaUsed = false; appendChat(`Black Maria returned ${toReturn} DON!!`, "#8e44ad"); processQueue(eotQueue); }); return; } } 
             window.batchState.blackMariaUsed = false; processQueue(eotQueue);
         });
 
@@ -1389,9 +1481,9 @@
     
     function processQueue(q) { if(q.length > 0) { const fn = q.shift(); fn(); } }
 
-    function returnDonAndCheckSanji(count, onComplete) { 
+    window.returnDonAndCheckSanji = function(count, onComplete) { 
         startSelection('don_minus', count, `Select ${count} DON!! to return`, (selectedDons) => { 
-            selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; }); organizeDon(); saveState(); 
+            selectedDons.forEach(d => { if(d.dataset.parentId) { window.updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; }); organizeDon(); saveState(); 
             const hasSanji = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).some(c => CARD_DB[c.dataset.url]?.name === "Sanji & Pudding"); 
             if (hasSanji && !window.sanjiUsedThisTurn && count >= 2) { showModal("Activate Sanji to add 1 Active DON!!?", "confirm", () => { window.sanjiUsedThisTurn = true; spawnDonLocal(false); onComplete(); }, () => onComplete()); } else { onComplete(); } 
         }); 
@@ -1445,194 +1537,137 @@
         if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; const cb = selectConfig.callback; selectConfig.onCancel = null; window.cancelSelection(); if(cb) cb(completed); } 
     }
 
-    // --- CONTEXT MENU ABILITIES ---
-    window.morgansLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); saveState(); }
-    window.magellanLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('don_minus', 1, "Return 1 DON!! to gain +1000 and Draw", (dons) => { dons[0].remove(); DON_DECK_COUNT++; organizeDon(); rightClickedCard.dataset.tempPower = (parseInt(rightClickedCard.dataset.tempPower || 0) + 1000); window.drawCardAction(); updatePowerDisplay(); saveState(); appendChat("Magellan: -1 DON, +1000 Power, Draw 1!", "#8e44ad"); }); }
-    window.judgeLeaderMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand"); }); }
-
-    window.stussyLeaderFlip = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); window.stussyUsedThisTurn = true; cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Stussy flipped life & froze target!", "#34dbdb"); }); }
-    window.lucciYellowMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
-    window.kakuMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
-    window.hattoriMain = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { c.classList.remove('rested'); saveState(); }); }
-    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s => s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
     window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
-    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); window.drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
+    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s => s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
     window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
-    window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
-
-    window.judgeMainEffect = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") executeSotuTrashTriggers(trashedName, "hand"); }); }
-    window.ichijiMainRamp = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); window.sotuTurnState.vinsmokeCostDiscount = 2; saveState(); appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db"); }
-    window.yonjiUnrest = function() { hideMenu(); const c = rightClickedCard; c.classList.remove('rested'); c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); saveState(); appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db"); }
-    window.luffy10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('rest_active_don', 1, "Select 1 Active DON!! to Rest", (cards) => { cards[0].classList.add('rested'); spawnDonLocal(false); saveState(); appendChat("10c Luffy swapped a rested DON for an active one!", "#8e44ad"); }); }
-    window.blackMariaMain = function() { hideMenu(); const hasOther = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Black Maria").length > 1; if(hasOther) { showModal("Cannot use if you have other Black Marias.", "alert"); return; } rightClickedCard.classList.add('rested'); window.batchState.blackMariaUsed = true; showModal("How many rested DON!! to add? (Max 5)", "prompt", (val) => { let num = Math.min(5, parseInt(val) || 0); for(let i=0; i<num; i++) spawnDonLocal(true); saveState(); appendChat(`Black Maria generated ${num} rested DON!!`, "#8e44ad"); }, null, "5"); }
-    window.zoro1cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); spawnDonLocal(true); window.batchState.zoroFrozenDonCount++; saveState(); appendChat("Zoro generated 1 rested DON!! (1 DON will not refresh next turn).", "#8e44ad"); }
-    window.reiju5cMain = function() { hideMenu(); rightClickedCard.dataset.reijuBuffExpires = turnNum + 3; window.drawCardAction(); window.drawCardAction(); showModal("Trash 3 cards from hand.", "alert", () => { startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); updatePowerDisplay(); saveState(); appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
-    window.sanji3cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; updateBadges(targets[0].id); organizeDon(); saveState(); appendChat("Sanji attached DON!!", "#3498db"); } }); }
-    window.impelStageMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
-    window.dominoMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { showModal("No DON returned this turn!", "alert"); return; } window.drawCardAction(); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); saveState(); appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
-    window.magellan10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); window.batchState.magellanBuffActive = true; updatePowerDisplay(); saveState(); appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
-    window.weNewsMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); if(trIdx !== -1) { createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); window.batchState.leaderCannotAttack = true; appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); } else { appendChat("No News Lackey in trash.", "#ccc"); } saveState(); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; }); }
-    window.morgansCharMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); }
-
-    function executeSotuTrashTriggers(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { window.openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
-
+    window.executeSotuTrashTriggers = function(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { window.openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
     window.moveToTrash = function(c) {
         if (!c) return; const db = CARD_DB[c.dataset.url]; const origZone = c.parentElement.id;
         TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); saveState();
-        if (db && db.name === "Vinsmoke Sora") { executeSotuTrashTriggers(db.name, origZone); } 
+        if (db && db.name === "Vinsmoke Sora") { window.executeSotuTrashTriggers(db.name, origZone); } 
         else if (db && db.name === "Vinsmoke Yonji" && db.cost === 2 && origZone === "char-zone-front") { showModal("Yonji Trashed! Give Opp Character/Leader -3 Cost?", "confirm", () => { startSelection('sotu_cost_minus', 1, "Give -3 Cost", (targets) => { targets[0].dataset.tempCost = parseInt(targets[0].dataset.tempCost || CARD_DB[targets[0].dataset.url]?.cost || 0) - 3; appendChat("Yonji gave target -3 Cost!", "#9b59b6"); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets[0].id}); }); }); } 
         else if (db && db.name === "Vinsmoke Yonji" && db.cost === 9 && origZone === "char-zone-front") { showModal("Yonji (9c) Trashed! Play him rested from Trash?", "confirm", () => { const trIdx = TRASH_ARR.findIndex(u => u === c.dataset.url); if(trIdx !== -1) { const revived = createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); revived.classList.add('rested'); revived.dataset.turnPlayed = myTurnCount; saveState(); appendChat("Yonji (9c) Revived Rested!", "#3498db"); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; } }); }
     }
 
-    function sSnakeEffect(c, onComplete) { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(top && top.classList.contains('card-back')) { showModal("S-Snake: Turn top Life face-up to give Opponent -2000 power?", "confirm", () => { top.classList.remove('card-back'); saveState(); startSelection('ssnake_minus', 1, "Select Opp Character to give -2000", (cards) => { cards[0].dataset.tempPower = parseInt(cards[0].dataset.tempPower||0) - 2000; updatePowerDisplay(); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_power', amount: 2000, target: cards[0].id}); saveState(); appendChat("S-Snake gave -2000 power!", "#f1c40f"); if(onComplete) onComplete(); }); }, () => { if(onComplete) onComplete(); }); } else { if(onComplete) onComplete(); } }
-
-    function execAttackPhase(c) { combatState = { active: true, attackerId: c.id, step: 'target' }; document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f"); }
-    
     window.simulateAttack = function() { 
         hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } 
         const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Action Locked!", "alert"); return; } 
-        const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); saveState(); 
+        const db = CARD_DB[c.dataset.url] || {}; c.classList.add('rested'); saveState(); 
         
-        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
-        if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
-        if(db.name === "Chopper") { window.drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
-        if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
-        if(db.name === "Vinsmoke Yonji" && db.cost === 9) { if(c.dataset.turnPlayed == myTurnCount) { c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000; updatePowerDisplay(); appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c"); } }
-        if(db.name === "Monkey D. Luffy (Unblockable)") { if(document.querySelectorAll(`[data-parent-id="${c.id}"]`).length >= 2) { c.dataset.unblockable = "true"; appendChat("Luffy attacks with 2 DON!! -> Unblockable!", "#e74c3c"); } }
-        if(db.name === "Monkey D. Luffy (Don Ramp)") { showModal("Give 1 rested DON!! to Leader or rested Character?", "confirm", () => { startSelection('give_don_ramp', 1, "Select Leader or Rested Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; updateBadges(targets[0].id); organizeDon(); saveState(); appendChat("Luffy ramped 1 rested DON!! to target!", "#f1c40f"); } }); }); }
-        if(db.name === "Monkey D. Luffy (Leader Buff)") { showModal("Return 2 DON!! to trigger When Attacking effect?", "confirm", () => { returnDonAndCheckSanji(2, () => { const leader = document.querySelector('#leader-zone .card'); if(leader && CARD_DB[leader.dataset.url]?.color.length > 1 && OPP_DON_TOTAL >= 5) { window.batchState.luffy6cBuffActive = true; window.batchState.luffy6cBuffExpires = turnNum + 3; updatePowerDisplay(); saveState(); appendChat("Luffy 6c buffed Leader base power to 7000!", "#8e44ad"); } }); }); }
-        if(db.name === "S-Snake") { sSnakeEffect(c, () => execAttackPhase(c)); return; }
-        execAttackPhase(c);
+        const proceed = () => {
+            combatState = { active: true, attackerId: c.id, step: 'target' }; 
+            document.body.classList.add('combat-target-mode'); 
+            appendChat("Select a target to attack!", "#f1c40f");
+        };
+
+        if(db.onAttack) { db.onAttack(c, proceed); } else { proceed(); }
     }
-    
-    function drawArrow(attId, defId) { const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return; const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2; const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; const arrow = document.getElementById('combat-arrow'); arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px'; arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block'; }
-    
-    document.addEventListener('mousedown', (e) => {
-        if(combatState.active && combatState.step === 'bon_clay_copy') { const target = e.target.closest('#opp-char-zone-front .card'); if(target) { const tBase = CARD_DB[target.dataset.url]?.power || 0; const attCard = document.getElementById(combatState.attackerId); attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); document.body.classList.remove('bon-clay-mode'); combatState.step = 'target'; document.body.classList.add('combat-target-mode'); appendChat(`Bon Clay copied power (${tBase})! Now select attack target.`, "#f1c40f"); } else if (e.button === 2) { document.body.classList.remove('bon-clay-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; }
-        if(combatState.active && combatState.step === 'target') { 
-            const target = e.target.closest('.card'); if(!target) return; const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')); 
-            if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') { 
-                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; const attCardForPow = document.getElementById(combatState.attackerId); const aPow = parseInt(attCardForPow.dataset.currentPower || 0); drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Waiting for Opponent..."); socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId, attackerPower: aPow, unblockable: attCardForPow.dataset.unblockable }); appendChat("Attack Declared! Waiting...", "#f1c40f"); 
-            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; 
+
+    socket.on('game_action', (data) => {
+        if(data.type === 'declare_attack') { 
+            const att = document.getElementById('opp-' + data.attackerId); const def = document.getElementById(data.defenderId.replace('opp-','')); 
+            if (data.attackerPower !== undefined) { att.dataset.currentPower = data.attackerPower; }
+            drawArrow(att.id, def.id); combatState = { active: true, attackerId: att.id, defenderId: def.id }; openArena(att.id, def.id, "You are being attacked!"); 
+            if(data.unblockable === "true" || att.dataset.unblockable === "true") { appendChat("Attack is Unblockable!", "#e74c3c"); askCounterPhase(); return; } 
+            const blockers = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested):not(.frozen)')).filter(c => CARD_DB[c.dataset.url]?.blocker || (CARD_DB[c.dataset.url]?.name==="Rob Lucci (Y)" && document.getElementById('life-zone').children.length<=1) || (CARD_DB[c.dataset.url]?.name==="Monkey D. Luffy" && c.dataset.luffyBuff==="true") || CARD_DB[c.dataset.url]?.name==="Spandam" || (c.dataset.reijuBuffExpires && turnNum < parseInt(c.dataset.reijuBuffExpires))); 
+            if(blockers.length > 0) { showModal("Opponent is attacking! Use a Blocker?", "confirm", () => { combatState.step = 'select_blocker'; document.body.classList.add('blocker-target-mode'); blockers.forEach(b => b.classList.add('valid-blocker')); appendChat("Select a Blocker.", "#3498db"); }, () => askCounterPhase()); } else { askCounterPhase(); } 
         }
-        if(combatState.active && combatState.step === 'select_blocker') { const target = e.target.closest('.valid-blocker'); if(target) { target.classList.add('rested'); saveState(); combatState.defenderId = target.id; document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id}); drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase..."); askCounterPhase(); } else if (e.button === 2) { document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); askCounterPhase(); } return; }
+        else if(data.type === 'block_declared') { 
+            combatState.defenderId = data.newDef; drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Opponent Blocked! Counter Phase..."); 
+            const hasRoger = Array.from(document.querySelectorAll('#char-zone-front .card')).some(c => CARD_DB[c.dataset.url]?.name === "Gol D. Roger" && CARD_DB[c.dataset.url]?.cost === 10);
+            const myLife = document.getElementById('life-zone').children.length; const oppLife = document.getElementById('opp-life-zone').children.length;
+            if(hasRoger && (myLife === 0 || oppLife === 0)) { showModal("GOL D. ROGER INSTANT WIN TRIGGERED!", "alert", () => { socket.emit('game_action', {type: 'game_over'}); window.location.reload(); }); }
+        }
+        else if(data.type === 'update_counter') { const el = document.getElementById('attacker-counter-val'); if(el) el.innerText = data.counterValue; updateArenaCounter(data.counterValue); }
+        else if(data.type === 'counter_declared') { executeCombatResolution(data.counterValue, data.finalDefPower); }
+        else if(data.type === 'resolve_kill') { 
+            const myTarget = document.getElementById(data.target.replace('opp-','')); 
+            if(myTarget) { 
+                const db = CARD_DB[myTarget.dataset.url]; 
+                if(db?.name === "General Franky") { const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (totalDon >= 3) { showModal("General Franky would be K.O.'d! Return 3 DON!! to save him?", "confirm", () => { window.returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); }); }, () => { window.trashCard(myTarget); appendChat("Your Character K.O.'d!", "#e74c3c"); }); return; } } 
+                window.trashCard(myTarget); appendChat("K.O.'d!", "#e74c3c"); 
+            } 
+        }
+        else if(data.type === 'resolve_life') { let attId = combatState.attackerId; if(attId && !attId.startsWith('opp-')) attId = 'opp-' + attId; if(!isMyTurn) handleLifeDamage(data.banish, data.double); else appendChat("Opponent took damage!", "#2ecc71"); }
+        else if(data.type === 'reveal_card') { appendChat(`Opponent revealed: ${CARD_DB[data.url]?.name}`, "#3498db"); }
+        else if(data.type === 'request_ko') { 
+            const myTarget = document.getElementById(data.target); 
+            if(myTarget) { 
+                const db = CARD_DB[myTarget.dataset.url]; 
+                if(db?.name === "General Franky") { const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (totalDon >= 3) { showModal("Opponent's effect would K.O. General Franky! Return 3 DON!! to save him?", "confirm", () => { window.returnDonAndCheckSanji(3, () => { appendChat("Returned 3 DON!! to save General Franky!", "#3498db"); }); }, () => { window.trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); }); return; } } 
+                window.trashCard(myTarget); appendChat("Character K.O.'d by effect!", "#e74c3c"); 
+            } 
+        }
+        else if(data.type === 'apply_status') { 
+            const myTarget = document.getElementById(data.target.replace('opp-','')); 
+            if(myTarget) { 
+                if(data.status === 'freeze') { myTarget.classList.add('frozen'); myTarget.dataset.frozenUntil = myTurnCount + 2; appendChat("Your card was Action Locked (Frozen) by opponent!", "#34dbdb"); } 
+                else if(data.status === 'rest') { myTarget.classList.add('rested'); appendChat("Your card was Rested by opponent!", "#f1c40f"); } 
+                else if(data.status === 'no_restand') { myTarget.classList.add('no-restand'); myTarget.dataset.noRestand = "true"; appendChat("Your card was Locked by opponent!", "#9b59b6"); } 
+                else if(data.status === 'minus_power') { myTarget.dataset.tempPower = parseInt(myTarget.dataset.tempPower||0) - data.amount; updatePowerDisplay(); appendChat("Your card lost " + data.amount + " power!", "#e74c3c"); }
+                else if(data.status === 'minus_cost') { myTarget.dataset.tempCost = parseInt(myTarget.dataset.tempCost || CARD_DB[myTarget.dataset.url]?.cost || 0) - data.amount; appendChat("Your card received -" + data.amount + " Cost!", "#9b59b6"); }
+                else if(data.status === 'minus_don') { if(DON_DECK_COUNT < 10) { const activeDon = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).find(d => !d.dataset.parentId); if(activeDon) { activeDon.remove(); DON_DECK_COUNT++; organizeDon(); } } }
+                saveState(); 
+            } 
+        }
+        else if (data.type === 'concede') { showModal("Opponent Conceded! YOU WIN!", "alert", ()=>window.location.reload()); } 
+        else if (data.type === 'game_over') { showModal("Opponent took damage at 0 Life! YOU WIN!", "alert", ()=>window.location.reload()); }
+        else if (data.type === 'force_sync') { saveState(); }
     });
 
-    window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { 
-        SEARCH_ARR = DECK_ARR.splice(-val).reverse(); 
-        const grid = document.getElementById('insp-grid'); grid.innerHTML = ''; 
-        document.getElementById('insp-title').innerText = `Pick 1 Target`; window.tempSearchCallback = callback; 
-        SEARCH_ARR.forEach((url, i) => { 
-            const db = CARD_DB[url]; let canTake = true; 
-            if(filterTraits && !filterTraits.some(t => (db.traits||[]).includes(t))) canTake = false; 
-            if(isTriggerOnly && !db.hasTrigger) canTake = false; 
-            if(isCost4Plus && db.cost < 5) canTake = false; 
-            if(excludeName && db.name === excludeName) canTake = false; 
-            const div = document.createElement('div'); div.style.textAlign = 'center'; 
-            div.innerHTML = `<div style="width:128px; height:180px; background-image:url('${url}'); background-size:100% 100%; border-radius:8px; border: ${canTake ? '4px solid #2ecc71' : '4px solid #e74c3c'}; cursor: ${canTake ? 'pointer' : 'not-allowed'}; box-shadow: 0 4px 10px rgba(0,0,0,0.5);" onclick="${canTake ? `window.resolveStructuredSearch(${i})` : ''}"></div>`; 
-            grid.appendChild(div); 
-        }); 
-        const btnDiv = document.createElement('div'); btnDiv.innerHTML = `<button onclick="window.resolveStructuredSearch(-1)" style="background:#555; width:128px; height: 180px; font-size:16px;">TAKE NOTHING</button>`; grid.appendChild(btnDiv); document.getElementById('search-modal').style.display = 'flex'; 
+    function openArena(attId, defId, statusMsg) { const aCard = document.getElementById(attId); const dCard = document.getElementById(defId); if(!aCard || !dCard) return; document.getElementById('arena-att-img').style.backgroundImage = `url('${aCard.dataset.url}')`; document.getElementById('arena-def-img').style.backgroundImage = `url('${dCard.dataset.url}')`; let aPow = parseInt(aCard.dataset.currentPower || 0); let dPow = parseInt(dCard.dataset.currentPower || 0); document.getElementById('arena-att-pow').innerText = aPow; document.getElementById('arena-def-pow').innerText = dPow; document.getElementById('arena-status').innerText = statusMsg; document.getElementById('arena-status').style.color = "#34dbdb"; let req = aPow - dPow + 1000; if(req <= 0) req = 0; document.getElementById('arena-math').innerText = `Needs +${req} to survive`; document.getElementById('combat-arena').style.display = 'flex'; }
+    function updateArenaCounter(counterVal) { const defCard = document.getElementById(combatState.defenderId); if(!defCard) return; let baseDPow = parseInt(defCard.dataset.currentPower || 0); let totalDPow = baseDPow + counterVal; document.getElementById('arena-def-pow').innerText = totalDPow; const attCard = document.getElementById(combatState.attackerId); let aPow = parseInt(attCard.dataset.currentPower || 0); let req = aPow - totalDPow + 1000; if(req <= 0) document.getElementById('arena-math').innerText = "DEFENSE SUCCESSFUL"; else document.getElementById('arena-math').innerText = `Needs +${req} more`; }
+    function askCounterPhase() { combatState.step = 'counter'; document.body.classList.add('counter-mode'); document.getElementById('counter-controls').style.display = 'flex'; currentCounterTotal = 0; selectedCounterCards = []; let req = parseInt(document.getElementById('arena-att-pow').innerText) - parseInt(document.getElementById('arena-def-pow').innerText) + 1000; document.getElementById('arena-math').innerText = `Needs +${Math.max(0,req)} to survive`; }
+    window.confirmCounter = function() { selectedCounterCards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); const defCard = document.getElementById(combatState.defenderId); const finalDefPower = parseInt(defCard.dataset.currentPower || 0) + currentCounterTotal; socket.emit('game_action', {type: 'counter_declared', counterValue: currentCounterTotal, finalDefPower: finalDefPower}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); saveState(); executeCombatResolution(currentCounterTotal, finalDefPower); }
+    window.takeHit = function() { const defCard = document.getElementById(combatState.defenderId); const finalDefPower = parseInt(defCard.dataset.currentPower || 0); socket.emit('game_action', {type: 'counter_declared', counterValue: 0, finalDefPower: finalDefPower}); document.getElementById('counter-controls').style.display = 'none'; document.body.classList.remove('counter-mode'); executeCombatResolution(0, finalDefPower); }
+    function executeCombatResolution(counterVal, finalDefPower) { 
+        const att = document.getElementById(combatState.attackerId); const def = document.getElementById(combatState.defenderId); if(!att || !def) { clearCombatState(); return; } const aPow = parseInt(att.dataset.currentPower || 0); const dPow = finalDefPower !== undefined ? finalDefPower : parseInt(def.dataset.currentPower || 0) + counterVal; document.getElementById('arena-def-pow').innerText = dPow; 
+        if(isMyTurn) { 
+            if(aPow >= dPow) { 
+                document.getElementById('arena-status').innerText = "ATTACK SUCCESSFUL!"; document.getElementById('arena-status').style.color = "#e74c3c"; document.getElementById('arena-math').innerText = "Defender takes Damage"; appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); 
+                if(def.parentElement.id.includes('char-zone')) { if(isDevMode) { window.trashCard(def); appendChat("K.O.'d!", "#e74c3c"); } else { socket.emit('game_action', {type: 'resolve_kill', target: def.id}); } } 
+                else if(def.parentElement.id.includes('leader-zone')) { const isBanish = CARD_DB[att.dataset.url]?.banish || att.dataset.banish === "true"; const isDouble = CARD_DB[att.dataset.url]?.doubleAttack || att.dataset.doubleAttack === "true"; if(isDevMode) { handleLifeDamage(isBanish, isDouble); } else { socket.emit('game_action', {type: 'resolve_life', banish: isBanish, double: isDouble}); } } 
+                setTimeout(() => { clearCombatState(); }, 2500); 
+            } else { document.getElementById('arena-status').innerText = "ATTACK FAILED!"; document.getElementById('arena-status').style.color = "#2ecc71"; document.getElementById('arena-math').innerText = "Defender Survives"; setTimeout(() => { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); clearCombatState(); }, 2500); } 
+        } else { 
+            if(aPow >= dPow) { document.getElementById('arena-status').innerText = "DEFENSE BROKEN!"; document.getElementById('arena-status').style.color = "#e74c3c"; setTimeout(() => { appendChat(`Attack SUCCESS! (${aPow} vs ${dPow})`, "#2ecc71"); clearCombatState(); }, 2500); } 
+            else { document.getElementById('arena-status').innerText = "DEFENSE HELD!"; document.getElementById('arena-status').style.color = "#2ecc71"; setTimeout(() => { appendChat(`Attack FAILED. (${aPow} vs ${dPow})`, "#e74c3c"); clearCombatState(); }, 2500); } 
+        } 
     }
     
-    window.resolveStructuredSearch = function(index) { 
-        if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); appendChat(`Searched: ${CARD_DB[url].name}`, "#2ecc71"); } 
-        while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); 
-        document.getElementById('search-modal').style.display = 'none'; saveState(); 
-        if (window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null; } 
+    window.trashCard = function(myTarget) { 
+        const db = CARD_DB[myTarget.dataset.url]; const leader = document.querySelector('#leader-zone .card');
+        if(leader && CARD_DB[leader.dataset.url]?.traits?.includes("Impel Down")) { if(["Minokoala", "Minotaur", "Minozebra", "Minochihuahua"].includes(db?.name)) { spawnDonLocal(true); appendChat(`${db.name} K.O.'d -> Ramped 1 Rested DON!!`, "#8e44ad"); } }
+        TRASH_ARR.push(myTarget.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${myTarget.dataset.url}')`; myTarget.remove(); saveState(); 
     }
 
-    window.openInspector = function(mode, action = 'hand', filterList = null) {
-        const list = (mode==='deck') ? [...DECK_ARR].reverse() : [...TRASH_ARR]; document.getElementById('insp-title').innerText = mode.toUpperCase() + " VIEW"; const grid = document.getElementById('insp-grid'); grid.innerHTML = '';
-        list.forEach((url, i) => {
-            const db = CARD_DB[url]; let isValid = true; if (filterList) { isValid = filterList.some(t => (db?.traits||[]).includes(t)); }
-            const img = document.createElement('div'); img.style.height='180px'; img.style.width='128px'; img.style.backgroundImage=`url('${url}')`; img.style.backgroundSize='100% 100%'; img.style.borderRadius='8px'; img.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)';
-            if (!isValid) img.style.filter = 'grayscale(100%) opacity(0.5)';
-            if(isDevMode && isValid) {
-                img.style.cursor='pointer';
-                img.onclick = () => {
-                    if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1);
-                    if (action === 'play_rested') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.classList.add('rested'); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
-                    else if (action === 'play_active') { const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { if(c.dataset.url && CARD_DB[c.dataset.url].hasOnPlay) window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); } 
-                    else { createCard(url, 0, 0, {inHand: true}); }
-                    window.closeInspector(); saveState();
-                };
-            }
-            grid.appendChild(img);
-        });
-        document.getElementById('search-modal').style.display = 'flex';
+    function handleLifeDamage(isBanish, isDouble) { 
+        const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); 
+        if(lifeCards.length === 0) { socket.emit('game_action', {type: 'game_over'}); showModal("YOU LOSE!", "alert", ()=>window.location.reload()); return; } 
+        const c = lifeCards[lifeCards.length-1]; const finishHit = () => { if(isDouble) setTimeout(() => handleLifeDamage(isBanish, false), 1500); };
+        if(isBanish) { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); updateLifePositions(); saveState(); finishHit(); return; } 
+        const db = CARD_DB[c.dataset.url]; 
+        if(db && db.hasTrigger) { let triggerMsg = `<div style="height:150px; width:100px; margin: 0 auto 15px auto; background-image:url('${c.dataset.url}'); background-size:100% 100%; border-radius:8px; border:2px solid #fff;"></div>Activate Trigger of <b>${db.name}</b>?`; showModal(triggerMsg, "confirm", () => { resolveTrigger(c, db); finishHit(); }, () => { putInHand(c); finishHit(); }); } else { putInHand(c); finishHit(); } 
     }
+    function putInHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); updateLifePositions(); saveState(); }
     
-    window.inspectDeck = function() { if(!isDevMode) return; window.openInspector('deck'); };
-    
-    window.closeInspector = function() { if(SEARCH_ARR.length > 0) window.resolveStructuredSearch(-1); else { document.getElementById('search-modal').style.display = 'none'; refreshStats(); } }
-
-    window.addEventListener('mousedown', (e) => { if(!e.target.closest('#context-menu') && !e.target.closest('#search-modal') && !e.target.closest('#custom-modal-box')) hideMenu(); if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } }, true);
-    function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
-    window.addEventListener('mousemove', (e) => { 
-        if (!dragged || selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
-        if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
-        if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.setProperty('position', 'absolute', 'important'); don.style.setProperty('left', (e.clientX - offX - 250 + 5 + (i*8)) + 'px', 'important'); don.style.setProperty('top', (e.clientY - offY + 15 + (i*15)) + 'px', 'important'); don.style.setProperty('z-index', (10 - i).toString(), 'important'); }); } 
-    });
-    
-    window.addEventListener('mouseup', (e) => { 
-        if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
-        const c = dragged; dragged = null; 
-        
-        if(!isDragging) { if(c.parentElement.id === 'hand-bar') window.playCardConfirm(c); return; } 
-        
-        if (c.dataset.isDon === "true") {
-            let attached = false; const targets = document.querySelectorAll('#char-zone-front .card, #leader-zone .card');
-            targets.forEach(t => { if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) { const r = t.getBoundingClientRect(); if (isInside(e, r)) { c.dataset.parentId = t.id; updateBadges(t.id); organizeDon(); saveState(); attached = true; } } });
-            if (attached) return; 
-        }
-        
-        // --- DEV MODE DRAG-TO-BOARD FEATURE ---
-        if (isDevMode && c.dataset.isDon !== "true") {
-            const charR = document.getElementById('char-zone-front').getBoundingClientRect();
-            const stageR = document.getElementById('stage-zone').getBoundingClientRect();
-            if (isInside(e, charR)) {
-                document.getElementById('char-zone-front').appendChild(c);
-                c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0';
-                saveState(); return;
-            }
-            if (isInside(e, stageR)) {
-                document.getElementById('stage-zone').appendChild(c);
-                c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0';
-                saveState(); return;
-            }
-        }
-        
-        c.style.zIndex = 20; const handR = document.getElementById('hand-bar').getBoundingClientRect(); 
-        if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
-    });
-    
-    function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
-    function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
-
-    function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
-    function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0'; c.style.transform = 'none'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
-    
-    function organizeDon() { 
-        const parentCounts = {}; 
-        document.querySelectorAll('.card[data-is-don="true"]').forEach(d => { 
-            if(d.id && d.id.startsWith('opp-')) return;
-            if(d.dataset.parentId) { const p = document.getElementById(d.dataset.parentId); if(p) { parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1; const idx = parentCounts[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); d.style.setProperty('z-index', (10 - idx).toString(), 'important'); d.style.opacity = "1"; } } 
-            else { document.getElementById('don-zone').appendChild(d); d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index'); d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; } 
-        }); 
+    function resolveTrigger(c, db) { 
+        c.dataset.isLife="false"; c.classList.remove('card-back'); updateLifePositions(); 
+        if(db.name === "Unblockable") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); startSelection('trigger_ko', 1, "Select Opponent Blocker (Cost 3 or less) to K.O.", (targets) => { socket.emit('game_action', {type: 'request_ko', target: targets[0].id.replace('opp-', '')}); appendChat("Trigger activated: Requested K.O.!", "#e74c3c"); updateLifePositions(); saveState(); }); } 
+        else if(db.name === "Rob Lucci (Y)" || db.name === "Kaku") { document.getElementById('char-zone-front').appendChild(c); saveState(); appendChat(`Triggered ${db.name}!`, "#f1c40f"); } 
+        else if(db.name === "Maha") { document.getElementById('hand-bar').appendChild(c); window.drawCardAction(); saveState(); appendChat("Maha Trigger: Draw 1", "#f1c40f"); } 
+        else if(db.name === "Lilith") { document.getElementById('hand-bar').appendChild(c); window.openStructuredSearch(4, null, "Lilith", true); } 
+        else if(db.name === "Seraphim") { document.getElementById('hand-bar').appendChild(c); startSelection('seraphim_freeze', 1, "Select 6c or less to Freeze", (cards)=>{ cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Seraphim Trigger Freeze!", "#34dbdb"); }); } 
+        else if(db.name === "Rob Lucci (G)") { document.getElementById('hand-bar').appendChild(c); startSelection('lucci_g_rest_trigger', 1, "Select 3c or less to Rest", (cards)=>{ cards[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); saveState(); appendChat("Lucci Trigger rested a Character!", "#f1c40f"); }); } 
+        else if(db.name === "Hattori") { document.getElementById('char-zone-front').appendChild(c); c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Trigger: Select Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori Trigger: Gave Lucci +2000!", "#2ecc71"); }, () => { appendChat("Hattori trigger placed but buff cancelled.", "#ccc"); }); } 
+        else if(db.name === "Spandam") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); const leaderCard = document.querySelector('#leader-zone .card'); if (leaderCard && CARD_DB[leaderCard.dataset.url]?.name === "Stussy") { window.drawCardAction(); appendChat("Spandam Trigger: Trashed & Drew 1 card.", "#f1c40f"); } else { appendChat("Spandam Trigger: Trashed.", "#f1c40f"); } saveState(); }
+        else if(db.name === "S-Snake") { startSelection('hand_trash', 1, "Trash 1 card to play S-Snake", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); document.getElementById('char-zone-front').appendChild(c); c.dataset.turnPlayed = myTurnCount; saveState(); appendChat("S-Snake played via Trigger!", "#f1c40f"); setTimeout(()=>{if(db.onPlay) db.onPlay(c);}, 100); }, () => { putInHand(c); }); }
+        else if(db.name === "Atlas") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); saveState(); appendChat("Atlas Trigger: Trashed to activate On Play!", "#f1c40f"); if(db.onPlay) db.onPlay(c); }
+        else if(db.name === "Hell's Judgement") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); if(OPP_DON_TOTAL >= 6) { appendChat("Hell's Judgement Trigger: Opponent lost 1 DON!!", "#8e44ad"); socket.emit('game_action', {type: 'apply_status', status: 'minus_don'}); } else { appendChat("Trigger missed (Opponent DON < 6)", "#ccc"); } saveState(); }
+        else if(db.name === "NoroNoro Beam Sword") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); spawnDonLocal(false); appendChat("NoroNoro Trigger: 1 Active DON!! added.", "#8e44ad"); saveState(); }
+        else if(db.name === "Bad Manners Kick Course") { TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); startSelection('kuzan_ko', 1, "Select Opponent to give -3000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 3000; updatePowerDisplay(); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_power', amount: 3000, target: targets[0].id}); appendChat("Trigger: -3000 Power!", "#e74c3c"); saveState(); }); }
+        else { putInHand(c); } 
     }
-    
-    function spawnDonLocal(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); organizeDon(); } }
-    window.spawnDonAction = function() { spawnDonLocal(false); saveState(); }; 
-    window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; saveState(); } };
-    window.drawCardAction = function() { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); saveState(); }; 
-    window.deckToLife = function() { if(DECK_ARR.length) { const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); updateLifePositions(); saveState(); } };
-    
-    function refreshStats() { document.getElementById('deck-count').innerText=DECK_ARR.length; document.getElementById('trash-count').innerText=TRASH_ARR.length; document.getElementById('life-count').innerText=Array.from(document.getElementById('life-zone').children).filter(c=>c.classList.contains('card')).length; document.getElementById('don-deck-count').innerText=DON_DECK_COUNT; }
-    function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
-    function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
-
-    window.addEventListener('beforeunload', (e) => { if (document.getElementById('home-screen').style.display === 'none') { e.preventDefault(); e.returnValue = ''; } });
 </script>
 </body>
 </html>
