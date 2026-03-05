@@ -546,7 +546,6 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const CARD_DB = {
-        // --- BASE SET & EARLIER BATCHES ---
         "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", color: ["Red", "Purple"], traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Char)", type: "Character", color: ["Purple"], cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", color: ["Purple"], cost: 3, traits: ["Water Seven"], hasOnPlay: true, power: 4000, counter: 1000, blocker: true },
@@ -593,13 +592,11 @@
         "https://i.imgur.com/FM0eSD9.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 3, power: 4000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true, hasMain: true },
         "https://i.imgur.com/OkT3RLn.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 9, power: 9000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
         "https://i.imgur.com/eWSBnwt.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Black"], cost: 7, power: 8000, counter: 1000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
-        
-        // FIXED YONJI URL
-        "https://i.imgur.com/eYUoSKo.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
-        
         "https://i.imgur.com/YNA0XRz.png": { name: "Vinsmoke Reiju", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 2000, traits: ["GERMA 66", "Vinsmoke Family"], hasOnPlay: true },
         "https://i.imgur.com/T0HV6Mm.png": { name: "Vinsmoke Judge", type: "Character", color: ["Blue"], cost: 6, power: 8000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], hasMain: true },
         "https://i.imgur.com/cUiteNd.png": { name: "Vinsmoke Ichiji", type: "Character", color: ["Blue"], cost: 7, power: 7000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
+        
+        "https://i.imgur.com/eYUoSKo.png": { name: "Vinsmoke Yonji", type: "Character", color: ["Blue"], cost: 4, power: 5000, counter: 0, traits: ["GERMA 66", "Vinsmoke Family"], blocker: true },
 
         "https://i.imgur.com/wKssAMn.png": { name: "Monkey D. Luffy (Unblockable)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Supernovas", "Straw Hat Crew"], rush: true },
         "https://i.imgur.com/2TJLOO7.png": { name: "Monkey D. Luffy (Don Ramp)", type: "Character", color: ["Red"], cost: 5, power: 6000, counter: 0, traits: ["Four Emperors", "Straw Hat Pirates"], rush: true },
@@ -613,7 +610,6 @@
         "https://i.imgur.com/EDgfwDo.png": { name: "Kuzan", type: "Character", color: ["Black"], cost: 10, power: 10000, counter: 0, traits: ["Former Navy"], hasOnPlay: true },
         "https://i.imgur.com/qr4ZGbm.png": { name: "Vinsmoke Family", type: "Character", color: ["Black"], cost: 4, power: 4000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"], blocker: true },
         
-        // --- NEW BATCH: BLUE/PURPLE/RED MASSIVE EXPANSION & BIG NEWS ---
         "https://i.imgur.com/TCU8vES.png": { name: "Vinsmoke Reiju (5c)", type: "Character", color: ["Blue"], cost: 5, power: 5000, counter: 1000, traits: ["Vinsmoke Family", "GERMA 66"], hasOnPlay: true, hasMain: true },
         "https://i.imgur.com/77AXsjF.png": { name: "Vinsmoke Sanji", type: "Character", color: ["Blue"], cost: 3, power: 3000, counter: 1000, traits: ["Vinsmoke Family", "Straw Hat Crew"], hasOnPlay: true, hasMain: true },
         
@@ -649,92 +645,85 @@
         "https://i.imgur.com/yrPhCy7.png": { name: "Front Page Scoop!", type: "Event", color: ["Red"], cost: 2, traits: ["Big News"], hasMain: true, isCounter: true, counter: 2000 },
         "https://i.imgur.com/TQTkwn6.png": { name: "Shocking Revelation!", type: "Event", color: ["Red"], cost: 7, traits: ["Big News"], hasMain: true, isCounter: true, counter: 5000 }
     };
-    // --- ALIGN TOOL LOGIC ---
-    function openAlignAuth() {
-        showModal("Enter Developer Code:", "prompt", (val) => {
-            if (val === "717") {
-                document.body.classList.add('align-mode-active');
-                document.getElementById('align-tool').style.display = 'block';
-                loadZoneAlign();
-            } else {
-                showModal("Access Denied.", "alert");
+    window.addEventListener('DOMContentLoaded', () => {
+        const newsModal = document.getElementById('news-modal');
+        if (newsModal && document.getElementById('home-screen').style.display !== 'none') {
+            newsModal.style.display = 'flex';
+        }
+    });
+
+    const socket = io(); 
+    const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
+    
+    let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
+    let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
+    let dragged = null, hovered = null, rightClickedCard = null, selectedDon = null;
+    let cardIDCounter = 0, isDragging = false, offX, offY, startX, startY;
+    let SEARCH_ARR = [], selectConfig = null;
+    let combatState = { active: false, attackerId: null, defenderId: null, step: null };
+    let currentCounterTotal = 0, selectedCounterCards = [];
+    
+    let savedDecks = [];
+    let editingDeck = { name: "", leader: null, main: {} }, editingDeckIndex = -1;
+    let activeDeckIndex = -1, activeLobbyDeckUrlArray = [];
+    
+    window.sanjiUsedThisTurn = false; 
+    window.rogerBuffActive = false; 
+    window.rogerBuffExpiresTurn = 0;
+    window.tempSearchCallback = null; 
+    window.locked7Plus = false; 
+    window.stussyUsedThisTurn = false;
+
+    window.sotuTurnState = { 
+        vinsmokeCostDiscount: 0, 
+        judgeGlobalPowerBuff: 0 
+    };
+
+    window.batchState = {
+        luffy6cBuffActive: false, 
+        luffy6cBuffExpires: 0, 
+        extraTurnActive: false, 
+        blackMariaUsed: false, 
+        zoroFrozenDonCount: 0,
+        donReturnedCount: 0, 
+        donReturnedThisTurn: false, 
+        magellanBuffActive: false, 
+        leaderCannotAttack: false, 
+        stussyRedEventBuffs: 0
+    };
+
+    // --- LOCAL STORAGE ANTI-CRASH & SELF-HEALING ROUTINE ---
+    try {
+        const raw = localStorage.getItem('opcg_decks');
+        savedDecks = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(savedDecks)) savedDecks = [];
+        
+        let healed = false;
+        savedDecks.forEach(deck => {
+            // Find and fix the corrupted Yonji link inside the main deck
+            if (deck && deck.main && deck.main["https://i.edu/eYUoSKo.png"]) {
+                deck.main["https://i.imgur.com/eYUoSKo.png"] = deck.main["https://i.edu/eYUoSKo.png"];
+                delete deck.main["https://i.edu/eYUoSKo.png"];
+                healed = true;
+            }
+            // Fix it if it was somehow set as the Leader
+            if (deck && deck.leader === "https://i.edu/eYUoSKo.png") {
+                deck.leader = "https://i.imgur.com/eYUoSKo.png";
+                healed = true;
             }
         });
-    }
-    
-    function closeAlignTool() {
-        document.body.classList.remove('align-mode-active');
-        document.getElementById('align-tool').style.display = 'none';
-        document.querySelectorAll('.zone-is-selected').forEach(z => z.classList.remove('zone-is-selected'));
-    }
-
-    function loadZoneAlign() {
-        const zoneId = document.getElementById('align-zone').value;
-        const targetIds = {
-            'ld': 'leader-zone', 'st': 'stage-zone', 'fz': 'franky-extra-zone',
-            'dk': 'drop-deck', 'tr': 'drop-trash', 'dd': 'don-deck',
-            'lf': 'life-zone', 'ch': 'char-zone-front', 'dz': 'don-zone'
-        };
-        const target = document.getElementById(targetIds[zoneId]);
         
-        document.querySelectorAll('.zone-is-selected').forEach(z => z.classList.remove('zone-is-selected'));
-        if(target) target.classList.add('zone-is-selected');
-
-        const rs = getComputedStyle(root);
-        document.getElementById('slider-t').value = parseFloat(rs.getPropertyValue(`--${zoneId}-t`)) || 0;
-        document.getElementById('slider-l').value = parseFloat(rs.getPropertyValue(`--${zoneId}-l`)) || 0;
-        document.getElementById('slider-w').value = parseFloat(rs.getPropertyValue(`--${zoneId}-w`)) || 0;
-        document.getElementById('slider-h').value = parseFloat(rs.getPropertyValue(`--${zoneId}-h`)) || 0;
-        
-        document.getElementById('val-t').innerText = document.getElementById('slider-t').value + "%";
-        document.getElementById('val-l').innerText = document.getElementById('slider-l').value + "%";
-        document.getElementById('val-w').innerText = document.getElementById('slider-w').value + "%";
-        document.getElementById('val-h').innerText = document.getElementById('slider-h').value + "%";
-
-        const innerCtrl = document.getElementById('inner-card-control');
-        if (['ch', 'dz'].includes(zoneId)) {
-            innerCtrl.style.display = 'flex';
-            document.getElementById('slider-cw').value = parseFloat(rs.getPropertyValue(`--${zoneId}-cw`)) || 11.5;
-            document.getElementById('val-cw').innerText = document.getElementById('slider-cw').value + "%";
-        } else {
-            innerCtrl.style.display = 'none';
+        if (healed) {
+            localStorage.setItem('opcg_decks', JSON.stringify(savedDecks));
+            console.log("Save file healed successfully.");
         }
-        
-        document.getElementById('slider-card-w').value = parseFloat(rs.getPropertyValue('--board-card-w')) || 11.5;
-        document.getElementById('val-card-w').innerText = document.getElementById('slider-card-w').value + "%";
-        document.getElementById('slider-don-w').value = parseFloat(rs.getPropertyValue('--don-card-w')) || 11.5;
-        document.getElementById('val-don-w').innerText = document.getElementById('slider-don-w').value + "%";
+    } catch (e) {
+        console.error("Deck storage severely corrupted. Resetting to prevent fatal crash.", e);
+        savedDecks = [];
+        localStorage.setItem('opcg_decks', "[]");
     }
 
-    function updateAlign(prop, val) {
-        const zoneId = document.getElementById('align-zone').value;
-        root.style.setProperty(`--${zoneId}-${prop}`, val + '%');
-        document.getElementById(`val-${prop}`).innerText = val + "%";
-        savedAlign[`--${zoneId}-${prop}`] = val + '%';
-    }
-
-    function updateGlobalSize(prop, val) {
-        root.style.setProperty(`--${prop}`, val + '%');
-        const displayId = prop === 'board-card-w' ? 'val-card-w' : 'val-don-w';
-        document.getElementById(displayId).innerText = val + "%";
-        savedAlign[`--${prop}`] = val + '%';
-    }
-
-    function saveAlign() {
-        localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
-        socket.emit('game_action', {type: 'global_align_update', alignData: savedAlign});
-        showModal("Alignment Saved & Synced!", "alert");
-    }
-
-    function resetAlign() {
-        showModal("Reset all alignment to default?", "confirm", () => {
-            savedAlign = {};
-            localStorage.removeItem('opcg_align');
-            window.location.reload();
-        });
-    }
-
-    // --- DECK BUILDER LOGIC (ADVANCED SORTING & NULL SAFE) ---
+    // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { 
         const map = {
             "Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", 
@@ -760,7 +749,7 @@
     function updateDeckBuilderPool() { 
         const pool = document.getElementById('db-pool'); 
         pool.innerHTML = ''; 
-        const leaderColors = editingDeck.leader && CARD_DB[editingDeck.leader] ? CARD_DB[editingDeck.leader].color : null; 
+        const leaderColors = (editingDeck.leader && CARD_DB[editingDeck.leader]) ? CARD_DB[editingDeck.leader].color : null; 
         
         let validCards = Object.keys(CARD_DB).filter(url => { 
             const db = CARD_DB[url]; 
@@ -887,15 +876,15 @@
         }); 
     }
 
-    // --- MAIN MENU DECK MANAGEMENT & PLAYMAT ---
     function renderHomeDecks() {
         const list = document.getElementById('home-deck-list'); 
         list.innerHTML = '';
-        if (savedDecks.length === 0) { 
+        if (!savedDecks || savedDecks.length === 0) { 
             list.innerHTML = "<span style='color:#777; font-style:italic;'>No decks saved. Create one!</span>"; 
             return; 
         }
         savedDecks.forEach((d, i) => {
+            if(!d || !d.name) return; // Ignore deeply corrupted objects
             const div = document.createElement('div'); 
             div.style.display = "flex"; 
             div.style.justifyContent = "space-between"; 
@@ -1259,6 +1248,92 @@
         showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); 
     });
 
+    // --- ALIGN TOOL LOGIC ---
+    function openAlignAuth() {
+        showModal("Enter Developer Code:", "prompt", (val) => {
+            if (val === "717") {
+                document.body.classList.add('align-mode-active');
+                document.getElementById('align-tool').style.display = 'block';
+                loadZoneAlign();
+            } else {
+                showModal("Access Denied.", "alert");
+            }
+        });
+    }
+    
+    function closeAlignTool() {
+        document.body.classList.remove('align-mode-active');
+        document.getElementById('align-tool').style.display = 'none';
+        document.querySelectorAll('.zone-is-selected').forEach(z => z.classList.remove('zone-is-selected'));
+    }
+
+    function loadZoneAlign() {
+        const zoneId = document.getElementById('align-zone').value;
+        const targetIds = {
+            'ld': 'leader-zone', 'st': 'stage-zone', 'fz': 'franky-extra-zone',
+            'dk': 'drop-deck', 'tr': 'drop-trash', 'dd': 'don-deck',
+            'lf': 'life-zone', 'ch': 'char-zone-front', 'dz': 'don-zone'
+        };
+        const target = document.getElementById(targetIds[zoneId]);
+        
+        document.querySelectorAll('.zone-is-selected').forEach(z => z.classList.remove('zone-is-selected'));
+        if(target) target.classList.add('zone-is-selected');
+
+        const rs = getComputedStyle(root);
+        document.getElementById('slider-t').value = parseFloat(rs.getPropertyValue(`--${zoneId}-t`)) || 0;
+        document.getElementById('slider-l').value = parseFloat(rs.getPropertyValue(`--${zoneId}-l`)) || 0;
+        document.getElementById('slider-w').value = parseFloat(rs.getPropertyValue(`--${zoneId}-w`)) || 0;
+        document.getElementById('slider-h').value = parseFloat(rs.getPropertyValue(`--${zoneId}-h`)) || 0;
+        
+        document.getElementById('val-t').innerText = document.getElementById('slider-t').value + "%";
+        document.getElementById('val-l').innerText = document.getElementById('slider-l').value + "%";
+        document.getElementById('val-w').innerText = document.getElementById('slider-w').value + "%";
+        document.getElementById('val-h').innerText = document.getElementById('slider-h').value + "%";
+
+        const innerCtrl = document.getElementById('inner-card-control');
+        if (['ch', 'dz'].includes(zoneId)) {
+            innerCtrl.style.display = 'flex';
+            document.getElementById('slider-cw').value = parseFloat(rs.getPropertyValue(`--${zoneId}-cw`)) || 11.5;
+            document.getElementById('val-cw').innerText = document.getElementById('slider-cw').value + "%";
+        } else {
+            innerCtrl.style.display = 'none';
+        }
+        
+        document.getElementById('slider-card-w').value = parseFloat(rs.getPropertyValue('--board-card-w')) || 11.5;
+        document.getElementById('val-card-w').innerText = document.getElementById('slider-card-w').value + "%";
+        document.getElementById('slider-don-w').value = parseFloat(rs.getPropertyValue('--don-card-w')) || 11.5;
+        document.getElementById('val-don-w').innerText = document.getElementById('slider-don-w').value + "%";
+    }
+
+    function updateAlign(prop, val) {
+        const zoneId = document.getElementById('align-zone').value;
+        root.style.setProperty(`--${zoneId}-${prop}`, val + '%');
+        document.getElementById(`val-${prop}`).innerText = val + "%";
+        savedAlign[`--${zoneId}-${prop}`] = val + '%';
+    }
+
+    function updateGlobalSize(prop, val) {
+        root.style.setProperty(`--${prop}`, val + '%');
+        const displayId = prop === 'board-card-w' ? 'val-card-w' : 'val-don-w';
+        document.getElementById(displayId).innerText = val + "%";
+        savedAlign[`--${prop}`] = val + '%';
+    }
+
+    function saveAlign() {
+        localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
+        socket.emit('game_action', {type: 'global_align_update', alignData: savedAlign});
+        showModal("Alignment Saved & Synced!", "alert");
+    }
+
+    function resetAlign() {
+        showModal("Reset all alignment to default?", "confirm", () => {
+            savedAlign = {};
+            localStorage.removeItem('opcg_align');
+            window.location.reload();
+        });
+    }
+
+    // --- UI & UTILITY FUNCTIONS ---
     function showModal(msg, type, onConfirm, onCancel, defaultVal = "") { 
         const over = document.getElementById('custom-modal-overlay'); 
         document.getElementById('custom-modal-msg').innerHTML = msg; 
@@ -1403,7 +1478,7 @@
             if (e.button !== 0 || combatState.step === 'wait_counter') return; 
             if (selectConfig) { handleSelection(c); return; }
             
-            const db = CARD_DB[c.dataset.url];
+            const db = CARD_DB[c.dataset.url] || {}; // ADDED NULL GUARD
 
             if (combatState.step === 'counter') { 
                 if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
@@ -1525,7 +1600,7 @@
             if(selectConfig || c.dataset.isDon === "true" || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
             
             rightClickedCard = c; 
-            const db = CARD_DB[c.dataset.url]; 
+            const db = CARD_DB[c.dataset.url] || {}; // ADDED NULL GUARD
             const menu = document.getElementById('context-menu'); 
             menu.style.display = 'block'; 
             menu.style.left = e.pageX + 'px'; 
@@ -1630,9 +1705,7 @@
         }
         
         document.querySelectorAll('.card').forEach(c => { 
-            const db = CARD_DB[c.dataset.url]; 
-            if(!db) return;
-            
+            const db = CARD_DB[c.dataset.url] || {}; 
             let isOppCard = c.id.startsWith('opp-'); 
             let zone = c.parentElement.id;
             let onField = zone === 'char-zone-front' || zone === 'leader-zone' || zone === 'opp-char-zone-front' || zone === 'opp-leader-zone';
@@ -1745,7 +1818,7 @@
                     vinsmokeCostDebuff = maxVinsmokeTrash;
                 }
                 
-                c.dataset.currentCost = Math.max(0, parseInt(c.dataset.tempCost || db.cost) - kuzanCostDebuff - vinsmokeCostDebuff);
+                c.dataset.currentCost = Math.max(0, parseInt(c.dataset.tempCost || db.cost || 0) - kuzanCostDebuff - vinsmokeCostDebuff);
             } 
             
             if(blockerT) blockerT.style.display = (onField && hasBlocker) ? 'block' : 'none';
@@ -1797,6 +1870,26 @@
         
         refreshStats();
     }
+
+    // --- ANTI-DESYNC & TAB-OUT PROTECTION ---
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !isDevMode && document.getElementById('home-screen').style.display === 'none') {
+            socket.emit('game_action', { type: 'force_sync' });
+        }
+    });
+
+    socket.on('connect', () => {
+        if (!isDevMode && document.getElementById('home-screen').style.display === 'none') {
+            appendChat("Connection restored! Syncing board...", "#2ecc71");
+            socket.emit('game_action', { type: 'force_sync' });
+        }
+    });
+    
+    socket.on('disconnect', () => {
+        if (!isDevMode && document.getElementById('home-screen').style.display === 'none') {
+            appendChat("Warning: Connection unstable (Tab slept/Network dropped)...", "#e74c3c");
+        }
+    });
 
     socket.on('opponent_board_update', (s) => {
         let oppLeaderUrl = ""; 
@@ -2172,7 +2265,7 @@
     }
     
     function handleSelection(card) { 
-        const db = CARD_DB[card.dataset.url];
+        const db = CARD_DB[card.dataset.url] || {};
         
         if(selectConfig.mode === 'don_minus') { 
             if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } 
@@ -2216,14 +2309,14 @@
             if(card.parentElement.id !== 'hand-bar') { showModal("Select a card from hand to trash.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'rest_stage') { 
-            if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone' || card.classList.contains('rested') || !db?.traits?.includes("Invention")) { showModal("Select an active Invention Stage.", "alert"); return; } 
+            if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone' || card.classList.contains('rested') || !(db.traits || []).includes("Invention")) { showModal("Select an active Invention Stage.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'give_rush') { 
-            if(card.parentElement.id !== 'char-zone-front' || !db || (!db.traits.includes("Straw Hat Crew") && !db.traits.includes("Straw Hat Pirates"))) { showModal("Select a Straw Hat Character on your field.", "alert"); return; } 
+            if(card.parentElement.id !== 'char-zone-front' || !db || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { showModal("Select a Straw Hat Character on your field.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'play_free_5') { 
-            if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || (!db.traits.includes("Straw Hat Crew") && !db.traits.includes("Straw Hat Pirates"))) { showModal("Select a cost 5 or lower Straw Hat card from hand.", "alert"); return; } 
-            if(selectConfig.isLuffytaro && (!db.color.includes("Purple") || !db.traits.includes("Straw Hat Crew"))) { showModal("Must be Purple and Straw Hat Crew.", "alert"); return; } 
+            if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { showModal("Select a cost 5 or lower Straw Hat card from hand.", "alert"); return; } 
+            if(selectConfig.isLuffytaro && (!(db.color || []).includes("Purple") || !(db.traits || []).includes("Straw Hat Crew"))) { showModal("Must be Purple and Straw Hat Crew.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'mihawk_9c_freeze') { 
             if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 9) { showModal("Select Opponent Character cost 9 or less", "alert"); return; } 
@@ -2241,7 +2334,7 @@
             if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select an opponent Character or Leader.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'sotu_trash_low_cost') { 
-            const currentCost = parseInt(card.dataset.tempCost || db?.cost || 0); 
+            const currentCost = parseInt(card.dataset.tempCost || db.cost || 0); 
             if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select an opponent Character.", "alert"); return; } 
             if(currentCost > selectConfig.maxCostTarget) { showModal(`Target cost must be ${selectConfig.maxCostTarget} or less (Currently ${currentCost}).`, "alert"); return; } 
         }
@@ -2260,16 +2353,16 @@
             if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'play_free_jailer') { 
-            if(card.parentElement.id !== 'hand-bar' || !db || (!db.traits.includes("Jailer Beast") && !db.traits.includes("Jailer Beasts"))) { showModal("Select a Jailer Beast from hand.", "alert"); return; } 
+            if(card.parentElement.id !== 'hand-bar' || !db || (!(db.traits || []).includes("Jailer Beast") && !(db.traits || []).includes("Jailer Beasts"))) { showModal("Select a Jailer Beast from hand.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'katakuri_active') { 
-            if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !db.traits.includes("Big Mom Pirates") || db.cost < 3) { showModal("Select your Big Mom Pirates Character (Cost 3+)", "alert"); return; } 
+            if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !(db.traits || []).includes("Big Mom Pirates") || db.cost < 3) { showModal("Select your Big Mom Pirates Character (Cost 3+)", "alert"); return; } 
         }
         else if(selectConfig.mode === 'divine_depart_minus') { 
             if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'play_free_bignews') { 
-            if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 7 || !db.traits.includes("Big News") || db.name === "News Lackey") { showModal("Select Big News (Cost 7 or less, not Lackey) from hand.", "alert"); return; } 
+            if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 7 || !(db.traits || []).includes("Big News") || db.name === "News Lackey") { showModal("Select Big News (Cost 7 or less, not Lackey) from hand.", "alert"); return; } 
         }
         else if(selectConfig.mode === 'play_free_10c') { 
             if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 10 || db.type !== 'Character') { showModal("Select Character Cost 10 or less from hand.", "alert"); return; } 
