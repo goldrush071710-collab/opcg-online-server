@@ -44,7 +44,6 @@
         .glass-panel {
             background: rgba(20, 20, 25, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 100; 
@@ -155,14 +154,13 @@
         #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;}
         #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
 
-        /* THE MASSIVE NEW CENTER HAND AREA */
         #hand-container {
             width: 100%; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: flex-end; 
-            flex: 1; /* Takes up all remaining screen space perfectly */
+            flex: 1; 
             min-height: 25vh;
             margin-top: 10px;
         }
@@ -549,6 +547,7 @@
 
 <div id="right-col" class="glass-panel">
     <div id="right-col-inspector"></div>
+    
     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
         <button id="btn-end-turn" onclick="window.endTurn()">END TURN</button>
         <button id="btn-concede" onclick="window.concedeGame()">CONCEDE MATCH</button>
@@ -559,15 +558,13 @@
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    // CRITICAL: Connects JS to the CSS variables so sliders actually move things!
-    const root = document.documentElement; 
-
+    // --- STABLE DATABASE ---
     const CARD_DB = {
         "https://i.imgur.com/TwmysAX.png": { name: "Franky", type: "Leader", color: ["Red", "Purple"], traits: ["Straw Hat Pirates", "Invention"], hasMain: true, life: 4, power: 5000 },
         "https://i.imgur.com/2lEVHJP.png": { name: "Franky (Char)", type: "Character", color: ["Purple"], cost: 1, traits: ["Straw Hat Pirates"], hasOnPlay: true, power: 0, counter: 2000 },
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", color: ["Purple"], cost: 3, traits: ["Water Seven"], hasOnPlay: true, power: 4000, counter: 1000, blocker: true },
         "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates"], power: 5000, counter: 2000 },
-        "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", color: ["Red"], cost: 11, traits: ["Straw Hat Pirates", "Invention"], power: 13000, counter: 0, blocker: true, banish: true },
+        "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", color: ["Red"], cost: 11, traits: ["Straw Hat Pirates", "Invention"], power: 13000, counter: 0, blocker: true, banish: true, hasMain: true },
         "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 2000, counter: 1000 },
         "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Crew"], power: 4000, counter: 1000 },
         "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", color: ["Purple"], cost: 5, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 7000, counter: 0 },
@@ -746,7 +743,7 @@
     }
 
     // --- ALIGN TOOL LOGIC ---
-    window.openAlignAuth = function() {
+    function openAlignAuth() {
         showModal("Enter Developer Code:", "prompt", (val) => {
             if (val === "717") {
                 document.getElementById('home-screen').style.display = 'none';
@@ -762,18 +759,18 @@
                 const lf = createCard('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg', 0, 0, {zone: 'life-zone'});
                 lf.style.position = 'absolute';
                 
-                window.loadZoneAlign();
+                loadZoneAlign();
             } else {
                 showModal("Access Denied.", "alert");
             }
         });
     }
     
-    window.closeAlignTool = function() {
+    function closeAlignTool() {
         window.location.reload(); 
     }
 
-    window.loadZoneAlign = function() {
+    function loadZoneAlign() {
         const zoneId = document.getElementById('align-zone').value;
         const targetIds = {
             'ld': 'leader-zone', 'st': 'stage-zone', 'fz': 'franky-extra-zone',
@@ -811,27 +808,27 @@
         document.getElementById('val-don-w').innerText = document.getElementById('slider-don-w').value + "%";
     }
 
-    window.updateAlign = function(prop, val) {
+    function updateAlign(prop, val) {
         const zoneId = document.getElementById('align-zone').value;
         root.style.setProperty(`--${zoneId}-${prop}`, val + '%');
         document.getElementById(`val-${prop}`).innerText = val + "%";
         savedAlign[`--${zoneId}-${prop}`] = val + '%';
     }
 
-    window.updateGlobalSize = function(prop, val) {
+    function updateGlobalSize(prop, val) {
         root.style.setProperty(`--${prop}`, val + '%');
         const displayId = prop === 'board-card-w' ? 'val-card-w' : 'val-don-w';
         document.getElementById(displayId).innerText = val + "%";
         savedAlign[`--${prop}`] = val + '%';
     }
 
-    window.saveAlign = function() {
+    function saveAlign() {
         localStorage.setItem('opcg_align', JSON.stringify(savedAlign));
         socket.emit('game_action', {type: 'global_align_update', alignData: savedAlign});
         showModal("Alignment Saved & Synced!", "alert");
     }
 
-    window.resetAlign = function() {
+    function resetAlign() {
         showModal("Reset all alignment to default?", "confirm", () => {
             savedAlign = {};
             localStorage.removeItem('opcg_align');
@@ -848,15 +845,15 @@
         return map[c] || "#fff"; 
     }
     
-    window.openDeckBuilder = function() { 
+    function openDeckBuilder() { 
         document.getElementById('home-screen').style.display = 'none'; 
         document.getElementById('deck-builder-screen').style.display = 'flex'; 
         editingDeck = { name: "New Deck", leader: null, main: {} }; 
         document.getElementById('db-name').value = ""; 
-        window.clearLeader(); 
+        clearLeader(); 
     }
     
-    window.clearLeader = function() { 
+    function clearLeader() { 
         editingDeck.leader = null; 
         renderDeckList(); 
         updateDeckBuilderPool(); 
@@ -961,7 +958,7 @@
         }); 
     }
     
-    window.saveDeck = function() { 
+    function saveDeck() { 
         editingDeck.name = document.getElementById('db-name').value.trim() || "Untitled Deck"; 
         let total = Object.values(editingDeck.main).reduce((a, b) => a + b, 0); 
         if(!editingDeck.leader || total !== 50) { 
@@ -975,16 +972,16 @@
         } 
         localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); 
         renderHomeDecks(); 
-        showModal("Deck Saved!", "alert", () => window.closeDeckBuilder()); 
+        showModal("Deck Saved!", "alert", () => closeDeckBuilder()); 
     }
     
-    window.closeDeckBuilder = function() { 
+    function closeDeckBuilder() { 
         document.getElementById('deck-builder-screen').style.display = 'none'; 
         document.getElementById('home-screen').style.display = 'flex'; 
         renderHomeDecks(); 
     }
     
-    window.importDeck = function() { 
+    function importDeck() { 
         showModal("Paste deck string:", "prompt", (val) => { 
             try { 
                 editingDeck = JSON.parse(atob(val)); 
@@ -1189,7 +1186,7 @@
         }
     }
 
-    window.startDevMode = function() { 
+    function startDevMode() { 
         if(!prepActiveDeck()) { 
             showModal("Select an active deck first!", "alert"); 
             return; 
@@ -1222,11 +1219,11 @@
         createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
         
         const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
-        for(let i=0; i<leaderLife; i++) window.deckToLife(); 
-        for(let i=0; i<5; i++) window.drawCardAction(); 
+        for(let i=0; i<leaderLife; i++) deckToLife(); 
+        for(let i=0; i<5; i++) drawCardAction(); 
     }
 
-    window.createLobby = function() { 
+    function createLobby() { 
         if(!prepActiveDeck()) { 
             showModal("Select an active deck first!", "alert"); 
             return; 
@@ -1240,7 +1237,7 @@
         }); 
     }
     
-    window.showJoinLobby = function() { 
+    function showJoinLobby() { 
         if(!prepActiveDeck()) { 
             showModal("Select an active deck first!", "alert"); 
             return; 
@@ -1249,7 +1246,7 @@
         document.getElementById('menu-join').style.display = 'block'; 
     }
     
-    window.joinLobby = function() { 
+    function joinLobby() { 
         socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { 
             if(res.success) { 
                 document.getElementById('menu-join').style.display = 'none'; 
@@ -1263,12 +1260,12 @@
         }); 
     }
     
-    window.backToMain = function() { 
+    function backToMain() { 
         document.getElementById('menu-join').style.display = 'none'; 
         document.getElementById('menu-main').style.display = 'block'; 
     }
     
-    window.randomMatch = function() { 
+    function randomMatch() { 
         if(!prepActiveDeck()) { 
             showModal("Select an active deck first!", "alert"); 
             return; 
@@ -1288,7 +1285,7 @@
         }); 
     }
     
-    window.copyCode = function() { 
+    function copyCode() { 
         navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=> {
             showModal("Code copied!", "alert");
         }); 
@@ -1365,27 +1362,27 @@
         updateTurnUI(); 
         if(isFirst) { 
             OPP_DON_TOTAL = 0; 
-            window.spawnDonLocal(); 
+            spawnDonLocal(); 
         } 
         showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); 
     });
 
     // --- GAME ENGINE & UTILITIES ---
-    window.showModal = function(msg, type, onConfirm, onCancel, defaultVal = "") { 
+    function showModal(msg, type, onConfirm, onCancel, defaultVal = "") { 
         const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerHTML = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2); 
         if(type === 'alert') { inp.style.display = 'none'; newB2.style.display = 'none'; newB1.innerText = "OK"; newB1.style.background = "#3498db"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; } else if(type === 'confirm') { inp.style.display = 'none'; newB2.style.display = 'block'; newB1.innerText = "YES"; newB1.style.background = "#2ecc71"; newB2.innerText = "NO"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } else if(type === 'prompt') { inp.style.display = 'block'; newB2.style.display = 'block'; inp.value = defaultVal; newB1.innerText = "SUBMIT"; newB1.style.background = "#2ecc71"; newB2.innerText = "CANCEL"; newB2.style.background = "#e74c3c"; newB1.onclick = () => { over.style.display = 'none'; if(onConfirm) onConfirm(inp.value); }; newB2.onclick = () => { over.style.display = 'none'; if(onCancel) onCancel(); }; } 
     }
     
-    window.sendChat = function(e) { e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg) return; window.appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = ''; } 
-    socket.on('chat_msg', (msg) => { window.appendChat("Opp: " + msg, "#e74c3c"); }); 
-    window.appendChat = function(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
+    function sendChat(e) { e.preventDefault(); const inp = document.getElementById('chat-input'); const msg = inp.value.trim(); if(!msg) return; appendChat("You: " + msg, "#2ecc71"); socket.emit('chat_msg', msg); inp.value = ''; } 
+    socket.on('chat_msg', (msg) => { appendChat("Opp: " + msg, "#e74c3c"); }); 
+    function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
     
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
     function clearCombatState() { document.getElementById('combat-arrow').style.display = 'none'; document.getElementById('combat-arena').style.display = 'none'; document.body.classList.remove('combat-target-mode', 'bon-clay-mode', 'blocker-target-mode', 'counter-mode'); document.getElementById('counter-controls').style.display = 'none'; combatState = { active: false, attackerId: null, defenderId: null, step: null }; document.querySelectorAll('.card').forEach(c => { c.style.outline = ""; c.classList.remove('valid-blocker'); }); }
     
-    window.concedeGame = function() { window.showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); window.showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
+    function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
 
-    window.createCard = function(url, x, y, opts = {}) { 
+    function createCard(url, x, y, opts = {}) { 
         const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; 
         c.innerHTML = `<div class="don-badge">0</div><div class="power-badge hidden">+0</div><div class="keyword-tags"><div class="kw-tag blocker-tag">BLOCKER</div><div class="kw-tag rush-tag">RUSH</div><div class="kw-tag banish-tag">BANISH</div><div class="kw-tag double-attack-tag">DOUBLE ATK</div></div>`; 
         if (opts.isBack) c.classList.add('card-back'); 
@@ -1406,30 +1403,30 @@
                 if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
                     if (db.name === "Divine Departure") {
                         if(selectedCounterCards.includes(c)) return;
-                        startSelection('hand_trash', 1, "Trash 1 card to give +3000 Power", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 3000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); window.appendChat("Divine Departure provided +3000 Defense!", "#3498db"); }); return;
+                        startSelection('hand_trash', 1, "Trash 1 card to give +3000 Power", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 3000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Divine Departure provided +3000 Defense!", "#3498db"); }); return;
                     }
                     if (db.name === "NoroNoro Beam Sword") {
                         if(selectedCounterCards.includes(c)) return;
                         const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
-                        if(activeDons.length < 2) { window.showModal("Need 2 active DON!!", "alert"); return; }
+                        if(activeDons.length < 2) { showModal("Need 2 active DON!!", "alert"); return; }
                         for(let i=0; i<2; i++) activeDons[i].classList.add('rested');
-                        startSelection('don_minus', 1, "Return 1 DON!! to Deck", (dons) => { dons[0].remove(); DON_DECK_COUNT++; window.organizeDon(); startSelection('lucci_g_rest', 1, "Rest 1 Opponent Character", (targets) => { targets[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: targets[0].id}); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); window.appendChat("NoroNoro Beam Sword gave +2000 and rested an enemy!", "#8e44ad"); saveState(); }); }); return;
+                        startSelection('don_minus', 1, "Return 1 DON!! to Deck", (dons) => { dons[0].remove(); DON_DECK_COUNT++; organizeDon(); startSelection('lucci_g_rest', 1, "Rest 1 Opponent Character", (targets) => { targets[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: targets[0].id}); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("NoroNoro Beam Sword gave +2000 and rested an enemy!", "#8e44ad"); saveState(); }); }); return;
                     }
                     if (db.name === "Bad Manners Kick Course") {
                         if(selectedCounterCards.includes(c)) return;
-                        startSelection('hand_trash', 1, "Trash 1 card to give +3000 Power", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 3000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); window.appendChat("Bad Manners Kick Course provided +3000 Defense!", "#e74c3c"); }); return;
+                        startSelection('hand_trash', 1, "Trash 1 card to give +3000 Power", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); TRASH_ARR.push(c.dataset.url); c.remove(); currentCounterTotal += 3000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Bad Manners Kick Course provided +3000 Defense!", "#e74c3c"); }); return;
                     }
                     let cv = db.counter || 0; if (db.isCounter && !db.counter) { if (db.name === "Gum Gum Giant") cv = 4000; else cv = 2000; }
                     if (selectedCounterCards.includes(c)) { 
                         selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= cv; 
                         if(db.type === 'Event') { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); for(let i=0; i<db.cost; i++) if(restedDons[i]) restedDons[i].classList.remove('rested'); }
                     } else { 
-                        if(db.type === 'Event') { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); if(activeDons.length < db.cost) { window.showModal(`Need ${db.cost} active DON!!`, "alert"); return; } for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); }
+                        if(db.type === 'Event') { const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); if(activeDons.length < db.cost) { showModal(`Need ${db.cost} active DON!!`, "alert"); return; } for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested'); }
                         selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += cv; 
                     } 
                     updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); 
                 } else if (c.parentElement.id === 'char-zone-front' && db?.name === "Dracule Mihawk (9c)" && c.dataset.usedDefend !== "true") {
-                    window.showModal("Trash 1 card from hand to give +2000 defense?", "confirm", () => { startSelection('hand_trash', 1, "Select 1 to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); c.dataset.usedDefend = "true"; currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); window.appendChat("Dracule Mihawk (9c) provided +2000 defense!", "#3498db"); }, () => askCounterPhase()); });
+                    showModal("Trash 1 card from hand to give +2000 defense?", "confirm", () => { startSelection('hand_trash', 1, "Select 1 to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); c.dataset.usedDefend = "true"; currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Dracule Mihawk (9c) provided +2000 defense!", "#3498db"); }, () => askCounterPhase()); });
                 } return; 
             }
             if (c.dataset.isDon === "true" && c.dataset.parentId) { e.stopPropagation(); return; }
@@ -1456,7 +1453,7 @@
                     if (window.batchState.leaderCannotAttack && c.parentElement.id === 'leader-zone') canAttack = false;
                 } 
             }
-            if(canAttack) h += `<div onclick="window.simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
+            if(canAttack) h += `<div onclick="simulateAttack()" style="background:#c0392b; color:#fff">Attack</div>`; 
             else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested')) {
                 if(c.classList.contains('frozen')) h += `<div style="background:#34dbdb; color:#000; font-weight:bold; cursor:not-allowed;">FROZEN (Cannot Act)</div>`;
                 else h += `<div style="background:#555; color:#999; cursor:not-allowed;">Attack Unavailable</div>`;
@@ -1464,47 +1461,47 @@
 
             if (!c.classList.contains('frozen')) {
                 const customMains = ["Franky", "Hattori", "Stussy", "Vinsmoke Judge", "Vinsmoke Ichiji", "Vinsmoke Yonji", "Monkey D. Luffy (Extra Turn)", "Black Maria", "Roronoa Zoro", "Vinsmoke Reiju (5c)", "Vinsmoke Sanji", "Impel Down", "Domino", "Magellan (10c)", "We News", "Morgans (5c)", "Morgans", "Rob Lucci (Y)", "Kaku", "Magellan"];
-                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && !customMains.includes(db?.name)) { h += `<div onclick="window.activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
-                if (db?.type === "Stage" && (db?.traits||[]).includes("Invention") && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="window.stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
+                if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && !customMains.includes(db?.name)) { h += `<div onclick="activateMain()" style="background:#f39c12; color:#000">Activate Main</div>`; } 
+                if (db?.type === "Stage" && (db?.traits||[]).includes("Invention") && !['hand-bar', 'life-zone'].includes(c.parentElement.id)) h += `<div onclick="stageOncePerGame()" style="background:#8e44ad; color:#fff">Once Per Game (Gen. Franky)</div>`;
                 
                 // LEADER ABILITIES
                 if (db?.type === "Leader" && (isMyTurn || isDevMode)) {
-                    if (db.name === "Franky") h += `<div onclick="window.frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`;
-                    if (db.name === "Stussy" && !window.stussyUsedThisTurn) h += `<div onclick="window.stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
-                    if (db.name === "Morgans") h += `<div onclick="window.morgansLeaderMain()" style="background:#f39c12; color:#000">Main: Look at top 3 for Big News</div>`;
+                    if (db.name === "Franky") h += `<div onclick="frankyMainEffect()" style="background:#f39c12; color:#000">Activate Main (Return 2 DON!!)</div>`;
+                    if (db.name === "Stussy" && !window.stussyUsedThisTurn) h += `<div onclick="stussyLeaderFlip()" style="background:#f39c12; color:#000">Activate: Flip Life & Freeze</div>`;
+                    if (db.name === "Morgans") h += `<div onclick="morgansLeaderMain()" style="background:#f39c12; color:#000">Main: Look at top 3 for Big News</div>`;
                     if (db.name === "Magellan") {
-                        h += `<div onclick="window.magellanLeaderMain()" style="background:#f39c12; color:#000">Main: DON-1 -> Play ≤4c Impel from Trash</div>`;
-                        h += `<div onclick="window.magellanLeaderDefensive()" style="background:#34dbdb; color:#000">Defensive: DON-1 -> +1000 & Draw 1</div>`;
+                        h += `<div onclick="magellanLeaderMain()" style="background:#f39c12; color:#000">Main: DON-1 -> Play ≤4c Impel from Trash</div>`;
+                        h += `<div onclick="magellanLeaderDefensive()" style="background:#34dbdb; color:#000">Defensive: DON-1 -> +1000 & Draw 1</div>`;
                     }
-                    if (db.name === "Vinsmoke Judge") h += `<div onclick="window.judgeLeaderMain()" style="background:#f39c12; color:#000">Main: Trash 1 GERMA -> Draw 1 & Opp -3 Cost</div>`;
+                    if (db.name === "Vinsmoke Judge") h += `<div onclick="judgeLeaderMain()" style="background:#f39c12; color:#000">Main: Trash 1 GERMA -> Draw 1 & Opp -3 Cost</div>`;
                 }
 
-                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
-                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="window.kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
-                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
-                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
-                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
-                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
-                if (db?.name === "Monkey D. Luffy (Extra Turn)" && db.cost === 10 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.luffy10cMain()" style="background:#f39c12; color:#000">Main: Rest 1 DON!! -> Add 1 Active DON!!</div>`;
-                if (db?.name === "Black Maria" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.blackMariaMain()" style="background:#f39c12; color:#000">Main: Add up to 5 Rested DON!!</div>`;
-                if (db?.name === "Roronoa Zoro" && db.cost === 1 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.zoro1cMain()" style="background:#f39c12; color:#000">Main: Add 1 Rested DON!! (Freeze 1 next turn)</div>`;
-                if (db?.name === "Vinsmoke Reiju (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.reiju5cMain()" style="background:#f39c12; color:#000">Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost</div>`;
-                if (db?.name === "Vinsmoke Sanji" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.sanji3cMain()" style="background:#f39c12; color:#000">Main: Attach 1 Rested DON!!</div>`;
-                if (db?.name === "Impel Down" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.impelStageMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> Search Top 3</div>`;
-                if (db?.name === "Domino" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.dominoMain()" style="background:#f39c12; color:#000">Main: If DON returned this turn, Draw 1 Trash 1</div>`;
-                if (db?.name === "Magellan (10c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.magellan10cMain()" style="background:#f39c12; color:#000">Main: Rest & Give Jailer Beasts +1000 per returned DON</div>`;
-                if (db?.name === "We News" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.weNewsMain()" style="background:#f39c12; color:#000">Main: Rest Stage & Trash 2 -> Play Lackey</div>`;
-                if ((db?.name === "Morgans (5c)" || db?.name === "Morgans") && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="window.morgansCharMain()" style="background:#f39c12; color:#000">Main: Rest & Search Top 6 for Red 5c+</div>`;
+                if (db?.name === "Rob Lucci (Y)" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="lucciYellowMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Restand EOT</div>`;
+                if (db?.name === "Kaku" && c.parentElement.id === 'char-zone-front' && (isMyTurn || isDevMode)) h += `<div onclick="kakuMain()" style="background:#f39c12; color:#000">Main: Flip Down -> Double Attack</div>`;
+                if (db?.name === "Hattori" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="hattoriMain()" style="background:#f39c12; color:#000">Activate Main: Buff Lucci</div>`;
+                if (db?.name === "Vinsmoke Judge" && db.cost === 6 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="judgeMainEffect()" style="background:#f39c12; color:#000">Main: Trash Hand -> +1000 GERMA</div>`;
+                if (db?.name === "Vinsmoke Ichiji" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="ichijiMainRamp()" style="background:#f39c12; color:#000">Main: Rest -> Vinsmoke in Hand -2 Cost</div>`;
+                if (db?.name === "Vinsmoke Yonji" && db.cost === 9 && c.parentElement.id === 'char-zone-front' && c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="yonjiUnrest()" style="background:#f39c12; color:#000">Main: Unrest & Gain RUSH</div>`;
+                if (db?.name === "Monkey D. Luffy (Extra Turn)" && db.cost === 10 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="luffy10cMain()" style="background:#f39c12; color:#000">Main: Rest 1 DON!! -> Add 1 Active DON!!</div>`;
+                if (db?.name === "Black Maria" && db.cost === 3 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="blackMariaMain()" style="background:#f39c12; color:#000">Main: Add up to 5 Rested DON!!</div>`;
+                if (db?.name === "Roronoa Zoro" && db.cost === 1 && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="zoro1cMain()" style="background:#f39c12; color:#000">Main: Add 1 Rested DON!! (Freeze 1 next turn)</div>`;
+                if (db?.name === "Vinsmoke Reiju (5c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="reiju5cMain()" style="background:#f39c12; color:#000">Main: Draw 2 Trash 3 -> Gain Blocker & +5 Cost</div>`;
+                if (db?.name === "Vinsmoke Sanji" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="sanji3cMain()" style="background:#f39c12; color:#000">Main: Attach 1 Rested DON!!</div>`;
+                if (db?.name === "Impel Down" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="impelStageMain()" style="background:#f39c12; color:#000">Main: Rest & Trash 1 -> Search Top 3</div>`;
+                if (db?.name === "Domino" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="dominoMain()" style="background:#f39c12; color:#000">Main: If DON returned this turn, Draw 1 Trash 1</div>`;
+                if (db?.name === "Magellan (10c)" && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="magellan10cMain()" style="background:#f39c12; color:#000">Main: Rest & Give Jailer Beasts +1000 per returned DON</div>`;
+                if (db?.name === "We News" && c.parentElement.id === 'stage-zone' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="weNewsMain()" style="background:#f39c12; color:#000">Main: Rest Stage & Trash 2 -> Play Lackey</div>`;
+                if ((db?.name === "Morgans (5c)" || db?.name === "Morgans") && c.parentElement.id === 'char-zone-front' && !c.classList.contains('rested') && (isMyTurn || isDevMode)) h += `<div onclick="morgansCharMain()" style="background:#f39c12; color:#000">Main: Rest & Search Top 6 for Red 5c+</div>`;
             }
 
-            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="window.bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
-            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="window.moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
-            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone' || c.parentElement.id === 'opp-franky-extra-zone')) { h += `<div onclick="window.requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
+            if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') h += `<div onclick="bottomGeneralFranky()" style="background:#8e44ad; color:#fff">Bottom Deck & Draw 1</div>`; 
+            if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') h += `<div onclick="moveToTrash(rightClickedCard)" style="color:#e67e22">Trash</div>`; 
+            if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone' || c.parentElement.id === 'opp-franky-extra-zone')) { h += `<div onclick="requestKO('${c.id}')" style="background:#8e44ad; color:#fff">Request K.O. / Trash</div>`; }
             menu.innerHTML = h; 
         }; 
     }
 
-    window.playCardConfirm = function(c) { 
+    function playCardConfirm(c) { 
         if(!isDevMode && !isMyTurn) return; 
         const db = CARD_DB[c.dataset.url]; 
         if(!db) return;
@@ -1525,28 +1522,28 @@
             if(has10k) cost = Math.max(0, cost - 4);
         }
 
-        if (window.locked7Plus && cost >= 7 && db.type === 'Character') { window.showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } 
-        window.showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; window.playCard(false, cost); }); 
+        if (window.locked7Plus && cost >= 7 && db.type === 'Character') { showModal("Cannot play Characters with cost 7 or more this turn!", "alert"); return; } 
+        showModal(`Play ${db.name} for ${cost} DON!!?`, "confirm", () => { rightClickedCard = c; playCard(false, cost); }); 
     }
     
-    window.playCard = function(isFree = false, customCost = null) { 
-        const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; window.hideMenu(); let cost = customCost !== null ? customCost : db.cost; 
+    function playCard(isFree = false, customCost = null) { 
+        const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; hideMenu(); let cost = customCost !== null ? customCost : db.cost; 
         if (db.name === "Divine Departure" && !isFree) {
             const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
-            if(activeDons.length < 5) { window.showModal("Need 5 active DON!! to use Main.", "alert"); return; }
-            window.showModal("Rest 5 DON!! to use Main effect?", "confirm", () => {
+            if(activeDons.length < 5) { showModal("Need 5 active DON!! to use Main.", "alert"); return; }
+            showModal("Rest 5 DON!! to use Main effect?", "confirm", () => {
                 for(let i=0; i<5; i++) activeDons[i].classList.add('rested');
                 TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove();
                 if(document.querySelectorAll('[data-parent-id]').length > 0) {
-                    startSelection('divine_depart_minus', 1, "Give -8000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 8000; window.updatePowerDisplay(); saveState(); window.appendChat("Divine Departure gave -8000 power!", "#8e44ad"); });
-                } else { window.appendChat("No attached DON. Effect fails.", "#ccc"); }
+                    startSelection('divine_depart_minus', 1, "Give -8000 Power", (targets) => { targets[0].dataset.tempPower = parseInt(targets[0].dataset.tempPower||0) - 8000; updatePowerDisplay(); saveState(); appendChat("Divine Departure gave -8000 power!", "#8e44ad"); });
+                } else { appendChat("No attached DON. Effect fails.", "#ccc"); }
             });
             return;
         }
 
         if(!isFree) { 
             const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId); 
-            if(activeDons.length < cost) { window.showModal(`Need ${cost} active DON!!`, "alert"); return; } 
+            if(activeDons.length < cost) { showModal(`Need ${cost} active DON!!`, "alert"); return; } 
             for(let i=0; i<cost; i++) activeDons[i].classList.add('rested'); 
         } 
         
@@ -1554,30 +1551,68 @@
         
         if(db.type === 'Event') { 
             TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); 
-            if(db.name === "Unblockable") { window.showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } 
+            if(db.name === "Unblockable") { showModal("Select a Character to make Unblockable.", "alert", () => { document.body.classList.add('combat-target-mode'); combatState = {active: true, step: 'unblockable_target'}; }); } 
             if((db.color||[]).includes("Red")) {
                 const hasStussy = Array.from(document.querySelectorAll('#char-zone-front .card')).some(fc => CARD_DB[fc.dataset.url]?.name === "Stussy");
-                if(hasStussy) { window.batchState.stussyRedEventBuffs++; window.updatePowerDisplay(); window.appendChat("Stussy gained +2000 from Red Event!", "#e74c3c"); }
+                if(hasStussy) { window.batchState.stussyRedEventBuffs++; updatePowerDisplay(); appendChat("Stussy gained +2000 from Red Event!", "#e74c3c"); }
             }
-            if(db.name === "Front Page Scoop!") { window.openStructuredSearch(5, ["Big News"], null, false, false, () => { window.appendChat("Front Page Scoop searched!", "#e74c3c"); }); }
+            if(db.name === "Front Page Scoop!") { openStructuredSearch(5, ["Big News"], null, false, false, () => { appendChat("Front Page Scoop searched!", "#e74c3c"); }); }
             if(db.name === "Shocking Revelation!") { 
                 document.querySelectorAll('#char-zone-front .card').forEach(fc => {
                     const fcdb = CARD_DB[fc.dataset.url];
                     if((fcdb?.traits||[]).includes("Big News")) { fc.dataset.tempPower = parseInt(fc.dataset.tempPower||0) + 2000; fc.dataset.hasRush = "true"; fc.querySelector('.rush-tag').style.display = 'block'; }
-                }); window.updatePowerDisplay(); window.appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c");
+                }); updatePowerDisplay(); appendChat("Shocking Revelation: Big News characters get +2000 and Rush!", "#e74c3c");
             }
-            if(db.name === "Unprecedented Bounties") { startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { rightClickedCard = cards[0]; window.playCard(true); }); }
+            if(db.name === "Unprecedented Bounties") { startSelection('play_free_10c', 1, "Play a 10c or less Character", (cards) => { rightClickedCard = cards[0]; playCard(true); }); }
         } else if(db.type === 'Stage') { 
             const bz = document.getElementById('stage-zone'); const fz = document.getElementById('franky-extra-zone'); const leaderCard = document.querySelector('#leader-zone .card'); const leaderName = leaderCard ? CARD_DB[leaderCard.dataset.url]?.name : "";
-            if (bz.children.length === 0) { bz.appendChild(c); } else if (leaderName === "Franky" && fz.children.length < 4) { fz.appendChild(c); } else { const maxStages = (leaderName === "Franky") ? 5 : 1; window.showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => { startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { window.trashCard(cards[0]); if(bz.children.length === 0) bz.appendChild(c); else fz.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; }
+            if (bz.children.length === 0) { bz.appendChild(c); } else if (leaderName === "Franky" && fz.children.length < 4) { fz.appendChild(c); } else { const maxStages = (leaderName === "Franky") ? 5 : 1; showModal(`Stage area full! (Max ${maxStages}). Trash a Stage to play this?`, "confirm", () => { startSelection('trash_for_play_stage', 1, "Select a Stage to Trash", (cards) => { trashCard(cards[0]); if(bz.children.length === 0) bz.appendChild(c); else fz.appendChild(c); saveState(); setTimeout(() => triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; }
         } else { 
             const charZ = document.getElementById('char-zone-front'); 
-            if(charZ.children.length >= 5) { window.showModal("Front line is full! Trash a Character to play this.", "confirm", () => { startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { window.trashCard(cards[0]); charZ.appendChild(c); saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; } else { charZ.appendChild(c); }
+            if(charZ.children.length >= 5) { showModal("Front line is full! Trash a Character to play this.", "confirm", () => { startSelection('trash_for_play_char', 1, "Select a Character to Trash", (cards) => { trashCard(cards[0]); charZ.appendChild(c); saveState(); setTimeout(() => triggerOnPlay(c, db), 100); }, () => { document.getElementById('hand-bar').appendChild(c); }); }); return; } else { charZ.appendChild(c); }
         } 
-        saveState(); setTimeout(() => window.triggerOnPlay(c, db), 100); 
+        saveState(); setTimeout(() => triggerOnPlay(c, db), 100); 
     }
 
-    window.updatePowerDisplay = function() {
+    function triggerOnPlay(c, db) {
+        if (db.name === "Vinsmoke Niji" && db.cost === 5) { const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : ""; if (leaderName === "Vinsmoke Judge") { showModal("Activate Niji's On Play effect?", "confirm", () => { startSelection('sotu_cost_minus', 1, "Target opponent for -3 Cost", (targets1) => { targets1[0].dataset.tempCost = parseInt(targets1[0].dataset.tempCost || CARD_DB[targets1[0].dataset.url]?.cost || 0) - 3; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets1[0].id}); selectConfig = { maxCostTarget: 1 }; startSelection('sotu_trash_low_cost', 1, "Trash an Opponent Character Cost 1 or 0", (targets2) => { if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')}); else trashCard(targets2[0]); selectConfig = { excludeNiji: true }; startSelection('sotu_play_free', 1, "Play 5c or less Character from hand", (targets3) => { rightClickedCard = targets3[0]; playCard(true); appendChat("Niji triggered full sequence!", "#f39c12"); }); }, () => { appendChat("Niji effect stopped after debuff.", "#ccc"); }); }, () => { appendChat("Niji effect skipped.", "#ccc"); }); }); } }
+        else if (db.name === "Vinsmoke Reiju" && db.cost === 7) { showModal("Activate 7c Reiju On Play effect?", "confirm", () => { startSelection('sotu_cost_minus', 2, "Target up to 2 for -3 Cost", (targets1) => { targets1.forEach(t => { t.dataset.tempCost = parseInt(t.dataset.tempCost || CARD_DB[t.dataset.url]?.cost || 0) - 3; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: t.id}); }); selectConfig = { maxCostTarget: 4 }; startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 4 or less", (targets2) => { if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets2[0].id.replace('opp-', '')}); else trashCard(targets2[0]); selectConfig = { maxCostTarget: 1 }; startSelection('sotu_trash_low_cost', 1, "Trash an Opp Character Cost 1 or less", (targets3) => { if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: targets3[0].id.replace('opp-', '')}); else trashCard(targets3[0]); appendChat("Reiju completely wiped the board!", "#f39c12"); }); }); }); }); }
+        else if (db.name === "Vinsmoke Reiju" && db.cost === 4) { const leaderName = document.querySelector('#leader-zone .card') ? CARD_DB[document.querySelector('#leader-zone .card').dataset.url]?.name : ""; if (leaderName === "Vinsmoke Judge") { showModal("Activate 4c Reiju On Play effect?", "confirm", () => { openStructuredSearch(5, ["GERMA 66"], null, false, false, () => { while(SEARCH_ARR.length > 0) { const url = SEARCH_ARR.pop(); TRASH_ARR.push(url); } document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; appendChat("Reiju trashed the remaining search cards!", "#8e44ad"); saveState(); }); }); } }
+
+        const hasLogic = ["Franky (Char)", "Franky Family", "Nami", "Sanji & Pudding", "Bon Clay", "Gol D. Roger", "Brachio Tank V", "Kurosai Fr-U IV"].includes(db.name); 
+        if (hasLogic) { showModal(`Activate On Play effect of ${db.name}?`, "confirm", () => { if(db.name === "Franky Family") { startSelection('hand_trash', 1, "Select 1 card from hand to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); spawnDonLocal(true); saveState(); appendChat("Trashed 1, added 1 rested DON!!", "#3498db"); }); } if(db.name === "Franky (Char)") { startSelection('rest_stage', 1, "Select Invention Stage to Rest", (cards) => { cards[0].classList.add('rested'); const sName = CARD_DB[cards[0].dataset.url]?.name; if(sName === "Waver") { spawnDonLocal(true); appendChat("Waver rested: Added 1 rested DON!!", "#3498db"); } else if(sName === "Mini Merry") { drawCardAction(); appendChat("Mini Merry rested: Drew 1 card.", "#3498db"); } saveState(); }); } if(db.name === "Nami") { openStructuredSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"], "Nami"); } if(db.name === "Sanji & Pudding") { if((10 - DON_DECK_COUNT) <= OPP_DON_TOTAL) drawCardAction(); } if(db.name === "Bon Clay") { spawnDonLocal(false); saveState(); } if(db.name === "Gol D. Roger" && db.cost === 8) { if(document.querySelectorAll('#don-zone .card[data-is-don="true"]').length >= 10 || OPP_DON_TOTAL >= 10) { window.rogerBuffActive = true; window.rogerBuffExpiresTurn = turnNum + 2; updatePowerDisplay(); saveState(); appendChat("Gol D. Roger played: +2000 to Leader until End of Opp's Turn!", "#f39c12");} } if(db.name === "Brachio Tank V") { startSelection('give_rush', 1, "Select Character to give Rush", (cards) => { cards[0].dataset.hasRush = "true"; cards[0].querySelector('.rush-tag').style.display = 'block'; saveState(); appendChat("Gave Rush!", "#f1c40f"); }); } if(db.name === "Kurosai Fr-U IV") { startSelection('play_free_5', 1, "Select cost 5 or lower SHC/SHP to play", (cards) => { rightClickedCard = cards[0]; playCard(true); }); } }); }
+        
+        if(db.name === "Maha") { const top = document.getElementById('life-zone').lastElementChild; if(top) { top.classList.remove('card-back'); document.getElementById('zoom-img').src = top.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Maha: Put Life on Top (YES) or Bottom (NO)?", "confirm", () => { top.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha left card on Top of Life.", "#f1c40f"); saveState(); }, () => { top.classList.add('card-back'); document.getElementById('life-zone').prepend(top); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Maha moved card to Bottom of Life.", "#f1c40f"); saveState(); }); } }
+        if(db.name === "Lilith") { openStructuredSearch(4, null, "Lilith", true); }
+        if(db.name === "Atlas") { openStructuredSearch(4, null, null, false, true); }
+        if(db.name === "Rob Lucci (G)") { startSelection('lucci_g_rest', 1, "Rest 1 Character", (cards)=>{ cards[0].classList.add('rested'); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'rest', target: cards[0].id}); const top = document.getElementById('life-zone').lastElementChild; if(top && !top.classList.contains('card-back')) { cards[0].classList.add('no-restand'); cards[0].dataset.noRestand = "true"; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: cards[0].id}); appendChat("Lucci rested and locked!", "#2ecc71"); } else { appendChat("Lucci rested a Character!", "#2ecc71"); } saveState(); }); }
+        if(db.name === "Doflamingo") { startSelection('doflamingo_lock', 3, "Freeze 3 Rested", (cards)=>{ cards.forEach(card => { card.classList.add('no-restand'); card.dataset.noRestand = "true"; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'no_restand', target: card.id}); }); saveState(); appendChat("Doflamingo Locked!", "#2ecc71"); }); }
+        if(db.name === "Stussy (Char)") { startSelection('play_trigger_5', 1, "Play 5c Trigger from hand", (cards)=>{ rightClickedCard = cards[0]; playCard(true); }); }
+        if(db.name === "Monkey D. Luffy" && db.cost === 10 && (db.color||[]).includes("Yellow")) { startSelection('hand_trash', 1, "Trash 1 for +2k Leader & Blocker", (cards)=>{ TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); c.dataset.luffyBuff = "true"; updatePowerDisplay(); saveState(); appendChat("Luffy gave +2k & Blocker!", "#f1c40f"); }); }
+        if(db.name === "Seraphim") { const lifeCount = document.getElementById('life-zone').children.length; if(lifeCount >= 2) { startSelection('hand_trigger', 1, "Select Trigger to stack on Life", (cards)=>{ const top = cards[0]; top.classList.remove('card-back'); top.style.position = 'absolute'; document.getElementById('life-zone').appendChild(top); updateLifePositions(); saveState(); appendChat("Seraphim stacked a Trigger on Life!", "#f1c40f"); }); } }
+        if(db.name === "Dracule Mihawk (8c)") { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')).slice(0, 4); restedDons.forEach(d => d.classList.remove('rested')); window.locked7Plus = true; appendChat("Mihawk rested 4 DON!! and locked 7+ cost plays.", "#2ecc71"); saveState(); }
+        if(db.name === "Spandam") { startSelection('play_lucci_free', 1, "Play a [Rob Lucci] from hand", (cards) => { rightClickedCard = cards[0]; playCard(true); }); }
+        if(db.name === "Charlotte Katakuri" && db.cost === 4) { const myL = document.getElementById('life-zone').children.length; const oppL = document.getElementById('opp-life-zone').children.length; if(myL < oppL) { c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); } showModal("Look at top Life card?", "confirm", () => { startSelection('katakuri_life', 1, "Select your Life or Opponent's Life", (cards) => { const target = cards[0]; target.classList.remove('card-back'); document.getElementById('zoom-img').src = target.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; showModal("Put on Top (YES) or Bottom (NO)?", "confirm", () => { target.classList.add('card-back'); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri left card on Top of Life.", "#f1c40f"); saveState(); }, () => { target.classList.add('card-back'); target.parentElement.prepend(target); updateLifePositions(); document.getElementById('zoom-overlay').style.display='none'; appendChat("Katakuri moved card to Bottom of Life.", "#f1c40f"); saveState(); }); }); }); }
+        
+        if(db.name === "Franky (Draw)") { showModal("Return 2 DON!! to activate Franky?", "confirm", () => { returnDonAndCheckSanji(2, () => { startSelection('hand_trash', 1, "Discard 1 card to draw 2", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); drawCardAction(); drawCardAction(); saveState(); appendChat("Franky drew 2 cards!", "#8e44ad"); }); }); }); }
+        if(db.name === "Monkey D. Luffy (Leader Buff)") { showModal("Return 2 DON!! to trigger On Play?", "confirm", () => { returnDonAndCheckSanji(2, () => { const leader = document.querySelector('#leader-zone .card'); if(leader && CARD_DB[leader.dataset.url]?.color.length > 1 && OPP_DON_TOTAL >= 5) { window.batchState.luffy6cBuffActive = true; window.batchState.luffy6cBuffExpires = turnNum + 3; updatePowerDisplay(); saveState(); appendChat("Luffy 6c buffed Leader base power to 7000!", "#8e44ad"); } }); }); }
+        if(db.name === "Monkey D. Luffy (Extra Turn)") { showModal("Return 10 DON!! to TAKE AN EXTRA TURN?", "confirm", () => { returnDonAndCheckSanji(10, () => { document.querySelectorAll('#char-zone-front .card').forEach(char => { if(char.id !== c.id) { DECK_ARR.unshift(char.dataset.url); char.remove(); } }); window.batchState.extraTurnActive = true; saveState(); appendChat("10c LUFFY TRIGGERS AN EXTRA TURN!", "#e74c3c"); }); }); }
+        if(db.name === "Luffytaro") { showModal("Return 1 DON!! to play 5c from hand?", "confirm", () => { returnDonAndCheckSanji(1, () => { selectConfig = { isLuffytaro: true }; startSelection('play_free_5', 1, "Play 5c or less SHC from hand", (cards) => { rightClickedCard = cards[0]; playCard(true); }); }); }); }
+        if(db.name === "Kuzan" && db.cost === 10) { startSelection('kuzan_ko', 1, "K.O. a 0-Cost Opponent Character", (cards) => { if(parseInt(cards[0].dataset.currentCost || 0) === 0) { if(!isDevMode) socket.emit('game_action', {type: 'request_ko', target: cards[0].id.replace('opp-', '')}); else trashCard(cards[0]); appendChat("Kuzan shattered a 0-cost character!", "#34dbdb"); } else { showModal("Target must have current cost 0.", "alert"); } }); }
+        if(db.name === "Vinsmoke Reiju (5c)") { showModal("Play 5c or less Vinsmoke from Trash?", "confirm", () => { openInspector('trash', 'play_active', ['Vinsmoke Family', 'GERMA 66']); }); }
+        if(db.name === "Vinsmoke Sanji") { openStructuredSearch(5, ["Vinsmoke Family", "GERMA 66"], "Vinsmoke Sanji"); }
+        if(db.name === "Hanyabal") { openStructuredSearch(5, ["Impel Down"], "Hanyabal"); }
+        if(db.name === "Donquixote Rosinante") { startSelection('hand_trash', 1, "Trash 1 Event to Draw 2", (cards) => { if(CARD_DB[cards[0].dataset.url]?.type === 'Event') { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); drawCardAction(); drawCardAction(); appendChat("Rosinante drew 2 cards!", "#8e44ad"); } }); }
+        if(db.name === "Sadi") { startSelection('play_free_jailer', 1, "Play 1 Jailer Beast from hand", (cards) => { rightClickedCard = cards[0]; playCard(true); }); }
+        if(db.name === "Magellan (10c)") { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); showModal("Play 1 Jailer Beast from Trash rested?", "confirm", () => { openInspector('trash', 'play_rested', ['Jailer Beast', 'Jailer Beasts']); }); }
+        if(db.name === "Silvers Rayleigh") { startSelection('sotu_cost_minus', 1, "Select Character for -3000 Power", (c1) => { c1[0].dataset.rayleighDebuff = "3000"; c1[0].dataset.rayleighExpires = turnNum + 3; startSelection('sotu_cost_minus', 1, "Select Character for -2000 Power", (c2) => { c2[0].dataset.rayleighDebuff = "2000"; c2[0].dataset.rayleighExpires = turnNum + 3; updatePowerDisplay(); startSelection('sotu_cost_minus', 1, "Select 3000 power or less to K.O.", (c3) => { if(parseInt(c3[0].dataset.currentPower || 0) <= 3000) { trashCard(c3[0]); appendChat("Rayleigh shattered a weakened enemy!", "#e74c3c"); } }); }); }); }
+        if(db.name === "Benn Beckman") { startSelection('sotu_cost_minus', 1, "Select 6000 power or less to K.O.", (cards) => { if(parseInt(cards[0].dataset.currentPower || 0) <= 6000) { trashCard(cards[0]); appendChat("Beckman K.O.'d an enemy!", "#e74c3c"); } }); }
+        if(db.name === "Saldeath") { startSelection('hand_trash', 1, "Trash 1 card to add 1 rested DON", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); spawnDonLocal(true); appendChat("Saldeath ramped 1 DON!", "#8e44ad"); }); }
+        if(db.name === "News Lackey") { startSelection('play_free_bignews', 1, "Play 7c or less Big News card", (cards) => { rightClickedCard = cards[0]; window.batchState.leaderCannotAttack = true; playCard(true); appendChat("News Lackey played an event. Leader cannot attack.", "#f39c12"); }); }
+        if(db.name === "Morgans (5c)") { showModal("Play 7c Event (YES) or Shocking Revelation from Trash (NO)?", "confirm", () => { startSelection('play_free_bignews', 1, "Play Event from Hand", (cards) => { rightClickedCard = cards[0]; drawCardAction(); playCard(true); }); }, () => { openInspector('trash'); }); }
+    }
+
+    function updatePowerDisplay() {
         let hasGenFranky = Array.from(document.querySelectorAll('#char-zone-front .card')).some(c => CARD_DB[c.dataset.url]?.name === "General Franky");
         const luffy = Array.from(document.querySelectorAll('#char-zone-front .card')).find(c => CARD_DB[c.dataset.url]?.name === "Monkey D. Luffy");
         let is4cYonjiProtected = false; 
@@ -1638,9 +1673,9 @@
         });
     }
 
-    window.saveState = function() {
-        if(isDevMode) { window.updatePowerDisplay(); return; } 
-        window.organizeDon(); window.updatePowerDisplay();
+    function saveState() {
+        if(isDevMode) { updatePowerDisplay(); return; } 
+        organizeDon(); updatePowerDisplay();
         let currentMat = document.getElementById('my-board').style.backgroundImage; let cleanPlaymatUrl = currentMat ? currentMat.replace(/(url\(|\)|"|')/g, '') : 'https://i.imgur.com/SSN1DUI.jpeg';
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, tempCost: c.dataset.tempCost || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), frozenUntil: c.dataset.frozenUntil, noRestand: c.dataset.noRestand }));
         socket.emit('board_update', { deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, field, handCount: document.querySelectorAll('#hand-bar .card').length, playmat: cleanPlaymatUrl }); 
@@ -1648,8 +1683,8 @@
     }
 
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !isDevMode && document.getElementById('home-screen').style.display === 'none') { socket.emit('game_action', { type: 'force_sync' }); } });
-    socket.on('connect', () => { if (!isDevMode && document.getElementById('home-screen').style.display === 'none') { window.appendChat("Connection restored! Syncing board...", "#2ecc71"); socket.emit('game_action', { type: 'force_sync' }); } });
-    socket.on('disconnect', () => { if (!isDevMode && document.getElementById('home-screen').style.display === 'none') { window.appendChat("Warning: Connection unstable (Tab slept/Network dropped)...", "#e74c3c"); } });
+    socket.on('connect', () => { if (!isDevMode && document.getElementById('home-screen').style.display === 'none') { appendChat("Connection restored! Syncing board...", "#2ecc71"); socket.emit('game_action', { type: 'force_sync' }); } });
+    socket.on('disconnect', () => { if (!isDevMode && document.getElementById('home-screen').style.display === 'none') { appendChat("Warning: Connection unstable (Tab slept/Network dropped)...", "#e74c3c"); } });
 
     socket.on('opponent_board_update', (s) => {
         let oppLeaderUrl = ""; s.field.forEach(d => { if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url; });
@@ -1666,7 +1701,7 @@
             }
         });
         const parentCountsOpp = {}; document.querySelectorAll('#opp-board [data-parent-id]').forEach(d => { const p = document.getElementById(d.dataset.parentId); if(p) { parentCountsOpp[d.dataset.parentId] = (parentCountsOpp[d.dataset.parentId] || 0) + 1; const idx = parentCountsOpp[d.dataset.parentId] - 1; if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); } d.style.setProperty('position', 'absolute', 'important'); d.style.setProperty('left', p.offsetLeft + 'px', 'important'); d.style.setProperty('top', (p.offsetTop - 20 - (idx * 20)) + 'px', 'important'); d.style.setProperty('z-index', 10 - idx, 'important'); d.style.opacity = "1"; } });
-        document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; window.updatePowerDisplay();
+        document.getElementById('opp-hand-count').innerText = s.handCount; document.getElementById('opp-deck-count').innerText = s.deck; document.getElementById('opp-don-deck-count').innerText = s.don; OPP_DON_TOTAL = s.totalDon; document.getElementById('opp-don').innerText = OPP_DON_TOTAL; updatePowerDisplay();
     });
 
     window.refreshPhase = function(isExtraTurn = false) {
@@ -1685,16 +1720,16 @@
             if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
             if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } else { c.classList.remove('rested'); } 
             if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) { c.classList.remove('frozen'); delete c.dataset.frozenUntil; }
-            window.updateBadges(c.id); const badge = c.querySelector('.don-badge'); if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
+            updateBadges(c.id); const badge = c.querySelector('.don-badge'); if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
-        window.organizeDon(); window.drawCardAction(); window.spawnDonLocal(false); window.spawnDonLocal(false); window.saveState();
+        organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
     }
 
     socket.on('turn_passed', () => {
         isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); window.sanjiUsedThisTurn = false; window.locked7Plus = false; window.stussyUsedThisTurn = false; window.sotuTurnState.vinsmokeCostDiscount = 0; window.sotuTurnState.judgeGlobalPowerBuff = 0;
         if(window.batchState.luffy6cBuffActive && turnNum >= window.batchState.luffy6cBuffExpires) { window.batchState.luffy6cBuffActive = false; }
         if(window.rogerBuffActive && turnNum >= window.rogerBuffExpiresTurn) { window.rogerBuffActive = false; }
-        window.showModal("It's your turn!", "alert", () => window.refreshPhase() );
+        showModal("It's your turn!", "alert", () => refreshPhase() );
     });
 
     window.endTurn = function() { 
@@ -1702,43 +1737,43 @@
         let eotQueue = []; const leader = document.querySelector('#leader-zone .card');
         
         const luccis = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Rob Lucci (Y)" && c.dataset.restandAtEOT === "true"); 
-        luccis.forEach(l => { eotQueue.push(() => { l.classList.remove('rested'); delete l.dataset.restandAtEOT; window.appendChat("Rob Lucci restands via effect!", "#f1c40f"); processQueue(eotQueue); }); });
+        luccis.forEach(l => { eotQueue.push(() => { l.classList.remove('rested'); delete l.dataset.restandAtEOT; appendChat("Rob Lucci restands via effect!", "#f1c40f"); processQueue(eotQueue); }); });
         
         const sharks = Array.from(document.querySelectorAll('#stage-zone .card.rested, #franky-extra-zone .card.rested')).filter(s => CARD_DB[s.dataset.url]?.name === "Shark Submerge III"); 
-        sharks.forEach(s => { eotQueue.push(() => { window.showModal("Shark Submerge III: Restand up to 2 DON!!?", "confirm", () => { const restedDons = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); window.appendChat("Shark Submerge III: Restood 2 DON!!", "#3498db"); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
+        sharks.forEach(s => { eotQueue.push(() => { showModal("Shark Submerge III: Restand up to 2 DON!!?", "confirm", () => { const restedDons = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); appendChat("Shark Submerge III: Restood 2 DON!!", "#3498db"); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
         
         const genFrankys = Array.from(document.querySelectorAll('#char-zone-front .card.rested')).filter(s => CARD_DB[s.dataset.url]?.name === "General Franky"); 
-        genFrankys.forEach(gf => { eotQueue.push(() => { window.showModal("Set General Franky as active?", "confirm", () => { gf.classList.remove('rested'); window.saveState(); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
+        genFrankys.forEach(gf => { eotQueue.push(() => { showModal("Set General Franky as active?", "confirm", () => { gf.classList.remove('rested'); saveState(); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
 
         if(leader && CARD_DB[leader.dataset.url]?.name === "Franky") { 
             const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); 
             const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); 
             if(hasExodia && DECK_ARR.length > 0) { 
-                eotQueue.push(() => { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if(idx !== -1) { window.showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", () => { document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s=>s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; processQueue(eotQueue); }, () => { processQueue(eotQueue); }); } else { processQueue(eotQueue); } }); 
+                eotQueue.push(() => { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if(idx !== -1) { showModal("EXODIA ASSEMBLED! Play General Franky for free?", "confirm", () => { document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s=>s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; processQueue(eotQueue); }, () => { processQueue(eotQueue); }); } else { processQueue(eotQueue); } }); 
             } else if (DECK_ARR.length >= 1) { 
-                eotQueue.push(() => { window.showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { window.openStructuredSearch(Math.min(5, DECK_ARR.length), ["Straw Hat Pirates", "Straw Hat Crew"], null, false, false, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); }); 
+                eotQueue.push(() => { showModal("Activate Franky Leader end-of-turn search?", "confirm", () => { openStructuredSearch(Math.min(5, DECK_ARR.length), ["Straw Hat Pirates", "Straw Hat Crew"], null, false, false, () => { processQueue(eotQueue); }); }, () => { processQueue(eotQueue); }); }); 
             } 
         }
         
         const rosinantes = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Donquixote Rosinante"); 
-        rosinantes.forEach(r => { eotQueue.push(() => { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(myDon >= 7) { window.showModal("Rosinante: Set up to 2 DON!! as active?", "confirm", () => { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); window.appendChat("Rosinante set 2 DON active!", "#8e44ad"); processQueue(eotQueue); }, () => processQueue(eotQueue)); } else { processQueue(eotQueue); } }); });
+        rosinantes.forEach(r => { eotQueue.push(() => { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(myDon >= 7) { showModal("Rosinante: Set up to 2 DON!! as active?", "confirm", () => { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); appendChat("Rosinante set 2 DON active!", "#8e44ad"); processQueue(eotQueue); }, () => processQueue(eotQueue)); } else { processQueue(eotQueue); } }); });
         
         const saldeaths = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).filter(c => CARD_DB[c.dataset.url]?.name === "Saldeath"); 
-        saldeaths.forEach(s => { eotQueue.push(() => { window.showModal("Saldeath: Rest this card to set 2 DON!! active?", "confirm", () => { s.classList.add('rested'); const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); window.appendChat("Saldeath rested to set 2 DON active!", "#8e44ad"); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
+        saldeaths.forEach(s => { eotQueue.push(() => { showModal("Saldeath: Rest this card to set 2 DON!! active?", "confirm", () => { s.classList.add('rested'); const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); if(restedDons[0]) restedDons[0].classList.remove('rested'); if(restedDons[1]) restedDons[1].classList.remove('rested'); appendChat("Saldeath rested to set 2 DON active!", "#8e44ad"); processQueue(eotQueue); }, () => processQueue(eotQueue)); }); });
         
         const katakuris = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Charlotte Katakuri (8c)"); 
-        katakuris.forEach(k => { eotQueue.push(() => { window.showModal("Katakuri: Set 2 Big Mom Pirates (3c+) active and add 1 rested DON?", "confirm", () => { startSelection('katakuri_active', 2, "Select up to 2 Big Mom Characters to set Active", (cards) => { cards.forEach(c => c.classList.remove('rested')); window.spawnDonLocal(true); window.saveState(); window.appendChat("Katakuri restood allies and ramped DON!", "#8e44ad"); processQueue(eotQueue); }, () => { window.spawnDonLocal(true); window.saveState(); window.appendChat("Katakuri ramped DON!", "#8e44ad"); processQueue(eotQueue); }); }, () => processQueue(eotQueue)); }); });
+        katakuris.forEach(k => { eotQueue.push(() => { showModal("Katakuri: Set 2 Big Mom Pirates (3c+) active and add 1 rested DON?", "confirm", () => { startSelection('katakuri_active', 2, "Select up to 2 Big Mom Characters to set Active", (cards) => { cards.forEach(c => c.classList.remove('rested')); spawnDonLocal(true); saveState(); appendChat("Katakuri restood allies and ramped DON!", "#8e44ad"); processQueue(eotQueue); }, () => { spawnDonLocal(true); saveState(); appendChat("Katakuri ramped DON!", "#8e44ad"); processQueue(eotQueue); }); }, () => processQueue(eotQueue)); }); });
 
         eotQueue.push(() => {
-            if (window.batchState.blackMariaUsed) { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (myDon > OPP_DON_TOTAL) { let toReturn = myDon - OPP_DON_TOTAL; window.returnDonAndCheckSanji(toReturn, () => { window.batchState.blackMariaUsed = false; window.appendChat(`Black Maria returned ${toReturn} DON!!`, "#8e44ad"); processQueue(eotQueue); }); return; } } 
+            if (window.batchState.blackMariaUsed) { let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if (myDon > OPP_DON_TOTAL) { let toReturn = myDon - OPP_DON_TOTAL; window.returnDonAndCheckSanji(toReturn, () => { window.batchState.blackMariaUsed = false; appendChat(`Black Maria returned ${toReturn} DON!!`, "#8e44ad"); processQueue(eotQueue); }); return; } } 
             window.batchState.blackMariaUsed = false; processQueue(eotQueue);
         });
 
         eotQueue.push(() => { 
             document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.doubleAttack; }); 
-            window.updatePowerDisplay(); 
-            if (window.batchState.extraTurnActive) { window.batchState.extraTurnActive = false; window.appendChat("EXTRA TURN COMMENCES!", "#e74c3c"); setTimeout(() => window.refreshPhase(true), 500); } 
-            else { isMyTurn = false; if(!isDevMode) { updateTurnUI(); socket.emit('pass_turn'); } else { window.organizeDon(); setTimeout(() => window.refreshPhase(), 500); } }
+            updatePowerDisplay(); 
+            if (window.batchState.extraTurnActive) { window.batchState.extraTurnActive = false; appendChat("EXTRA TURN COMMENCES!", "#e74c3c"); setTimeout(() => refreshPhase(true), 500); } 
+            else { isMyTurn = false; if(!isDevMode) { updateTurnUI(); socket.emit('pass_turn'); } else { organizeDon(); setTimeout(() => refreshPhase(), 500); } }
         }); processQueue(eotQueue);
     }
     
@@ -1746,9 +1781,9 @@
 
     window.returnDonAndCheckSanji = function(count, onComplete) { 
         startSelection('don_minus', count, `Select ${count} DON!! to return`, (selectedDons) => { 
-            selectedDons.forEach(d => { if(d.dataset.parentId) { window.updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; }); window.organizeDon(); window.saveState(); 
+            selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; }); organizeDon(); saveState(); 
             const hasSanji = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).some(c => CARD_DB[c.dataset.url]?.name === "Sanji & Pudding"); 
-            if (hasSanji && !window.sanjiUsedThisTurn && count >= 2) { window.showModal("Activate Sanji to add 1 Active DON!!?", "confirm", () => { window.sanjiUsedThisTurn = true; window.spawnDonLocal(false); onComplete(); }, () => onComplete()); } else { onComplete(); } 
+            if (hasSanji && !window.sanjiUsedThisTurn && count >= 2) { showModal("Activate Sanji to add 1 Active DON!!?", "confirm", () => { window.sanjiUsedThisTurn = true; spawnDonLocal(false); onComplete(); }, () => onComplete()); } else { onComplete(); } 
         }); 
     }
 
@@ -1762,38 +1797,38 @@
     
     function handleSelection(card) { 
         const db = CARD_DB[card.dataset.url] || {};
-        if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { window.showModal("Select your DON!!", "alert"); return; } } 
-        else if(selectConfig.mode === 'judge_trash_germa') { if(card.id.includes('opp-') || !(db.traits || []).includes("GERMA 66") || (card.parentElement.id !== 'hand-bar' && card.parentElement.id !== 'char-zone-front')) { window.showModal("Select a GERMA 66 from your Hand or Field.", "alert"); return; } }
-        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { window.showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { window.showModal("Select a Character or Leader", "alert"); return; } }
-        else if(selectConfig.mode === 'seraphim_freeze') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { window.showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
-        else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { window.showModal("Select Opponent Rested Card", "alert"); return; } }
-        else if(selectConfig.mode === 'lucci_g_rest') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { window.showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && !['char-zone-front', 'opp-char-zone-front', 'leader-zone', 'opp-leader-zone'].includes(card.parentElement.id)) { window.showModal("Select a Character or Leader", "alert"); return; } }
-        else if(selectConfig.mode === 'lucci_g_rest_trigger') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { window.showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
-        else if(selectConfig.mode === 'play_lucci_free') { if(card.parentElement.id !== 'hand-bar' || !db || !db.name.includes("Rob Lucci")) { window.showModal("Select a Rob Lucci from hand", "alert"); return; } }
-        else if(selectConfig.mode === 'katakuri_life') { if(card.parentElement.id !== 'life-zone' && card.parentElement.id !== 'opp-life-zone') { window.showModal("Select a Life card", "alert"); return; } }
-        else if(selectConfig.mode === 'ssnake_minus') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { window.showModal("Select Opponent Character", "alert"); return; } }
-        else if(selectConfig.mode === 'play_trigger_5') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || !db.hasTrigger) { window.showModal("Select Cost 5 or less Trigger", "alert"); return; } }
-        else if(selectConfig.mode === 'hand_trigger') { if(card.parentElement.id !== 'hand-bar' || !db || !db.hasTrigger) { window.showModal("Select a Trigger card from hand", "alert"); return; } }
-        else if(selectConfig.mode === 'hand_stage') { if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage') { window.showModal("Select a Stage from hand.", "alert"); return; } }
-        else if(selectConfig.mode === 'hand_trash') { if(card.parentElement.id !== 'hand-bar') { window.showModal("Select a card from hand to trash.", "alert"); return; } }
-        else if(selectConfig.mode === 'rest_stage') { if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone' || card.classList.contains('rested') || !(db.traits || []).includes("Invention")) { window.showModal("Select an active Invention Stage.", "alert"); return; } }
-        else if(selectConfig.mode === 'give_rush') { if(card.parentElement.id !== 'char-zone-front' || !db || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { window.showModal("Select a Straw Hat Character on your field.", "alert"); return; } }
-        else if(selectConfig.mode === 'play_free_5') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { window.showModal("Select a cost 5 or lower Straw Hat card from hand.", "alert"); return; } if(selectConfig.isLuffytaro && (!(db.color || []).includes("Purple") || !(db.traits || []).includes("Straw Hat Crew"))) { window.showModal("Must be Purple and Straw Hat Crew.", "alert"); return; } }
-        else if(selectConfig.mode === 'mihawk_9c_freeze') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 9) { window.showModal("Select Opponent Character cost 9 or less", "alert"); return; } }
-        else if(selectConfig.mode === 'hattori_buff') { if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !db.name.includes('Rob Lucci')) { window.showModal("Select one of your Rob Lucci characters", "alert"); return; } }
-        else if(selectConfig.mode === 'trash_for_play_char') { if(card.parentElement.id !== 'char-zone-front') { window.showModal("Select a Character on your Front Line.", "alert"); return; } }
-        else if(selectConfig.mode === 'trash_for_play_stage') { if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone') { window.showModal("Select a Stage on your field.", "alert"); return; } }
-        else if(selectConfig.mode === 'sotu_cost_minus') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { window.showModal("Select an opponent Character or Leader.", "alert"); return; } }
-        else if(selectConfig.mode === 'sotu_trash_low_cost') { const currentCost = parseInt(card.dataset.tempCost || db.cost || 0); if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { window.showModal("Select an opponent Character.", "alert"); return; } if(currentCost > selectConfig.maxCostTarget) { window.showModal(`Target cost must be ${selectConfig.maxCostTarget} or less (Currently ${currentCost}).`, "alert"); return; } }
-        else if(selectConfig.mode === 'sotu_play_free') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5) { window.showModal("Select a character Cost 5 or less from hand.", "alert"); return; } if(selectConfig.excludeNiji && db.name === "Vinsmoke Niji") { window.showModal("Cannot select Vinsmoke Niji.", "alert"); return; } }
-        else if(selectConfig.mode === 'give_don_ramp') { if(card.id.includes('opp-') || (card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'char-zone-front')) { window.showModal("Select your Leader or Character.", "alert"); return; } if(card.parentElement.id === 'char-zone-front' && !card.classList.contains('rested')) { window.showModal("Character must be rested.", "alert"); return; } }
-        else if(selectConfig.mode === 'rest_active_don') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-') || card.classList.contains('rested')) { window.showModal("Select 1 Active DON!!", "alert"); return; } }
-        else if(selectConfig.mode === 'kuzan_ko') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { window.showModal("Select Opponent Character.", "alert"); return; } }
-        else if(selectConfig.mode === 'play_free_jailer') { if(card.parentElement.id !== 'hand-bar' || !db || (!(db.traits || []).includes("Jailer Beast") && !(db.traits || []).includes("Jailer Beasts"))) { window.showModal("Select a Jailer Beast from hand.", "alert"); return; } }
-        else if(selectConfig.mode === 'katakuri_active') { if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !(db.traits || []).includes("Big Mom Pirates") || db.cost < 3) { window.showModal("Select your Big Mom Pirates Character (Cost 3+)", "alert"); return; } }
-        else if(selectConfig.mode === 'divine_depart_minus') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { window.showModal("Select Opponent Character.", "alert"); return; } }
-        else if(selectConfig.mode === 'play_free_bignews') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 7 || !(db.traits || []).includes("Big News") || db.name === "News Lackey") { window.showModal("Select Big News (Cost 7 or less, not Lackey) from hand.", "alert"); return; } }
-        else if(selectConfig.mode === 'play_free_10c') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 10 || db.type !== 'Character') { window.showModal("Select Character Cost 10 or less from hand.", "alert"); return; } }
+        if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
+        else if(selectConfig.mode === 'judge_trash_germa') { if(card.id.includes('opp-') || !(db.traits || []).includes("GERMA 66") || (card.parentElement.id !== 'hand-bar' && card.parentElement.id !== 'char-zone-front')) { showModal("Select a GERMA 66 from your Hand or Field.", "alert"); return; } }
+        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { showModal("Select a Character or Leader", "alert"); return; } }
+        else if(selectConfig.mode === 'seraphim_freeze') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
+        else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
+        else if(selectConfig.mode === 'lucci_g_rest') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && !['char-zone-front', 'opp-char-zone-front', 'leader-zone', 'opp-leader-zone'].includes(card.parentElement.id)) { showModal("Select a Character or Leader", "alert"); return; } }
+        else if(selectConfig.mode === 'lucci_g_rest_trigger') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
+        else if(selectConfig.mode === 'play_lucci_free') { if(card.parentElement.id !== 'hand-bar' || !db || !db.name.includes("Rob Lucci")) { showModal("Select a Rob Lucci from hand", "alert"); return; } }
+        else if(selectConfig.mode === 'katakuri_life') { if(card.parentElement.id !== 'life-zone' && card.parentElement.id !== 'opp-life-zone') { showModal("Select a Life card", "alert"); return; } }
+        else if(selectConfig.mode === 'ssnake_minus') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character", "alert"); return; } }
+        else if(selectConfig.mode === 'play_trigger_5') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || !db.hasTrigger) { showModal("Select Cost 5 or less Trigger", "alert"); return; } }
+        else if(selectConfig.mode === 'hand_trigger') { if(card.parentElement.id !== 'hand-bar' || !db || !db.hasTrigger) { showModal("Select a Trigger card from hand", "alert"); return; } }
+        else if(selectConfig.mode === 'hand_stage') { if(card.parentElement.id !== 'hand-bar' || !db || db.type !== 'Stage') { showModal("Select a Stage from hand.", "alert"); return; } }
+        else if(selectConfig.mode === 'hand_trash') { if(card.parentElement.id !== 'hand-bar') { showModal("Select a card from hand to trash.", "alert"); return; } }
+        else if(selectConfig.mode === 'rest_stage') { if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone' || card.classList.contains('rested') || !(db.traits || []).includes("Invention")) { showModal("Select an active Invention Stage.", "alert"); return; } }
+        else if(selectConfig.mode === 'give_rush') { if(card.parentElement.id !== 'char-zone-front' || !db || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { showModal("Select a Straw Hat Character on your field.", "alert"); return; } }
+        else if(selectConfig.mode === 'play_free_5') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5 || (!(db.traits || []).includes("Straw Hat Crew") && !(db.traits || []).includes("Straw Hat Pirates"))) { showModal("Select a cost 5 or lower Straw Hat card from hand.", "alert"); return; } if(selectConfig.isLuffytaro && (!(db.color || []).includes("Purple") || !(db.traits || []).includes("Straw Hat Crew"))) { showModal("Must be Purple and Straw Hat Crew.", "alert"); return; } }
+        else if(selectConfig.mode === 'mihawk_9c_freeze') { if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 9) { showModal("Select Opponent Character cost 9 or less", "alert"); return; } }
+        else if(selectConfig.mode === 'hattori_buff') { if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !db.name.includes('Rob Lucci')) { showModal("Select one of your Rob Lucci characters", "alert"); return; } }
+        else if(selectConfig.mode === 'trash_for_play_char') { if(card.parentElement.id !== 'char-zone-front') { showModal("Select a Character on your Front Line.", "alert"); return; } }
+        else if(selectConfig.mode === 'trash_for_play_stage') { if(card.parentElement.id !== 'stage-zone' && card.parentElement.id !== 'franky-extra-zone') { showModal("Select a Stage on your field.", "alert"); return; } }
+        else if(selectConfig.mode === 'sotu_cost_minus') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select an opponent Character or Leader.", "alert"); return; } }
+        else if(selectConfig.mode === 'sotu_trash_low_cost') { const currentCost = parseInt(card.dataset.tempCost || db.cost || 0); if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select an opponent Character.", "alert"); return; } if(currentCost > selectConfig.maxCostTarget) { showModal(`Target cost must be ${selectConfig.maxCostTarget} or less (Currently ${currentCost}).`, "alert"); return; } }
+        else if(selectConfig.mode === 'sotu_play_free') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 5) { showModal("Select a character Cost 5 or less from hand.", "alert"); return; } if(selectConfig.excludeNiji && db.name === "Vinsmoke Niji") { showModal("Cannot select Vinsmoke Niji.", "alert"); return; } }
+        else if(selectConfig.mode === 'give_don_ramp') { if(card.id.includes('opp-') || (card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'char-zone-front')) { showModal("Select your Leader or Character.", "alert"); return; } if(card.parentElement.id === 'char-zone-front' && !card.classList.contains('rested')) { showModal("Character must be rested.", "alert"); return; } }
+        else if(selectConfig.mode === 'rest_active_don') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-') || card.classList.contains('rested')) { showModal("Select 1 Active DON!!", "alert"); return; } }
+        else if(selectConfig.mode === 'kuzan_ko') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character.", "alert"); return; } }
+        else if(selectConfig.mode === 'play_free_jailer') { if(card.parentElement.id !== 'hand-bar' || !db || (!(db.traits || []).includes("Jailer Beast") && !(db.traits || []).includes("Jailer Beasts"))) { showModal("Select a Jailer Beast from hand.", "alert"); return; } }
+        else if(selectConfig.mode === 'katakuri_active') { if(card.id.includes('opp-') || card.parentElement.id !== 'char-zone-front' || !db || !(db.traits || []).includes("Big Mom Pirates") || db.cost < 3) { showModal("Select your Big Mom Pirates Character (Cost 3+)", "alert"); return; } }
+        else if(selectConfig.mode === 'divine_depart_minus') { if(!isDevMode && (!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front')) { showModal("Select Opponent Character.", "alert"); return; } }
+        else if(selectConfig.mode === 'play_free_bignews') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 7 || !(db.traits || []).includes("Big News") || db.name === "News Lackey") { showModal("Select Big News (Cost 7 or less, not Lackey) from hand.", "alert"); return; } }
+        else if(selectConfig.mode === 'play_free_10c') { if(card.parentElement.id !== 'hand-bar' || !db || db.cost > 10 || db.type !== 'Character') { showModal("Select Character Cost 10 or less from hand.", "alert"); return; } }
 
         selectConfig.current.push(card); 
         card.style.outline = "4px solid #e74c3c"; 
@@ -1805,16 +1840,16 @@
     window.morgansLeaderMain = function() { 
         hideMenu(); 
         window.openStructuredSearch(3, ["Big News"], null, false, false); 
-        window.saveState(); 
-        window.appendChat("Morgans checked top 3 cards.", "#e74c3c"); 
+        saveState(); 
+        appendChat("Morgans checked top 3 cards.", "#e74c3c"); 
     }
 
     window.magellanLeaderMain = function() { 
         hideMenu(); 
         const myChars = document.getElementById('char-zone-front').children.length;
-        if(myChars > 3) { window.showModal("You have more than 3 Characters!", "alert"); return; }
+        if(myChars > 3) { showModal("You have more than 3 Characters!", "alert"); return; }
         startSelection('don_minus', 1, "Return 1 DON!! to play ≤4c Impel Down from Trash", (dons) => { 
-            dons[0].remove(); DON_DECK_COUNT++; window.organizeDon(); 
+            dons[0].remove(); DON_DECK_COUNT++; organizeDon(); 
             window.openInspector('trash', 'play_rested_impel_4', null); 
         }); 
     }
@@ -1822,11 +1857,11 @@
     window.magellanLeaderDefensive = function() {
         hideMenu(); 
         startSelection('don_minus', 1, "Defensive: Return 1 DON!! to gain +1000 and Draw", (dons) => { 
-            dons[0].remove(); DON_DECK_COUNT++; window.organizeDon(); 
+            dons[0].remove(); DON_DECK_COUNT++; organizeDon(); 
             const c = document.querySelector('#leader-zone .card');
             if(c) c.dataset.tempPower = (parseInt(c.dataset.tempPower || 0) + 1000); 
-            window.drawCardAction(); window.updatePowerDisplay(); window.saveState(); 
-            window.appendChat("Magellan Defensive: -1 DON, +1000 Power, Draw 1!", "#8e44ad"); 
+            drawCardAction(); updatePowerDisplay(); saveState(); 
+            appendChat("Magellan Defensive: -1 DON, +1000 Power, Draw 1!", "#8e44ad"); 
         }); 
     }
 
@@ -1835,69 +1870,69 @@
         startSelection('judge_trash_germa', 1, "Trash 1 GERMA 66 from Hand or Field", (cards) => { 
             const trashedName = CARD_DB[cards[0].dataset.url]?.name; 
             window.moveToTrash(cards[0]); 
-            window.drawCardAction();
+            drawCardAction();
             startSelection('sotu_cost_minus', 1, "Select Opponent Character to give -3 Cost", (targets) => {
                 targets[0].dataset.tempCost = parseInt(targets[0].dataset.tempCost || CARD_DB[targets[0].dataset.url]?.cost || 0) - 3; 
-                window.appendChat("Judge: Trashed 1 GERMA, Drew 1, gave target -3 Cost!", "#3498db"); 
+                appendChat("Judge: Trashed 1 GERMA, Drew 1, gave target -3 Cost!", "#3498db"); 
                 if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets[0].id}); 
-                window.saveState(); 
+                saveState(); 
                 if (trashedName === "Vinsmoke Sora") window.executeSotuTrashTriggers(trashedName, "hand"); 
             });
         }); 
     }
 
     // --- CONTEXT MENU ABILITIES ---
-    window.stussyLeaderFlip = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || !top.classList.contains('card-back')) { window.showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); window.stussyUsedThisTurn = true; cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); window.saveState(); window.appendChat("Stussy flipped life & froze target!", "#34dbdb"); }); }
-    window.lucciYellowMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { window.showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; window.saveState(); window.appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
-    window.kakuMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { window.showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; window.saveState(); window.appendChat("Kaku gained Double Attack!", "#f1c40f"); }
-    window.hattoriMain = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); window.saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); window.updatePowerDisplay(); window.saveState(); window.appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { c.classList.remove('rested'); window.saveState(); }); }
-    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { window.showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { window.showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { window.showModal("General Franky is not in Deck.", "alert"); return; } window.showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s => s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; window.saveState(); }); } else { window.showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
-    window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { window.showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { window.showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); window.appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); window.saveState(); };
-    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); window.drawCardAction(); window.saveState(); window.appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
-    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); window.appendChat("Requested opponent to trash card...", "#8e44ad"); }
-    window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { window.showModal("Need 2 DON!! to return", "alert"); return; } window.showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { window.returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; window.playCard(true); window.appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
+    window.stussyLeaderFlip = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || !top.classList.contains('card-back')) { showModal("Top Life must be face down.", "alert"); return; } startSelection('stussy_freeze', 1, "Freeze 1 Character or Leader", (cards) => { top.classList.remove('card-back'); window.stussyUsedThisTurn = true; cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); saveState(); appendChat("Stussy flipped life & froze target!", "#34dbdb"); }); }
+    window.lucciYellowMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.restandAtEOT = "true"; saveState(); appendChat("Lucci prepares to restand at End of Turn!", "#f1c40f"); }
+    window.kakuMain = function() { hideMenu(); const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(!top || top.classList.contains('card-back')) { showModal("Top Life must be face up.", "alert"); return; } top.classList.add('card-back'); rightClickedCard.dataset.doubleAttack = "true"; rightClickedCard.querySelector('.double-attack-tag').style.display='block'; saveState(); appendChat("Kaku gained Double Attack!", "#f1c40f"); }
+    window.hattoriMain = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); saveState(); startSelection('hattori_buff', 1, "Select a Rob Lucci to buff", (cards) => { cards[0].dataset.tempPower = (parseInt(cards[0].dataset.tempPower||0) + 2000); updatePowerDisplay(); saveState(); appendChat("Hattori rested to give Lucci +2000 power!", "#2ecc71"); }, () => { c.classList.remove('rested'); saveState(); }); }
+    window.stageOncePerGame = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } if(document.body.dataset.merryUsed === "true") { showModal("Once Per Game effect already used!", "alert"); return; } const stages = Array.from(document.querySelectorAll('#stage-zone .card:not(.rested), #franky-extra-zone .card:not(.rested)')).map(s => CARD_DB[s.dataset.url]?.name); const hasExodia = stages.includes("Mini Merry") && stages.includes("Waver") && stages.includes("Brachio Tank V") && stages.includes("Kurosai Fr-U IV") && stages.includes("Shark Submerge III"); if(hasExodia) { const idx = DECK_ARR.findIndex(u => CARD_DB[u]?.name === "General Franky"); if (idx === -1) { showModal("General Franky is not in Deck.", "alert"); return; } showModal("Rest 5 Invention Stages to search General Franky?", "confirm", () => { document.body.dataset.merryUsed = "true"; document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card').forEach(s => s.classList.add('rested')); const gf = createCard(DECK_ARR.splice(idx,1)[0], 0, 0, {zone: 'char-zone-front'}); gf.dataset.turnPlayed = myTurnCount; saveState(); }); } else { showModal("Need exactly 1 of each of the 5 unique active Invention stages.", "alert"); } }
+    window.activateMain = function() { hideMenu(); if(!isDevMode && !isMyTurn) { showModal("It's not your turn!", "alert"); return; } const c = rightClickedCard; const db = CARD_DB[c.dataset.url]; if(c.classList.contains('rested')) { showModal("Card is rested.", "alert"); return; } c.classList.add('rested'); appendChat(`${db.name} activated Once Per Turn effect.`, "#3498db"); saveState(); };
+    window.bottomGeneralFranky = function() { hideMenu(); DECK_ARR.unshift(rightClickedCard.dataset.url); rightClickedCard.remove(); drawCardAction(); saveState(); appendChat("Bottomed General Franky to draw 1.", "#8e44ad"); socket.emit('game_action', {type: 'reveal_card', url: rightClickedCard.dataset.url}); }
+    window.requestKO = function(id) { hideMenu(); socket.emit('game_action', {type: 'request_ko', target: id.replace('opp-', '')}); appendChat("Requested opponent to trash card...", "#8e44ad"); }
+    window.frankyMainEffect = function() { hideMenu(); if(!isMyTurn && !isDevMode) return; const totalDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length; if(totalDon < 2) { showModal("Need 2 DON!! to return", "alert"); return; } showModal("Return 2 DON!! to play 5-cost Stage from hand?", "confirm", () => { window.returnDonAndCheckSanji(2, () => { startSelection('hand_stage', 1, "Select a Stage from hand", (cards) => { rightClickedCard = cards[0]; playCard(true); appendChat("Franky returned 2 DON!! and played a Stage!", "#f39c12"); }); }); }); };
 
-    window.judgeMainEffect = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; window.updatePowerDisplay(); window.saveState(); window.appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") window.executeSotuTrashTriggers(trashedName, "hand"); }); }
-    window.ichijiMainRamp = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); window.sotuTurnState.vinsmokeCostDiscount = 2; window.saveState(); window.appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db"); }
-    window.yonjiUnrest = function() { hideMenu(); const c = rightClickedCard; c.classList.remove('rested'); c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; window.updatePowerDisplay(); window.saveState(); window.appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db"); }
-    window.luffy10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('rest_active_don', 1, "Select 1 Active DON!! to Rest", (cards) => { cards[0].classList.add('rested'); window.spawnDonLocal(false); window.saveState(); window.appendChat("10c Luffy swapped a rested DON for an active one!", "#8e44ad"); }); }
-    window.blackMariaMain = function() { hideMenu(); const hasOther = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Black Maria").length > 1; if(hasOther) { window.showModal("Cannot use if you have other Black Marias.", "alert"); return; } rightClickedCard.classList.add('rested'); window.batchState.blackMariaUsed = true; window.showModal("How many rested DON!! to add? (Max 5)", "prompt", (val) => { let num = Math.min(5, parseInt(val) || 0); for(let i=0; i<num; i++) window.spawnDonLocal(true); window.saveState(); window.appendChat(`Black Maria generated ${num} rested DON!!`, "#8e44ad"); }, null, "5"); }
-    window.zoro1cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); window.spawnDonLocal(true); window.batchState.zoroFrozenDonCount++; window.saveState(); window.appendChat("Zoro generated 1 rested DON!! (1 DON will not refresh next turn).", "#8e44ad"); }
-    window.reiju5cMain = function() { hideMenu(); rightClickedCard.dataset.reijuBuffExpires = turnNum + 3; window.drawCardAction(); window.drawCardAction(); window.showModal("Trash 3 cards from hand.", "alert", () => { startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); window.updatePowerDisplay(); window.saveState(); window.appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
-    window.sanji3cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; window.updateBadges(targets[0].id); window.organizeDon(); window.saveState(); window.appendChat("Sanji attached DON!!", "#3498db"); } }); }
-    window.impelStageMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); window.appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
-    window.dominoMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { window.showModal("No DON returned this turn!", "alert"); return; } window.drawCardAction(); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.saveState(); window.appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
-    window.magellan10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); window.batchState.magellanBuffActive = true; window.updatePowerDisplay(); window.saveState(); window.appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
-    window.weNewsMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); if(trIdx !== -1) { createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); window.batchState.leaderCannotAttack = true; window.appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); } else { window.appendChat("No News Lackey in trash.", "#ccc"); } window.saveState(); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; }); }
+    window.judgeMainEffect = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to give GERMA +1000", (cards) => { const trashedName = CARD_DB[cards[0].dataset.url]?.name; window.moveToTrash(cards[0]); window.sotuTurnState.judgeGlobalPowerBuff += 1000; updatePowerDisplay(); saveState(); appendChat("Judge: Trashed 1 card -> All GERMA gained +1000!", "#3498db"); if (trashedName === "Vinsmoke Sora") window.executeSotuTrashTriggers(trashedName, "hand"); }); }
+    window.ichijiMainRamp = function() { hideMenu(); const c = rightClickedCard; c.classList.add('rested'); window.sotuTurnState.vinsmokeCostDiscount = 2; saveState(); appendChat("Ichiji: Rested -> Vinsmoke in Hand cost -2 this turn.", "#3498db"); }
+    window.yonjiUnrest = function() { hideMenu(); const c = rightClickedCard; c.classList.remove('rested'); c.dataset.hasRush = "true"; c.querySelector('.rush-tag').style.display='block'; updatePowerDisplay(); saveState(); appendChat("Yonji (9c): Unrested and gained Rush!", "#3498db"); }
+    window.luffy10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('rest_active_don', 1, "Select 1 Active DON!! to Rest", (cards) => { cards[0].classList.add('rested'); spawnDonLocal(false); saveState(); appendChat("10c Luffy swapped a rested DON for an active one!", "#8e44ad"); }); }
+    window.blackMariaMain = function() { hideMenu(); const hasOther = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Black Maria").length > 1; if(hasOther) { showModal("Cannot use if you have other Black Marias.", "alert"); return; } rightClickedCard.classList.add('rested'); window.batchState.blackMariaUsed = true; showModal("How many rested DON!! to add? (Max 5)", "prompt", (val) => { let num = Math.min(5, parseInt(val) || 0); for(let i=0; i<num; i++) spawnDonLocal(true); saveState(); appendChat(`Black Maria generated ${num} rested DON!!`, "#8e44ad"); }, null, "5"); }
+    window.zoro1cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); spawnDonLocal(true); window.batchState.zoroFrozenDonCount++; saveState(); appendChat("Zoro generated 1 rested DON!! (1 DON will not refresh next turn).", "#8e44ad"); }
+    window.reiju5cMain = function() { hideMenu(); rightClickedCard.dataset.reijuBuffExpires = turnNum + 3; drawCardAction(); drawCardAction(); showModal("Trash 3 cards from hand.", "alert", () => { startSelection('hand_trash', 3, "Select 3 to trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); updatePowerDisplay(); saveState(); appendChat("Reiju modified her stats and gained Blocker!", "#3498db"); }); }); }
+    window.sanji3cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('give_don_ramp', 1, "Attach rested DON!! to Leader/Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; updateBadges(targets[0].id); organizeDon(); saveState(); appendChat("Sanji attached DON!!", "#3498db"); } }); }
+    window.impelStageMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(3, ["Impel Down"], null); appendChat("Impel Down searched top 3!", "#8e44ad"); }); }
+    window.dominoMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); if(!window.batchState.donReturnedThisTurn) { showModal("No DON returned this turn!", "alert"); return; } drawCardAction(); startSelection('hand_trash', 1, "Trash 1 card", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); saveState(); appendChat("Domino cycled 1 card!", "#8e44ad"); }); }
+    window.magellan10cMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); window.batchState.magellanBuffActive = true; updatePowerDisplay(); saveState(); appendChat(`Magellan buffed Jailer Beasts by +${window.batchState.donReturnedCount * 1000}!`, "#8e44ad"); }
+    window.weNewsMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 2, "Trash 2 cards to play Lackey from Trash", (cards) => { cards.forEach(c => { TRASH_ARR.push(c.dataset.url); c.remove(); }); const trIdx = TRASH_ARR.findIndex(u => CARD_DB[u]?.name === "News Lackey"); if(trIdx !== -1) { createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); window.batchState.leaderCannotAttack = true; appendChat("We News played Lackey from trash! Leader cannot attack.", "#f39c12"); } else { appendChat("No News Lackey in trash.", "#ccc"); } saveState(); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; }); }
     window.morgansCharMain = function() { hideMenu(); rightClickedCard.classList.add('rested'); startSelection('hand_trash', 1, "Trash 1 to Search Top 6", (cards) => { TRASH_ARR.push(cards[0].dataset.url); cards[0].remove(); window.openStructuredSearch(6, null, null, false, true); }); }
 
-    window.executeSotuTrashTriggers = function(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { window.showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { window.openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
+    window.executeSotuTrashTriggers = function(cardName, origZone) { if (cardName === "Vinsmoke Sora" && (origZone === "hand" || origZone === "char-zone-front")) { showModal("Sora Trashed! Look at top 5 for GERMA/Vinsmoke?", "confirm", () => { window.openStructuredSearch(5, ["GERMA 66", "Vinsmoke Family"], "Vinsmoke Sora"); }); } }
 
     window.moveToTrash = function(c) {
         if (!c) return; const db = CARD_DB[c.dataset.url]; const origZone = c.parentElement.id;
-        TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); window.saveState();
+        TRASH_ARR.push(c.dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${c.dataset.url}')`; c.remove(); saveState();
         if (db && db.name === "Vinsmoke Sora") { window.executeSotuTrashTriggers(db.name, origZone); } 
-        else if (db && db.name === "Vinsmoke Yonji" && db.cost === 2 && origZone === "char-zone-front") { window.showModal("Yonji Trashed! Give Opp Character/Leader -3 Cost?", "confirm", () => { startSelection('sotu_cost_minus', 1, "Give -3 Cost", (targets) => { targets[0].dataset.tempCost = parseInt(targets[0].dataset.tempCost || CARD_DB[targets[0].dataset.url]?.cost || 0) - 3; window.appendChat("Yonji gave target -3 Cost!", "#9b59b6"); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets[0].id}); }); }); } 
-        else if (db && db.name === "Vinsmoke Yonji" && db.cost === 9 && origZone === "char-zone-front") { window.showModal("Yonji (9c) Trashed! Play him rested from Trash?", "confirm", () => { const trIdx = TRASH_ARR.findIndex(u => u === c.dataset.url); if(trIdx !== -1) { const revived = createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); revived.classList.add('rested'); revived.dataset.turnPlayed = myTurnCount; window.saveState(); window.appendChat("Yonji (9c) Revived Rested!", "#3498db"); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; } }); }
+        else if (db && db.name === "Vinsmoke Yonji" && db.cost === 2 && origZone === "char-zone-front") { showModal("Yonji Trashed! Give Opp Character/Leader -3 Cost?", "confirm", () => { startSelection('sotu_cost_minus', 1, "Give -3 Cost", (targets) => { targets[0].dataset.tempCost = parseInt(targets[0].dataset.tempCost || CARD_DB[targets[0].dataset.url]?.cost || 0) - 3; appendChat("Yonji gave target -3 Cost!", "#9b59b6"); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_cost', amount: 3, target: targets[0].id}); }); }); } 
+        else if (db && db.name === "Vinsmoke Yonji" && db.cost === 9 && origZone === "char-zone-front") { showModal("Yonji (9c) Trashed! Play him rested from Trash?", "confirm", () => { const trIdx = TRASH_ARR.findIndex(u => u === c.dataset.url); if(trIdx !== -1) { const revived = createCard(TRASH_ARR.splice(trIdx, 1)[0], 0, 0, {zone: 'char-zone-front'}); revived.classList.add('rested'); revived.dataset.turnPlayed = myTurnCount; saveState(); appendChat("Yonji (9c) Revived Rested!", "#3498db"); if(TRASH_ARR.length > 0) document.getElementById('drop-trash').style.backgroundImage = `url('${TRASH_ARR[TRASH_ARR.length-1]}')`; else document.getElementById('drop-trash').style.backgroundImage = 'none'; } }); }
     }
 
-    function sSnakeEffect(c, onComplete) { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(top && top.classList.contains('card-back')) { window.showModal("S-Snake: Turn top Life face-up to give Opponent -2000 power?", "confirm", () => { top.classList.remove('card-back'); window.saveState(); startSelection('ssnake_minus', 1, "Select Opp Character to give -2000", (cards) => { cards[0].dataset.tempPower = parseInt(cards[0].dataset.tempPower||0) - 2000; window.updatePowerDisplay(); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_power', amount: 2000, target: cards[0].id}); window.saveState(); window.appendChat("S-Snake gave -2000 power!", "#f1c40f"); if(onComplete) onComplete(); }); }, () => { if(onComplete) onComplete(); }); } else { if(onComplete) onComplete(); } }
+    function sSnakeEffect(c, onComplete) { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(card => card.classList.contains('card')); const top = lifeCards[lifeCards.length-1]; if(top && top.classList.contains('card-back')) { showModal("S-Snake: Turn top Life face-up to give Opponent -2000 power?", "confirm", () => { top.classList.remove('card-back'); saveState(); startSelection('ssnake_minus', 1, "Select Opp Character to give -2000", (cards) => { cards[0].dataset.tempPower = parseInt(cards[0].dataset.tempPower||0) - 2000; updatePowerDisplay(); if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'minus_power', amount: 2000, target: cards[0].id}); saveState(); appendChat("S-Snake gave -2000 power!", "#f1c40f"); if(onComplete) onComplete(); }); }, () => { if(onComplete) onComplete(); }); } else { if(onComplete) onComplete(); } }
 
-    function execAttackPhase(c) { combatState = { active: true, attackerId: c.id, step: 'target' }; document.body.classList.add('combat-target-mode'); window.appendChat("Select a target to attack!", "#f1c40f"); }
+    function execAttackPhase(c) { combatState = { active: true, attackerId: c.id, step: 'target' }; document.body.classList.add('combat-target-mode'); appendChat("Select a target to attack!", "#f1c40f"); }
     
     window.simulateAttack = function() { 
-        hideMenu(); if(!isDevMode && !isMyTurn) { window.showModal("Not your turn!", "alert"); return; } 
-        const c = rightClickedCard; if(c.classList.contains('frozen')) { window.showModal("This character is Action Locked!", "alert"); return; } 
-        const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); window.saveState(); 
+        hideMenu(); if(!isDevMode && !isMyTurn) { showModal("Not your turn!", "alert"); return; } 
+        const c = rightClickedCard; if(c.classList.contains('frozen')) { showModal("This character is Action Locked!", "alert"); return; } 
+        const db = CARD_DB[c.dataset.url]; c.classList.add('rested'); saveState(); 
         
-        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); window.appendChat("Mihawk froze an enemy!", "#2ecc71"); window.saveState(); execAttackPhase(c); }, () => { window.appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
-        if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); window.appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
-        if(db.name === "Chopper") { window.drawCardAction(); window.appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); window.appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } window.updatePowerDisplay(); window.saveState(); }
-        if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { window.spawnDonLocal(true); window.saveState(); }
-        if(db.name === "Vinsmoke Yonji" && db.cost === 9) { if(c.dataset.turnPlayed == myTurnCount) { c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000; window.updatePowerDisplay(); window.appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c"); } }
-        if(db.name === "Monkey D. Luffy (Unblockable)") { if(document.querySelectorAll(`[data-parent-id="${c.id}"]`).length >= 2) { c.dataset.unblockable = "true"; window.appendChat("Luffy attacks with 2 DON!! -> Unblockable!", "#e74c3c"); } }
-        if(db.name === "Monkey D. Luffy (Don Ramp)") { window.showModal("Give 1 rested DON!! to Leader or rested Character?", "confirm", () => { startSelection('give_don_ramp', 1, "Select Leader or Rested Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; window.updateBadges(targets[0].id); window.organizeDon(); window.saveState(); window.appendChat("Luffy ramped 1 rested DON!! to target!", "#f1c40f"); } }); }); }
-        if(db.name === "Monkey D. Luffy (Leader Buff)") { window.showModal("Return 2 DON!! to trigger When Attacking effect?", "confirm", () => { window.returnDonAndCheckSanji(2, () => { const leader = document.querySelector('#leader-zone .card'); if(leader && CARD_DB[leader.dataset.url]?.color.length > 1 && OPP_DON_TOTAL >= 5) { window.batchState.luffy6cBuffActive = true; window.batchState.luffy6cBuffExpires = turnNum + 3; window.updatePowerDisplay(); window.saveState(); window.appendChat("Luffy 6c buffed Leader base power to 7000!", "#8e44ad"); } }); }); }
+        if(db.name === "Dracule Mihawk (9c)") { startSelection('mihawk_9c_freeze', 1, "Select 9c or less to Freeze (or Cancel to skip)", (cards) => { cards[0].classList.add('frozen'); cards[0].dataset.frozenUntil = myTurnCount + 2; if(!isDevMode) socket.emit('game_action', {type: 'apply_status', status: 'freeze', target: cards[0].id}); appendChat("Mihawk froze an enemy!", "#2ecc71"); saveState(); execAttackPhase(c); }, () => { appendChat("Mihawk attacks without freezing.", "#ccc"); execAttackPhase(c); }); return; }
+        if(db.name === "Bon Clay") { combatState = { active: true, attackerId: c.id, step: 'bon_clay_copy' }; document.body.classList.add('bon-clay-mode'); appendChat("Bon Clay: Select an opponent's character to copy its power!", "#f1c40f"); return; }
+        if(db.name === "Chopper") { drawCardAction(); appendChat("Chopper attacked: Drew 1 card.", "#3498db"); const hasTank = Array.from(document.querySelectorAll('#stage-zone .card, #franky-extra-zone .card')).some(s => CARD_DB[s.dataset.url]?.name === "Brachio Tank V"); if(hasTank) { c.dataset.tempPower = (parseInt(c.dataset.tempPower||0) + 2000); appendChat("Chopper gets +2000 from Brachio Tank V!", "#3498db"); } updatePowerDisplay(); saveState(); }
+        if(db.name === "Zoro-juurou" && document.querySelectorAll('#life-zone .card').length <= 3) { spawnDonLocal(true); saveState(); }
+        if(db.name === "Vinsmoke Yonji" && db.cost === 9) { if(c.dataset.turnPlayed == myTurnCount) { c.dataset.tempPower = parseInt(c.dataset.tempPower||0) - 2000; updatePowerDisplay(); appendChat("Yonji attacked on turn played -> -2000 Power!", "#e74c3c"); } }
+        if(db.name === "Monkey D. Luffy (Unblockable)") { if(document.querySelectorAll(`[data-parent-id="${c.id}"]`).length >= 2) { c.dataset.unblockable = "true"; appendChat("Luffy attacks with 2 DON!! -> Unblockable!", "#e74c3c"); } }
+        if(db.name === "Monkey D. Luffy (Don Ramp)") { showModal("Give 1 rested DON!! to Leader or rested Character?", "confirm", () => { startSelection('give_don_ramp', 1, "Select Leader or Rested Character", (targets) => { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); d.classList.add('rested'); d.dataset.parentId = targets[0].id; updateBadges(targets[0].id); organizeDon(); saveState(); appendChat("Luffy ramped 1 rested DON!! to target!", "#f1c40f"); } }); }); }
+        if(db.name === "Monkey D. Luffy (Leader Buff)") { showModal("Return 2 DON!! to trigger When Attacking effect?", "confirm", () => { window.returnDonAndCheckSanji(2, () => { const leader = document.querySelector('#leader-zone .card'); if(leader && CARD_DB[leader.dataset.url]?.color.length > 1 && OPP_DON_TOTAL >= 5) { window.batchState.luffy6cBuffActive = true; window.batchState.luffy6cBuffExpires = turnNum + 3; updatePowerDisplay(); saveState(); appendChat("Luffy 6c buffed Leader base power to 7000!", "#8e44ad"); } }); }); }
         if(db.name === "S-Snake") { sSnakeEffect(c, () => execAttackPhase(c)); return; }
         execAttackPhase(c);
     }
@@ -1905,14 +1940,14 @@
     function drawArrow(attId, defId) { const a = document.getElementById(attId); const d = document.getElementById(defId); if(!a || !d) return; const ar = a.getBoundingClientRect(); const dr = d.getBoundingClientRect(); const ax = ar.left + ar.width/2; const ay = ar.top + ar.height/2; const dx = dr.left + dr.width/2; const dy = dr.top + dr.height/2; const len = Math.hypot(dx - ax, dy - ay); const angle = Math.atan2(dy - ay, dx - ax) * 180 / Math.PI + 225; const arrow = document.getElementById('combat-arrow'); arrow.style.width = len + 'px'; arrow.style.left = ax + 'px'; arrow.style.top = (ay - 15) + 'px'; arrow.style.transform = `rotate(${angle}deg)`; arrow.style.display = 'block'; }
     
     document.addEventListener('mousedown', (e) => {
-        if(combatState.active && combatState.step === 'bon_clay_copy') { const target = e.target.closest('#opp-char-zone-front .card'); if(target) { const tBase = CARD_DB[target.dataset.url]?.power || 0; const attCard = document.getElementById(combatState.attackerId); attCard.dataset.tempPower = Math.max(0, tBase - 1000); window.updatePowerDisplay(); window.saveState(); document.body.classList.remove('bon-clay-mode'); combatState.step = 'target'; document.body.classList.add('combat-target-mode'); window.appendChat(`Bon Clay copied power (${tBase})! Now select attack target.`, "#f1c40f"); } else if (e.button === 2) { document.body.classList.remove('bon-clay-mode'); clearCombatState(); window.appendChat("Attack canceled.", "#ccc"); } return; }
+        if(combatState.active && combatState.step === 'bon_clay_copy') { const target = e.target.closest('#opp-char-zone-front .card'); if(target) { const tBase = CARD_DB[target.dataset.url]?.power || 0; const attCard = document.getElementById(combatState.attackerId); attCard.dataset.tempPower = Math.max(0, tBase - 1000); updatePowerDisplay(); saveState(); document.body.classList.remove('bon-clay-mode'); combatState.step = 'target'; document.body.classList.add('combat-target-mode'); appendChat(`Bon Clay copied power (${tBase})! Now select attack target.`, "#f1c40f"); } else if (e.button === 2) { document.body.classList.remove('bon-clay-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; }
         if(combatState.active && combatState.step === 'target') { 
             const target = e.target.closest('.card'); if(!target) return; const isValidTarget = target.parentElement.id === 'opp-leader-zone' || (target.parentElement.id === 'opp-char-zone-front' && target.classList.contains('rested')); 
             if(isValidTarget && target.dataset.isDon !== 'true' && target.dataset.isLife !== 'true') { 
-                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; const attCardForPow = document.getElementById(combatState.attackerId); const aPow = parseInt(attCardForPow.dataset.currentPower || 0); drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Waiting for Opponent..."); socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId, attackerPower: aPow, unblockable: attCardForPow.dataset.unblockable }); window.appendChat("Attack Declared! Waiting...", "#f1c40f"); 
-            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); window.appendChat("Attack canceled.", "#ccc"); } return; 
+                document.body.classList.remove('combat-target-mode'); combatState.defenderId = target.id; combatState.step = 'wait_counter'; const attCardForPow = document.getElementById(combatState.attackerId); const aPow = parseInt(attCardForPow.dataset.currentPower || 0); drawArrow(combatState.attackerId, combatState.defenderId); openArena(combatState.attackerId, combatState.defenderId, "Waiting for Opponent..."); socket.emit('game_action', { type: 'declare_attack', attackerId: combatState.attackerId, defenderId: combatState.defenderId, attackerPower: aPow, unblockable: attCardForPow.dataset.unblockable }); appendChat("Attack Declared! Waiting...", "#f1c40f"); 
+            } else if (e.button === 2) { document.body.classList.remove('combat-target-mode'); clearCombatState(); appendChat("Attack canceled.", "#ccc"); } return; 
         }
-        if(combatState.active && combatState.step === 'select_blocker') { const target = e.target.closest('.valid-blocker'); if(target) { target.classList.add('rested'); window.saveState(); combatState.defenderId = target.id; document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id}); drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase..."); askCounterPhase(); } else if (e.button === 2) { document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); askCounterPhase(); } return; }
+        if(combatState.active && combatState.step === 'select_blocker') { const target = e.target.closest('.valid-blocker'); if(target) { target.classList.add('rested'); saveState(); combatState.defenderId = target.id; document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); socket.emit('game_action', {type: 'block_declared', newDef: 'opp-'+target.id}); drawArrow('opp-'+combatState.attackerId.replace('opp-', ''), target.id); openArena('opp-'+combatState.attackerId.replace('opp-', ''), target.id, "Intercepted! Counter Phase..."); askCounterPhase(); } else if (e.button === 2) { document.body.classList.remove('blocker-target-mode'); document.querySelectorAll('.valid-blocker').forEach(c => c.classList.remove('valid-blocker')); askCounterPhase(); } return; }
     });
 
     window.openStructuredSearch = function(val, filterTraits, excludeName, isTriggerOnly, isCost4Plus, callback = null) { 
@@ -1933,9 +1968,9 @@
     }
     
     window.resolveStructuredSearch = function(index) { 
-        if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); window.appendChat(`Searched: ${CARD_DB[url].name}`, "#2ecc71"); } 
+        if(index !== -1) { const url = SEARCH_ARR.splice(index, 1)[0]; createCard(url, 0, 0, {inHand:true}); socket.emit('game_action', {type: 'reveal_card', url: url}); appendChat(`Searched: ${CARD_DB[url].name}`, "#2ecc71"); } 
         while(SEARCH_ARR.length) DECK_ARR.unshift(SEARCH_ARR.pop()); 
-        document.getElementById('search-modal').style.display = 'none'; window.saveState(); 
+        document.getElementById('search-modal').style.display = 'none'; saveState(); 
         if (window.tempSearchCallback) { window.tempSearchCallback(); window.tempSearchCallback = null; } 
     }
 
@@ -1944,7 +1979,6 @@
         list.forEach((url, i) => {
             const db = CARD_DB[url]; let isValid = true; 
             
-            // Custom Action filter checks
             if (action === 'play_rested_impel_4') {
                 isValid = (db?.traits||[]).includes("Impel Down") && db?.type === 'Character' && (db?.cost || 0) <= 4;
             } else if (filterList) { 
@@ -1960,14 +1994,14 @@
                     if(mode==='deck') DECK_ARR.splice(DECK_ARR.length-1-i, 1); else TRASH_ARR.splice(i, 1);
                     
                     if (action === 'play_rested' || action === 'play_rested_impel_4') { 
-                        const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.classList.add('rested'); c.dataset.turnPlayed = myTurnCount; window.appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); 
+                        const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.classList.add('rested'); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); 
                     } else if (action === 'play_active') { 
-                        const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.dataset.turnPlayed = myTurnCount; window.appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); 
+                        const c = createCard(url, 0, 0, {zone: 'char-zone-front'}); c.dataset.turnPlayed = myTurnCount; appendChat(`Played ${db?.name} from Trash!`, "#8e44ad"); setTimeout(() => { window.triggerOnPlay(c, CARD_DB[c.dataset.url]); }, 100); 
                     } else { 
                         createCard(url, 0, 0, {inHand: true}); 
                     }
                     
-                    window.closeInspector(); window.saveState();
+                    window.closeInspector(); saveState();
                 };
             }
             grid.appendChild(img);
@@ -1995,28 +2029,28 @@
         
         if (c.dataset.isDon === "true") {
             let attached = false; const targets = document.querySelectorAll('#char-zone-front .card, #leader-zone .card');
-            targets.forEach(t => { if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) { const r = t.getBoundingClientRect(); if (isInside(e, r)) { c.dataset.parentId = t.id; window.updateBadges(t.id); window.organizeDon(); window.saveState(); attached = true; } } });
+            targets.forEach(t => { if (t.dataset.isDon !== "true" && !t.id.includes('opp-')) { const r = t.getBoundingClientRect(); if (isInside(e, r)) { c.dataset.parentId = t.id; updateBadges(t.id); organizeDon(); saveState(); attached = true; } } });
             if (attached) return; 
         }
         
         if (isDevMode && c.dataset.isDon !== "true") {
             const charR = document.getElementById('char-zone-front').getBoundingClientRect();
             const stageR = document.getElementById('stage-zone').getBoundingClientRect();
-            if (isInside(e, charR)) { document.getElementById('char-zone-front').appendChild(c); c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; window.saveState(); return; }
-            if (isInside(e, stageR)) { document.getElementById('stage-zone').appendChild(c); c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; window.saveState(); return; }
+            if (isInside(e, charR)) { document.getElementById('char-zone-front').appendChild(c); c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; saveState(); return; }
+            if (isInside(e, stageR)) { document.getElementById('stage-zone').appendChild(c); c.style.position = 'relative'; c.style.left = '0'; c.style.top = '0'; saveState(); return; }
         }
         
         c.style.zIndex = 20; const handR = document.getElementById('hand-bar').getBoundingClientRect(); 
         if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
     });
     
-    function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); window.saveState(); } }
+    function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
 
-    function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); window.organizeDon(); updateLifePositions(); window.saveState(); }
+    function toHand(c) { c.dataset.isLife = "false"; c.classList.remove('card-back', 'rested'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); document.querySelectorAll(`[data-parent-id="${c.id}"]`).forEach(d => { delete d.dataset.parentId; }); organizeDon(); updateLifePositions(); saveState(); }
     function updateLifePositions() { const lifeCards = Array.from(document.getElementById('life-zone').children).filter(c => c.classList.contains('card')); lifeCards.forEach((c, i) => { c.style.left = '0'; c.style.transform = 'none'; c.style.top = (i * 15) + 'px'; c.style.zIndex = 20 + i; }); }
     
-    window.organizeDon = function() { 
+    function organizeDon() { 
         const parentCounts = {}; 
         document.querySelectorAll('.card[data-is-don="true"]').forEach(d => { 
             if(d.id && d.id.startsWith('opp-')) return;
@@ -2025,15 +2059,15 @@
         }); 
     }
     
-    window.spawnDonLocal = function(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); window.organizeDon(); } }
-    window.spawnDonAction = function() { window.spawnDonLocal(false); window.saveState(); }; 
-    window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; window.saveState(); } };
-    window.drawCardAction = function() { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); window.saveState(); }; 
-    window.deckToLife = function() { if(DECK_ARR.length) { const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); updateLifePositions(); window.saveState(); } };
+    function spawnDonLocal(isRested=false) { if(DON_DECK_COUNT > 0) { DON_DECK_COUNT--; const d = createCard(DON_URL,0,0,{zone:'don-zone'}); if(isRested) d.classList.add('rested'); organizeDon(); } }
+    window.spawnDonAction = function() { spawnDonLocal(false); saveState(); }; 
+    window.killDon = function() { const d = Array.from(document.querySelectorAll('#my-board .card[data-is-don="true"]')).find(c=>!c.dataset.parentId); if(d) { d.remove(); DON_DECK_COUNT++; window.batchState.donReturnedCount++; window.batchState.donReturnedThisTurn = true; saveState(); } };
+    window.drawCardAction = function() { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); saveState(); }; 
+    window.deckToLife = function() { if(DECK_ARR.length) { const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); updateLifePositions(); saveState(); } };
     
     function refreshStats() { document.getElementById('deck-count').innerText=DECK_ARR.length; document.getElementById('trash-count').innerText=TRASH_ARR.length; document.getElementById('life-count').innerText=Array.from(document.getElementById('life-zone').children).filter(c=>c.classList.contains('card')).length; document.getElementById('don-deck-count').innerText=DON_DECK_COUNT; }
     function shuffleArray(a) { for(let i=a.length-1; i>0; i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }}
-    window.updateBadges = function(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
+    function updateBadges(id){ const t = document.getElementById(id); if (!t) return; const c = document.querySelectorAll(`[data-parent-id="${id}"]`).length; const b = t.querySelector('.don-badge'); b.innerText = c; b.style.display = c > 0 ? 'flex' : 'none'; }
 
     window.addEventListener('beforeunload', (e) => { if (document.getElementById('home-screen').style.display === 'none') { e.preventDefault(); e.returnValue = ''; } });
 </script>
