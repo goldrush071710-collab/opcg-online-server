@@ -1259,6 +1259,75 @@
     socket.on('end_turn', () => { 
         window.startTurn(); 
     });
+    // --- MISSING OPPONENT BOARD SYNC LISTENER ---
+    socket.on('board_update', (data) => {
+        // 1. Update opponent HUD stats
+        document.getElementById('opp-hand-count').innerText = data.handCount;
+        document.getElementById('opp-deck-count').innerText = data.deck;
+        OPP_DON_TOTAL = data.totalDon;
+        
+        // 2. Wipe old opponent board
+        const oppZones = ['opp-char-zone-front', 'opp-leader-zone', 'opp-stage-zone', 'opp-don-zone', 'opp-life-zone', 'opp-franky-extra-zone'];
+        oppZones.forEach(id => { document.getElementById(id).innerHTML = ''; });
+        
+        if (data.playmat) {
+            document.getElementById('opp-board').style.backgroundImage = `url('${data.playmat}')`;
+        }
+
+        // 3. Rebuild opponent board exactly as they see it
+        data.field.forEach(c => {
+            let oppZoneId = 'opp-char-zone-front';
+            if (c.zone === 'life-zone') oppZoneId = 'opp-life-zone';
+            if (c.zone === 'leader-zone') oppZoneId = 'opp-leader-zone';
+            if (c.zone === 'stage-zone') oppZoneId = 'opp-stage-zone';
+            if (c.zone === 'don-zone') oppZoneId = 'opp-don-zone';
+            if (c.zone === 'franky-extra-zone') oppZoneId = 'opp-franky-extra-zone';
+
+            const oppC = window.createCard(c.url, 0, 0, { zone: oppZoneId, isOpponent: true, isLife: c.isLife === "true", isBack: c.back });
+            oppC.id = 'opp-' + c.id;
+            oppC.dataset.currentPower = c.tempPower || CARD_DB[c.url]?.power || 0;
+            oppC.dataset.tempPower = c.tempPower || 0;
+            oppC.dataset.currentCost = c.tempCost || CARD_DB[c.url]?.cost || 0;
+            oppC.dataset.tempCost = c.tempCost || 0;
+            
+            if (c.unblockable) oppC.dataset.unblockable = "true";
+            if (c.rush) { oppC.dataset.hasRush = "true"; oppC.querySelector('.rush-tag').style.display = 'block'; }
+            if (c.banish) { oppC.dataset.banish = "true"; oppC.querySelector('.banish-tag').style.display = 'block'; }
+            if (c.doubleAttack) { oppC.dataset.doubleAttack = "true"; oppC.querySelector('.double-attack-tag').style.display = 'block'; }
+            if (c.turnPlayed) oppC.dataset.turnPlayed = c.turnPlayed;
+            if (c.rested) oppC.classList.add('rested');
+            if (c.frozen) oppC.classList.add('frozen');
+            if (c.noRestand === "true") { oppC.classList.add('no-restand'); oppC.dataset.noRestand = "true"; }
+            if (c.isDon === "true") oppC.dataset.isDon = "true";
+            if (c.parentId) oppC.dataset.parentId = 'opp-' + c.parentId;
+        });
+
+        // 4. Visually attach opponent DON!!
+        const parentCounts = {};
+        document.querySelectorAll('#opp-board .card[data-is-don="true"]').forEach(d => {
+            if (d.dataset.parentId) {
+                const p = document.getElementById(d.dataset.parentId);
+                if (p) {
+                    parentCounts[d.dataset.parentId] = (parentCounts[d.dataset.parentId] || 0) + 1;
+                    const idx = parentCounts[d.dataset.parentId] - 1;
+                    if (d.parentElement !== p.parentElement) { p.parentElement.appendChild(d); }
+                    d.style.setProperty('position', 'absolute', 'important');
+                    d.style.setProperty('left', p.offsetLeft + 'px', 'important');
+                    d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important');
+                    d.style.setProperty('z-index', (10 - idx).toString(), 'important');
+                }
+            }
+        });
+        
+        // 5. Fix opponent life overlapping
+        const oppLifeCards = Array.from(document.getElementById('opp-life-zone').children).filter(c => c.classList.contains('card'));
+        oppLifeCards.forEach((c, i) => { 
+            c.style.left = '0'; 
+            c.style.transform = 'none'; 
+            c.style.top = (i * 15) + 'px'; 
+            c.style.zIndex = 20 + i; 
+        });
+    });
 
     window.endTurn = function() {
         if (!isDevMode && !isMyTurn) return;
@@ -2805,3 +2874,4 @@
 </script>
 </body>
 </html>
+
