@@ -1329,7 +1329,7 @@
         });
     });
 
-    window.endTurn = function() {
+ window.endTurn = function() {
         if (!isDevMode && !isMyTurn) return;
         window.showModal("End your turn?", "confirm", () => {
             isMyTurn = false;
@@ -1356,8 +1356,10 @@
             window.batchState.leaderCannotAttack = false;
 
             window.saveState();
+            
             if (!isDevMode) {
-                socket.emit('end_turn');
+                // FIXED: Routes the end turn signal through the stable game_action channel
+                socket.emit('game_action', { type: 'pass_turn' }); 
             } else {
                 setTimeout(() => window.startTurn(), 1000);
             }
@@ -1684,6 +1686,10 @@
         } 
         else if (data.type === 'game_over') { 
             window.showModal("Opponent took damage at 0 Life! YOU WIN!", "alert", () => window.location.reload()); 
+        }
+        else if (data.type === 'pass_turn') {
+            window.startTurn();
+        }
         }
     });
 
@@ -2874,4 +2880,5 @@
 </script>
 </body>
 </html>
+
 
