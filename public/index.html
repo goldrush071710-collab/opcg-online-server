@@ -33,7 +33,7 @@
         #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;} #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; } .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;} .align-slider { width: 150px; cursor: pointer;}
         #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; } #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;} #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;} #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
 
-        /* STADIUM COMBAT ENGINE */
+        /* STADIUM COMBAT ENGINE (NO ARROWS) */
         #combat-arena { position: fixed; top: 15vh; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 800px; height: 35vh; background: linear-gradient(135deg, rgba(20,20,25,0.98), rgba(60,20,20,0.98)); border: 3px solid #e74c3c; border-radius: 15px; z-index: 90000; display: none; align-items: center; justify-content: space-between; padding: 20px 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); color: white; box-sizing: border-box; }
         .arena-side { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 140px;} .arena-img { width: 120px; height: 168px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); background-size: 100% 100%;} .arena-power { font-size: 32px; font-weight: 900; background: #000; padding: 5px 15px; border-radius: 8px; border: 2px solid var(--op-gold); color: var(--op-gold); text-align: center; width: 100%; box-sizing: border-box; text-shadow: 0 2px 4px rgba(0,0,0,1);}
         .arena-center { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; } .arena-center h1 { font-size: 60px; margin: 0; color: #e74c3c; text-shadow: 2px 2px 0 #000, 0 0 20px #e74c3c; font-style: italic;} .arena-status { font-size: 22px; margin-top: 10px; color: #34dbdb; font-weight: bold; text-transform: uppercase;} .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 15px;}
@@ -56,6 +56,10 @@
 
 <div id="home-screen">
     <button onclick="openAlignAuth()" style="position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.9); color:var(--op-gold); border:2px solid var(--op-gold); font-size:14px; z-index: 99999999; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">🛠 ALIGN TOOL</button>
+    <div id="news-modal" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <img src="https://i.imgur.com/M5xMPsN.png" alt="Newsletter Poster" style="max-width: 90vw; max-height: 75vh; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); margin-bottom: 20px;">
+        <button onclick="document.getElementById('news-modal').style.display='none'" style="padding: 15px 40px; background: #3498db; color: white; border: 2px solid #fff; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 18px; text-transform: uppercase;">OK</button>
+    </div>
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa;">SELECT ACTIVE DECK:</div>
@@ -133,6 +137,24 @@
     <div style="margin-top:20px; display:flex; gap:5px;"><button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button><button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button><button onclick="closeAlignTool()" style="flex:1;">HIDE</button></div>
 </div>
 
+<div id="deck-builder-screen">
+    <div class="db-card-pool" id="db-pool"></div>
+    <div class="db-sidebar">
+        <h2 style="margin:0; color:var(--op-blue); font-size:24px;">Deck Builder</h2>
+        <input type="text" id="db-name" placeholder="Deck Name" style="padding:10px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid #555; border-radius:6px; font-size:14px;">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:12px; color:#aaa; margin-bottom:5px;">LEADER:</div>
+            <div id="db-leader" style="color:#e74c3c; font-weight:bold; font-size:16px;">None</div><div class="color-dots" id="db-leader-colors" style="margin-top:8px;"></div>
+            <button onclick="clearLeader()" style="background:#c0392b; padding:8px; margin-top:10px; width:100%; font-size:10px;">CLEAR LEADER</button>
+        </div>
+        <div style="font-size:14px; font-weight:bold; color:#aaa;">MAIN DECK (<span id="db-count" style="color:#fff;">0</span>/50)</div>
+        <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; flex-direction:column; gap:5px; border-radius:6px; background:rgba(0,0,0,0.3);"></div>
+        <div style="display:flex; gap:5px;"><button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button></div>
+        <button onclick="importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
+        <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
+    </div>
+</div>
+
 <div id="search-modal">
     <div id="search-modal-container">
         <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;"><h2 id="insp-title" style="margin:0; color:var(--op-blue); font-size: 28px;">Search / Inspect</h2><button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button></div>
@@ -177,12 +199,12 @@
         "https://i.imgur.com/f6TtmW9.png": { name: "Franky Family", type: "Character", color: ["Purple"], cost: 3, traits: ["Water Seven"], hasOnPlay: true, power: 4000, counter: 1000, blocker: true },
         "https://i.imgur.com/bzg3Xpr.png": { name: "Chopper", type: "Character", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates"], power: 5000, counter: 2000 },
         "https://i.imgur.com/zmZCFVB.png": { name: "General Franky", type: "Character", color: ["Red"], cost: 11, traits: ["Straw Hat Pirates", "Invention"], power: 13000, counter: 0, blocker: true, banish: true, hasMain: true },
-        "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", color: ["Red"], cost: 1, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 2000, counter: 1000 },
+        "https://i.imgur.com/WCFtQ4V.png": { name: "Nami", type: "Character", color: ["Red"], cost: 1, traits: ["Straw Hat Crew", "Straw Hat Pirates"], hasOnPlay: true, power: 2000, counter: 1000 },
         "https://i.imgur.com/5LAj93m.png": { name: "Zoro-juurou", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Crew"], power: 4000, counter: 1000 },
-        "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", color: ["Purple"], cost: 5, traits: ["Straw Hat Crew"], hasOnPlay: true, power: 7000, counter: 0 },
-        "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", color: ["Purple"], cost: 4, traits: ["Alabasta"], hasOnPlay: true, power: 1000, counter: 0 },
+        "https://i.imgur.com/XzXandk.png": { name: "Sanji & Pudding", type: "Character", color: ["Purple"], cost: 5, traits: ["Straw Hat Crew", "Big Mom Pirates"], hasOnPlay: true, power: 7000, counter: 0 },
+        "https://i.imgur.com/l16quan.png": { name: "Bon Clay", type: "Character", color: ["Purple"], cost: 4, traits: ["Former Baroque Works"], hasOnPlay: true, power: 1000, counter: 0 },
         "https://i.imgur.com/gAedzn3.png": { name: "Gol D. Roger", type: "Character", color: ["Purple"], cost: 8, traits: ["Roger Pirates"], hasOnPlay: true, power: 10000, counter: 0 },
-        "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Pirates"], power: 3000, counter: 2000 },
+        "https://i.imgur.com/egPJ3rM.png": { name: "Uso-hatchi", type: "Character", color: ["Purple"], cost: 3, traits: ["Straw Hat Crew", "Straw Hat Pirates"], power: 3000, counter: 2000 },
         "https://i.imgur.com/KdMSz8v.png": { name: "Mini Merry", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
         "https://i.imgur.com/oULaM8n.png": { name: "Waver", type: "Stage", color: ["Purple"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true },
         "https://i.imgur.com/YRa5DDx.png": { name: "Brachio Tank V", type: "Stage", color: ["Red"], cost: 5, traits: ["Straw Hat Pirates", "Invention"], hasMain: true, hasOnPlay: true },
@@ -276,10 +298,7 @@
     
     // --- TRACKING STATES ---
     window.sanjiUsedThisTurn = false; window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0; window.tempSearchCallback = null; window.locked7Plus = false; 
-    
-    // ONCE PER TURN FLAGS
     window.leaderUsedThisTurn = false; window.magellanDefensiveUsed = false; window.stussyUsedThisTurn = false;
-
     window.sotuTurnState = { vinsmokeCostDiscount: 0, judgeGlobalPowerBuff: 0 };
     window.batchState = { luffy6cBuffActive: false, luffy6cBuffExpires: 0, extraTurnActive: false, blackMariaUsed: false, zoroFrozenDonCount: 0, donReturnedCount: 0, donReturnedThisTurn: false, magellanBuffActive: false, leaderCannotAttack: false, stussyRedEventBuffs: 0 };
 
@@ -394,8 +413,8 @@
         window.batchState.luffy6cBuffActive = false; window.batchState.extraTurnActive = false; window.batchState.blackMariaUsed = false; window.batchState.zoroFrozenDonCount = 0; window.batchState.donReturnedCount = 0; window.batchState.donReturnedThisTurn = false; window.batchState.magellanBuffActive = false; window.batchState.leaderCannotAttack = false; window.batchState.stussyRedEventBuffs = 0;
         
         setupPlayerBoardVisuals(); DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions(); for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); } refreshStats();
-        setTimeout(() => { showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); } socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); }, 500);
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); 
+        setTimeout(() => { showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) drawCardAction(); socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); }, 500);
     });
 
     socket.on('begin_game', () => { 
@@ -1184,10 +1203,116 @@
         saveState();
     }
 
-    function endTurn() {
-        if (!isMyTurn && !isDevMode) return;
+    // --- EOT QUEUE SYSTEM ---
+    let eotQueue = [];
+
+    function processEndOfTurn() {
+        eotQueue = [];
+        const leader = document.querySelector('#leader-zone .card');
+        const leaderName = leader ? CARD_DB[leader.dataset.url]?.name : "";
+        const field = Array.from(document.querySelectorAll('#my-board .card'));
+
+        // 1. Black Maria Auto-Return
+        if(window.batchState.blackMariaUsed) {
+            eotQueue.push((next) => {
+                let myDon = document.querySelectorAll('#my-board .card[data-is-don="true"]').length;
+                let diff = myDon - OPP_DON_TOTAL;
+                if(diff > 0) {
+                    const dons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]'));
+                    for(let i=0; i<diff && i<dons.length; i++) { dons[i].remove(); DON_DECK_COUNT++; }
+                    organizeDon(); refreshStats();
+                    appendChat("Black Maria auto-returned " + Math.min(diff, dons.length) + " DON!!", "#8e44ad");
+                }
+                next();
+            });
+        }
+
+        // 2. Franky Leader Search
+        if(leaderName === "Franky") {
+            eotQueue.push((next) => {
+                showModal("EOT: Franky Leader - Look at top 5 for Straw Hat type?", "confirm", () => {
+                    openStructuredSearch(5, ["Straw Hat Crew", "Straw Hat Pirates"], null, true, true);
+                    next();
+                }, () => next());
+            });
+        }
+
+        // 3. Saldeath
+        const saldeaths = field.filter(c => CARD_DB[c.dataset.url]?.name === "Saldeath" && !c.classList.contains('rested') && c.parentElement.id === 'char-zone-front');
+        saldeaths.forEach(sal => {
+            eotQueue.push((next) => {
+                showModal("EOT: Rest Saldeath to set 2 DON active?", "confirm", () => {
+                    sal.classList.add('rested');
+                    let restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested'));
+                    if(restedDons[0]) restedDons[0].classList.remove('rested');
+                    if(restedDons[1]) restedDons[1].classList.remove('rested');
+                    appendChat("Saldeath set 2 DON active!", "#8e44ad");
+                    saveState(); next();
+                }, () => next());
+            });
+        });
+
+        // 4. Rosinante
+        const rosinantes = field.filter(c => CARD_DB[c.dataset.url]?.name === "Donquixote Rosinante" && c.parentElement.id === 'char-zone-front');
+        rosinantes.forEach(ros => {
+            eotQueue.push((next) => {
+                showModal("EOT: Rosinante - Set 2 rested DON active?", "confirm", () => {
+                    let restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested'));
+                    if(restedDons[0]) restedDons[0].classList.remove('rested');
+                    if(restedDons[1]) restedDons[1].classList.remove('rested');
+                    appendChat("Rosinante set 2 DON active!", "#8e44ad");
+                    saveState(); next();
+                }, () => next());
+            });
+        });
+
+        // 5. Katakuri (8c)
+        const katakuris = field.filter(c => CARD_DB[c.dataset.url]?.name === "Charlotte Katakuri (8c)" && c.parentElement.id === 'char-zone-front');
+        katakuris.forEach(kat => {
+            eotQueue.push((next) => {
+                showModal("EOT: Katakuri (8c) - Set up to 2 Big Mom Pirates active & add 1 rested DON?", "confirm", () => {
+                    spawnDonLocal(true);
+                    let bmChars = Array.from(document.querySelectorAll('#char-zone-front .card.rested')).filter(c => {
+                        let db = CARD_DB[c.dataset.url];
+                        return db && (db.traits||[]).includes("Big Mom Pirates") && (db.cost >= 3);
+                    });
+                    if(bmChars[0]) bmChars[0].classList.remove('rested');
+                    if(bmChars[1]) bmChars[1].classList.remove('rested');
+                    appendChat("Katakuri set characters active and ramped 1 rested DON!", "#8e44ad");
+                    saveState(); next();
+                }, () => next());
+            });
+        });
+
+        // 6. Shark Submerge III
+        const sharks = field.filter(c => CARD_DB[c.dataset.url]?.name === "Shark Submerge III" && c.classList.contains('rested') && (c.parentElement.id === 'stage-zone' || c.parentElement.id === 'franky-extra-zone'));
+        sharks.forEach(sh => {
+            eotQueue.push((next) => {
+                let restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested'));
+                if(restedDons.length > 0) {
+                    if(restedDons[0]) restedDons[0].classList.remove('rested');
+                    if(restedDons[1]) restedDons[1].classList.remove('rested');
+                    appendChat("Shark Submerge III set 2 DON active!", "#3498db");
+                    saveState();
+                }
+                next();
+            });
+        });
+
+        runNextEOT();
+    }
+
+    function runNextEOT() {
+        if(eotQueue.length > 0) {
+            let func = eotQueue.shift();
+            func(runNextEOT);
+        } else {
+            finishEndTurn();
+        }
+    }
+
+    function finishEndTurn() {
         isMyTurn = false;
-        
         document.querySelectorAll('[data-restand-at-eot="true"]').forEach(c => {
             c.classList.remove('rested');
             c.dataset.restandAtEOT = "false";
@@ -1199,6 +1324,11 @@
             handleTurnStartLogic();
         }
         updateTurnUI();
+    }
+
+    function endTurn() {
+        if (!isMyTurn && !isDevMode) return;
+        processEndOfTurn(); // Fire the EOT queue before ending
     }
 
     function handleTurnStartLogic() {
@@ -1214,6 +1344,7 @@
         window.sotuTurnState.judgeGlobalPowerBuff = 0;
         window.batchState.stussyRedEventBuffs = 0;
         window.batchState.leaderCannotAttack = false;
+        window.batchState.blackMariaUsed = false;
         
         // Refresh Phase
         let frozenDon = window.batchState.zoroFrozenDonCount;
