@@ -33,7 +33,7 @@
         #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;} #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; } .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;} .align-slider { width: 150px; cursor: pointer;}
         #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; } #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;} #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;} #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
 
-        /* STADIUM COMBAT ENGINE (NO ARROWS) */
+        /* STADIUM COMBAT ENGINE */
         #combat-arena { position: fixed; top: 15vh; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 800px; height: 35vh; background: linear-gradient(135deg, rgba(20,20,25,0.98), rgba(60,20,20,0.98)); border: 3px solid #e74c3c; border-radius: 15px; z-index: 90000; display: none; align-items: center; justify-content: space-between; padding: 20px 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.9); color: white; box-sizing: border-box; }
         .arena-side { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 140px;} .arena-img { width: 120px; height: 168px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255,255,255,0.3); background-size: 100% 100%;} .arena-power { font-size: 32px; font-weight: 900; background: #000; padding: 5px 15px; border-radius: 8px; border: 2px solid var(--op-gold); color: var(--op-gold); text-align: center; width: 100%; box-sizing: border-box; text-shadow: 0 2px 4px rgba(0,0,0,1);}
         .arena-center { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; } .arena-center h1 { font-size: 60px; margin: 0; color: #e74c3c; text-shadow: 2px 2px 0 #000, 0 0 20px #e74c3c; font-style: italic;} .arena-status { font-size: 22px; margin-top: 10px; color: #34dbdb; font-weight: bold; text-transform: uppercase;} .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 15px;}
@@ -56,10 +56,6 @@
 
 <div id="home-screen">
     <button onclick="openAlignAuth()" style="position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.9); color:var(--op-gold); border:2px solid var(--op-gold); font-size:14px; z-index: 99999999; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">🛠 ALIGN TOOL</button>
-    <div id="news-modal" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-        <img src="https://i.imgur.com/M5xMPsN.png" alt="Newsletter Poster" style="max-width: 90vw; max-height: 75vh; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); margin-bottom: 20px;">
-        <button onclick="document.getElementById('news-modal').style.display='none'" style="padding: 15px 40px; background: #3498db; color: white; border: 2px solid #fff; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 18px; text-transform: uppercase;">OK</button>
-    </div>
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
         <div style="text-align: left; font-size: 12px; font-weight: bold; color: #aaa;">SELECT ACTIVE DECK:</div>
@@ -135,24 +131,6 @@
     </div>
     <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;"><span style="color:var(--op-blue);">Inner Card %:</span> <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="updateAlign('cw', this.value)"> <span id="val-cw" style="width:40px; text-align:right;"></span></div>
     <div style="margin-top:20px; display:flex; gap:5px;"><button onclick="saveAlign()" style="flex:1; background:#2ecc71;">SAVE</button><button onclick="resetAlign()" style="flex:1; background:#e74c3c;">RESET</button><button onclick="closeAlignTool()" style="flex:1;">HIDE</button></div>
-</div>
-
-<div id="deck-builder-screen">
-    <div class="db-card-pool" id="db-pool"></div>
-    <div class="db-sidebar">
-        <h2 style="margin:0; color:var(--op-blue); font-size:24px;">Deck Builder</h2>
-        <input type="text" id="db-name" placeholder="Deck Name" style="padding:10px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid #555; border-radius:6px; font-size:14px;">
-        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border: 1px solid rgba(255,255,255,0.1);">
-            <div style="font-size:12px; color:#aaa; margin-bottom:5px;">LEADER:</div>
-            <div id="db-leader" style="color:#e74c3c; font-weight:bold; font-size:16px;">None</div><div class="color-dots" id="db-leader-colors" style="margin-top:8px;"></div>
-            <button onclick="clearLeader()" style="background:#c0392b; padding:8px; margin-top:10px; width:100%; font-size:10px;">CLEAR LEADER</button>
-        </div>
-        <div style="font-size:14px; font-weight:bold; color:#aaa;">MAIN DECK (<span id="db-count" style="color:#fff;">0</span>/50)</div>
-        <div id="db-list" style="flex:1; overflow-y:auto; border:1px solid rgba(255,255,255,0.1); padding:5px; display:flex; flex-direction:column; gap:5px; border-radius:6px; background:rgba(0,0,0,0.3);"></div>
-        <div style="display:flex; gap:5px;"><button onclick="saveDeck()" style="flex:1; background:#2ecc71; padding:12px;">SAVE DECK</button></div>
-        <button onclick="importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
-        <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
-    </div>
 </div>
 
 <div id="search-modal">
@@ -300,9 +278,7 @@
     window.sanjiUsedThisTurn = false; window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0; window.tempSearchCallback = null; window.locked7Plus = false; 
     
     // ONCE PER TURN FLAGS
-    window.leaderUsedThisTurn = false; 
-    window.magellanDefensiveUsed = false;
-    window.stussyUsedThisTurn = false;
+    window.leaderUsedThisTurn = false; window.magellanDefensiveUsed = false; window.stussyUsedThisTurn = false;
 
     window.sotuTurnState = { vinsmokeCostDiscount: 0, judgeGlobalPowerBuff: 0 };
     window.batchState = { luffy6cBuffActive: false, luffy6cBuffExpires: 0, extraTurnActive: false, blackMariaUsed: false, zoroFrozenDonCount: 0, donReturnedCount: 0, donReturnedThisTurn: false, magellanBuffActive: false, leaderCannotAttack: false, stussyRedEventBuffs: 0 };
@@ -440,7 +416,8 @@
     function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
     
-    function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }'// --- PURE NETWORK COMBAT LOGIC & SYNC ---
+    function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
+    // --- PURE NETWORK COMBAT LOGIC & SYNC ---
     socket.on('board_update', (data) => {
         if(isDevMode) return;
         document.getElementById('opp-deck-count').innerText = data.deck;
