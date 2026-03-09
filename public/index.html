@@ -385,7 +385,7 @@
 
     function createLobby() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
-        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }); 
+        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); }); 
     }
     
     function showJoinLobby() { 
@@ -394,7 +394,7 @@
     }
     
     function joinLobby() { 
-        socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); } else { showModal("Invalid room.", "alert"); } }); 
+        socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); } else { showModal("Invalid room.", "alert"); } }); 
     }
     
     function backToMain() { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; }
@@ -402,7 +402,7 @@
     function randomMatch() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; 
-        socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } else { socket.emit('deck_selected', "custom"); } }); 
+        socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); } else { socket.emit('deck_selected', activeLobbyDeckUrlArray); } }); 
     }
     
     function copyCode() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=> { showModal("Code copied!", "alert"); }); }
@@ -440,8 +440,67 @@
     function appendChat(str, col) { const box = document.getElementById('chat-messages'); const div = document.createElement('div'); div.style.color = col; div.innerText = str; box.appendChild(div); box.scrollTop = box.scrollHeight; }
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
     
-    function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
-    // --- PURE NETWORK COMBAT LOGIC ---
+    function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }'// --- PURE NETWORK COMBAT LOGIC & SYNC ---
+    socket.on('board_update', (data) => {
+        if(isDevMode) return;
+        document.getElementById('opp-deck-count').innerText = data.deck;
+        document.getElementById('opp-hand-count').innerText = data.handCount;
+        OPP_DON_TOTAL = data.totalDon;
+        
+        if(data.playmat) {
+            document.getElementById('opp-board').style.backgroundImage = `url('${data.playmat}')`;
+            if(data.playmat.includes('WjiUDr0')) document.getElementById('opp-board').classList.add('mat-white');
+            else document.getElementById('opp-board').classList.remove('mat-white');
+        }
+
+        const oppZones = ['opp-life-zone', 'opp-char-zone-front', 'opp-franky-extra-zone', 'opp-leader-zone', 'opp-stage-zone', 'opp-don-zone'];
+        oppZones.forEach(z => document.getElementById(z).innerHTML = '');
+        
+        data.field.forEach(c => {
+            const url = c.back ? 'https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg' : c.url;
+            const newC = createCard(url, 0, 0, {isOpponent: true, isBack: c.back});
+            newC.id = 'opp-' + c.id;
+            newC.dataset.url = c.url;
+            newC.dataset.isDon = c.isDon;
+            newC.dataset.isLife = c.isLife;
+            newC.dataset.currentPower = c.tempPower;
+            if(c.rested) newC.classList.add('rested');
+            if(c.frozen) { newC.classList.add('frozen'); newC.dataset.frozenUntil = c.frozenUntil; }
+            if(c.noRestand) { newC.classList.add('no-restand'); newC.dataset.noRestand = "true"; }
+            if(c.unblockable) newC.dataset.unblockable = "true";
+            
+            if(c.rush) { newC.dataset.hasRush = "true"; newC.querySelector('.rush-tag').style.display='block'; }
+            if(c.banish) { newC.dataset.banish = "true"; newC.querySelector('.banish-tag').style.display='block'; }
+            if(c.doubleAttack) { newC.dataset.doubleAttack = "true"; newC.querySelector('.double-attack-tag').style.display='block'; }
+            
+            const targetZone = c.zone === 'hand-bar' ? 'opp-hand' : (c.zone.startsWith('opp-') ? c.zone : 'opp-' + c.zone);
+            const tzEl = document.getElementById(targetZone);
+            if(tzEl) {
+                if(targetZone === 'opp-life-zone') newC.style.position = 'absolute';
+                else newC.style.position = 'relative';
+                tzEl.appendChild(newC);
+            }
+        });
+        
+        data.field.forEach(c => {
+            if(c.parentId) {
+                const don = document.getElementById('opp-' + c.id);
+                const parent = document.getElementById('opp-' + c.parentId);
+                if(don && parent) don.dataset.parentId = 'opp-' + c.parentId;
+            }
+        });
+        
+        const oppLifeCards = document.getElementById('opp-life-zone').children;
+        for(let i=0; i<oppLifeCards.length; i++) {
+            oppLifeCards[i].style.top = (i * 10) + 'px';
+            oppLifeCards[i].style.left = (i * 2) + 'px';
+            oppLifeCards[i].style.zIndex = i;
+        }
+        
+        document.getElementById('opp-don').innerText = OPP_DON_TOTAL;
+        updatePowerDisplay();
+    });
+
     socket.on('game_action', (data) => {
         if(data.type === 'declare_attack') { 
             const att = document.getElementById('opp-' + data.attackerId); 
@@ -504,15 +563,9 @@
                 }); 
             }
         }
-        else if(data.type === 'update_counter') { 
-            updateArenaCounter(data.counterValue); 
-        }
-        else if(data.type === 'counter_declared') { 
-            executeCombatResolution(data.counterValue, data.finalDefPower); 
-        }
-        else if(data.type === 'clear_combat') {
-            clearCombatState();
-        }
+        else if(data.type === 'update_counter') { updateArenaCounter(data.counterValue); }
+        else if(data.type === 'counter_declared') { executeCombatResolution(data.counterValue, data.finalDefPower); }
+        else if(data.type === 'clear_combat') { clearCombatState(); }
         else if(data.type === 'resolve_kill') { 
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
@@ -538,9 +591,7 @@
             if(!isMyTurn) handleLifeDamage(data.banish, data.double); 
             else appendChat("Opponent took damage!", "#2ecc71"); 
         }
-        else if(data.type === 'reveal_card') { 
-            appendChat(`Opponent revealed: ${CARD_DB[data.url]?.name || 'Unknown Card'}`, "#3498db"); 
-        }
+        else if(data.type === 'reveal_card') { appendChat(`Opponent revealed: ${CARD_DB[data.url]?.name || 'Unknown Card'}`, "#3498db"); }
         else if(data.type === 'request_ko') { 
             const myTarget = document.getElementById(data.target.replace('opp-','')); 
             if(myTarget) { 
@@ -580,6 +631,7 @@
         else if (data.type === 'concede') { showModal("Opponent Conceded! YOU WIN!", "alert", ()=>window.location.reload()); } 
         else if (data.type === 'game_over') { showModal("Opponent took damage at 0 Life! YOU WIN!", "alert", ()=>window.location.reload()); }
         else if (data.type === 'force_sync') { saveState(); }
+        else if (data.type === 'end_turn') { isMyTurn = true; handleTurnStartLogic(); }
     });
 
     function createCard(url, x, y, opts = {}) { 
@@ -1114,7 +1166,7 @@
         if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
     });
 
-    // --- ENGINE FIXES: CORE LOOP ---
+    // --- ENGINE FIXES: CORE LOOP & UTILITIES ---
     function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
     function toHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); saveState(); }
@@ -1133,6 +1185,27 @@
         organizeDon();
         refreshStats();
     }
+    
+    function killDon() {
+        const dons = document.querySelectorAll('#my-board .card[data-is-don="true"]');
+        if (dons.length > 0) {
+            dons[dons.length - 1].remove();
+            DON_DECK_COUNT++;
+            organizeDon();
+            refreshStats();
+            saveState();
+        }
+    }
+    
+    function deckToLife() {
+        if (DECK_ARR.length === 0) return;
+        const url = DECK_ARR.shift();
+        const c = createCard(url, 0, 0, {isLife: true, isBack: true});
+        c.style.position = 'absolute';
+        document.getElementById('life-zone').appendChild(c);
+        updateLifePositions();
+        saveState();
+    }
 
     function endTurn() {
         if (!isMyTurn && !isDevMode) return;
@@ -1150,13 +1223,6 @@
         }
         updateTurnUI();
     }
-
-    socket.on('game_action', (data) => {
-        if (data.type === 'end_turn') {
-            isMyTurn = true;
-            handleTurnStartLogic();
-        }
-    });
 
     function handleTurnStartLogic() {
         myTurnCount++;
@@ -1369,14 +1435,14 @@
         }
         refreshStats();
         saveState();
-    
+    }
+
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
-    }}
+    }
 </script>
 </body>
 </html>
-
