@@ -344,7 +344,7 @@
             const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
             const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px"; editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
             const listBtn = document.createElement('button'); listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad"; listBtn.onclick = (e) => { e.stopPropagation(); showVisualDecklist(i); };
-            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c"; delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
+            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c"; delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
             btnContainer.appendChild(editBtn); btnContainer.appendChild(listBtn); btnContainer.appendChild(delBtn); div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
         });
         if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
@@ -441,7 +441,6 @@
     function updateTurnUI() { if(isDevMode) return; const ti = document.getElementById('turn-indicator'); ti.style.display = 'block'; if(isMyTurn) { ti.innerText = "YOUR TURN"; ti.style.background = "#2ecc71"; document.getElementById('btn-end-turn').disabled = false; } else { ti.innerText = "OPPONENT'S TURN"; ti.style.background = "#e74c3c"; document.getElementById('btn-end-turn').disabled = true; } }
     
     function concedeGame() { showModal("Are you sure you want to concede?", "confirm", () => { socket.emit('game_action', {type: 'concede'}); showModal("You Conceded. GAME OVER.", "alert", () => window.location.reload()); }); }
-
     // --- PURE NETWORK COMBAT LOGIC ---
     socket.on('game_action', (data) => {
         if(data.type === 'declare_attack') { 
@@ -1115,7 +1114,7 @@
         if (isInside(e, handR)) { if(c.dataset.origZone !== 'hand-bar' && isDevMode) toHand(c); else snapBack(c); } else { snapBack(c); } 
     });
 
-    // --- ENGINE FIXES: THESE WERE MISSING FROM YOUR SCRIPT ---
+    // --- ENGINE FIXES: CORE LOOP ---
     function snapBack(c) { const orig = document.getElementById(c.dataset.origZone); if(orig) { orig.appendChild(c); c.style.position = (orig.id === 'life-zone') ? 'absolute' : 'relative'; c.style.left = '0'; c.style.top = '0'; if(orig.id === 'life-zone') updateLifePositions(); saveState(); } }
     function isInside(e, r) { return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom; }
     function toHand(c) { c.dataset.isLife="false"; c.classList.remove('card-back'); c.style.position='relative'; document.getElementById('hand-bar').appendChild(c); saveState(); }
@@ -1262,7 +1261,7 @@
         saveState();
     }
 
-    // --- SELECTION UI FIXES ---
+    // --- SELECTION TARGETING UI ---
     function startSelection(type, count, msg, onComplete, onCancel) {
         selectConfig = { type, count, onComplete, onCancel, selected: [] };
         document.getElementById('select-msg').style.display = 'flex';
@@ -1354,7 +1353,6 @@
     }
 
     function openStructuredSearch(num, traits, nameStr, addRestToHand = false, toBottom = true) {
-        // Simple search stub to prevent crashes, draws matching cards
         for (let i = 0; i < num && DECK_ARR.length > 0; i++) {
             const url = DECK_ARR.shift();
             const db = CARD_DB[url];
