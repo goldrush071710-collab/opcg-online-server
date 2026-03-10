@@ -366,7 +366,7 @@
     function prepActiveDeck() { if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false; const d = savedDecks[activeDeckIndex]; activeLobbyDeckUrlArray = [d.leader]; Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) { activeLobbyDeckUrlArray.push(url); } }); return true; }
     function setupPlayerBoardVisuals() { const board = document.getElementById('my-board'); let chosenMat = getSelectedPlaymat(); board.style.backgroundImage = `url('${chosenMat}')`; if (chosenMat.includes('WjiUDr0')) { board.classList.add('mat-white'); } else { board.classList.remove('mat-white'); } }
 
-    function startDevMode() { 
+function startDevMode() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; 
         window.locked7Plus = false; window.leaderUsedThisTurn = false; window.magellanDefensiveUsed = false; window.stussyUsedThisTurn = false;
@@ -374,36 +374,16 @@
         window.batchState.luffy6cBuffActive = false; window.batchState.extraTurnActive = false; window.batchState.blackMariaUsed = false; window.batchState.zoroFrozenDonCount = 0; window.batchState.donReturnedCount = 0; window.batchState.donReturnedThisTurn = false; window.batchState.magellanBuffActive = false; window.batchState.leaderCannotAttack = false; window.batchState.stussyRedEventBuffs = 0;
         
         setupPlayerBoardVisuals(); document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
-        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); 
+        DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
+        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
+        for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length) { const c = createCard(DECK_ARR.shift(), 0, 0, {isLife: true, isBack: true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } 
+        updateLifePositions(); 
+        for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); } 
+        refreshStats();
+        saveState();
     }
-
-    function createLobby() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
-        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); }); 
-    }
-    
-    function showJoinLobby() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
-        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; 
-    }
-    
-    function joinLobby() { 
-        socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); } else { showModal("Invalid room.", "alert"); } }); 
-    }
-    
-    function backToMain() { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; }
-    
-    function randomMatch() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
-        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; 
-        socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', activeLobbyDeckUrlArray); } else { socket.emit('deck_selected', activeLobbyDeckUrlArray); } }); 
-    }
-    
-    function copyCode() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=> { showModal("Code copied!", "alert"); }); }
-
-    // --- GAME INITIALIZATION ---
-    socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Connecting..."; });
 
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; 
@@ -412,11 +392,28 @@
         window.sotuTurnState.vinsmokeCostDiscount = 0; window.sotuTurnState.judgeGlobalPowerBuff = 0;
         window.batchState.luffy6cBuffActive = false; window.batchState.extraTurnActive = false; window.batchState.blackMariaUsed = false; window.batchState.zoroFrozenDonCount = 0; window.batchState.donReturnedCount = 0; window.batchState.donReturnedThisTurn = false; window.batchState.magellanBuffActive = false; window.batchState.leaderCannotAttack = false; window.batchState.stussyRedEventBuffs = 0;
         
-        setupPlayerBoardVisuals(); DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
-        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; for(let i=0; i<leaderLife; i++) deckToLife(); for(let i=0; i<5; i++) drawCardAction(); 
-        setTimeout(() => { showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); shuffleArray(DECK_ARR); for(let i=0; i<5; i++) drawCardAction(); socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }, () => { socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; }); }, 500);
-    });
+        setupPlayerBoardVisuals(); DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
+        createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
+        
+        const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
+        for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length) { const c = createCard(DECK_ARR.shift(), 0, 0, {isLife: true, isBack: true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } 
+        updateLifePositions(); 
+        for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); } 
+        refreshStats();
+        saveState();
 
+        setTimeout(() => { 
+            showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { 
+                document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.push(c.dataset.url); c.remove(); }); 
+                shuffleArray(DECK_ARR); 
+                for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); } 
+                refreshStats(); saveState();
+                socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; 
+            }, () => { 
+                socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; 
+            }); 
+        }, 500);
+    });
     socket.on('begin_game', () => { 
         document.getElementById('sync-overlay').style.display = 'none'; 
         isMyTurn = isFirst; if(isFirst) myTurnCount = 1; updateTurnUI(); 
@@ -1341,3 +1338,4 @@
 </script>
 </body>
 </html>
+
