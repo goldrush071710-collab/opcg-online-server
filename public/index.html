@@ -2,187 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OPCG Master Engine - Precision Tabletop</title>
+    <title>OPCG Master Engine - Precision Golden Hybrid</title>
     <style>
-        :root { 
-            /* BIG HAND CARDS */
-            --hand-card-h: 15vh; 
-            --hand-card-w: calc(var(--hand-card-h) * 0.71); 
-            
-            /* GLOBAL BOARD CARD SIZE (Controlled by Align Tool) */
-            --board-card-w: 11.5%; 
-            
-            --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c;
-            --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg');
-
-            /* DYNAMIC ALIGNMENT COORDINATES */
-            --lf-t: 6%; --lf-l: 4%; --lf-w: 11.5%; --lf-h: 60%;
-            --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%;
-            --ld-t: 40%; --ld-l: 47.8%;
-            --st-t: 40%; --st-l: 66%;
-            --dk-t: 40%; --dk-l: 84%;
-            --tr-t: 73%; --tr-l: 84%;
-            --dd-t: 73%; --dd-l: 4.5%;
-            --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%;
-        }
+        :root { --hand-card-h: 21vh; --hand-card-w: calc(var(--hand-card-h) * 0.71); --board-card-w: 11.5%; --don-card-w: 11.5%; --op-blue: #3498db; --op-gold: #f1c40f; --op-red: #e74c3c; --card-back-url: url('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg'); --lf-t: 6%; --lf-l: 4%; --lf-w: 11.5%; --lf-h: 60%; --ch-t: 5%; --ch-l: 20%; --ch-w: 62%; --ch-h: 28%; --ch-cw: 11.5%; --ld-t: 40%; --ld-l: 47.8%; --ld-w: 11.5%; --ld-h: 16.2%; --st-t: 40%; --st-l: 66%; --st-w: 11.5%; --st-h: 16.2%; --fz-t: 40%; --fz-l: 10%; --fz-w: 35%; --fz-h: 16.2%; --dk-t: 40%; --dk-l: 84%; --dk-w: 11.5%; --dk-h: 16.2%; --tr-t: 73%; --tr-l: 84%; --tr-w: 11.5%; --tr-h: 16.2%; --dd-t: 73%; --dd-l: 4.5%; --dd-w: 11.5%; --dd-h: 16.2%; --dz-t: 73%; --dz-l: 20%; --dz-w: 62%; --dz-h: 28%; --dz-cw: 11.5%; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; background-size: cover; color: #f0f0f0; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; display: flex; user-select: none; }
+        .glass-panel { background: rgba(20, 20, 25, 0.85); backdrop-filter: blur(12px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); z-index: 100; box-sizing: border-box; }
+        #left-col { width: 340px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); height: 100vh; box-sizing: border-box; }
+        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 15px; padding: 10px 20px; overflow: hidden; position: relative; }
         
-        /* THE WOOD TABLE */
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center fixed; 
-            background-size: cover;
-            color: #f0f0f0; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; 
-            display: flex; user-select: none;
-        }
-
-        /* GLASSMORPHISM PANELS */
-        .glass-panel {
-            background: rgba(20, 20, 25, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100; box-sizing: border-box;
-        }
+        /* WIDENED RIGHT COLUMN FOR PERFECT ZOOM */
+        #right-col { width: 24vw; min-width: 380px; max-width: 480px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
         
-        #left-col { width: 360px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
-        #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
-        #right-col { width: 330px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
-
-        /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
-        .board-section { 
-            aspect-ratio: 24 / 14; 
-            width: 100%; max-width: 1050px; max-height: 48vh;
-            background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
-            border-radius: 10px; border: 2px solid #000; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative;
-            background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); 
-        }
-        
+        .board-section { aspect-ratio: 24 / 14; height: 35vh; width: auto; max-width: 95%; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: transparent; border-radius: 10px; border: 2px solid #000; box-shadow: 0 15px 35px rgba(0,0,0,0.8); position: relative; background-image: url('https://i.imgur.com/SSN1DUI.jpeg'); }
         .board-section::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.15); pointer-events: none; z-index: 0; border-radius: 8px;}
+        .slot, .flex-zone { position: absolute; z-index: 1; display: flex; box-sizing: border-box; border-radius: 8px; transition: all 0.2s ease; } .slot { flex-direction: column; align-items: center; justify-content: flex-start; } .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
         
-        /* DEFAULT SUBTLE ZONES */
-        .slot, .flex-zone { 
-            position: absolute; z-index: 1; display: flex; box-sizing: border-box; 
-            border-radius: 8px; transition: all 0.2s ease;
-        }
-        .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
-        .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
-
-        /* ========================================================
-           DEV MODE VISIBILITY LIGHTS! (Triggered by 717 Code)
-           ======================================================== */
-        body.align-mode-active .slot, 
-        body.align-mode-active .flex-zone {
-            background-color: rgba(52, 152, 219, 0.3) !important; 
-            border: 2px dashed var(--op-gold) !important;
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
-        }
-
-        /* HIGHLIGHTS THE SPECIFIC ZONE YOU ARE CURRENTLY MOVING */
-        body.align-mode-active .zone-is-selected {
-            background-color: rgba(231, 76, 60, 0.5) !important;
-            border: 3px solid var(--op-red) !important;
-            box-shadow: 0 0 20px var(--op-red) !important;
-            z-index: 1000 !important;
-        }
-        /* ======================================================== */
-
-        /* DYNAMIC PLACEMENT (Driven by CSS Variables) */
-        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
-        .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
+        body.align-mode-active .slot, body.align-mode-active .flex-zone { background-color: rgba(52, 152, 219, 0.3) !important; border: 2px dashed var(--op-gold) !important; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important; } body.align-mode-active .zone-is-selected { background-color: rgba(231, 76, 60, 0.5) !important; border: 3px solid var(--op-red) !important; box-shadow: 0 0 20px var(--op-red) !important; z-index: 1000 !important; }
         
-        /* Single slots are PERMANENTLY locked to var(--board-card-w) */
-        .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--board-card-w); aspect-ratio: 71/100; }
-        .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--board-card-w); aspect-ratio: 71/100; }
-        .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
-        .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
-        .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
+        .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; } .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; } .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--ld-w); height: var(--ld-h); } .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); height: var(--st-h); } .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); height: var(--dk-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;} .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); height: var(--tr-h); background: transparent !important; border: none !important; box-shadow: none !important;} .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); height: var(--dd-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; } .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; } .franky-extra-zone { top: var(--fz-t); left: var(--fz-l); width: var(--fz-w); height: var(--fz-h); flex-direction: row-reverse; justify-content: flex-start; gap: 8px; flex-wrap: nowrap; }
         
-        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
-
-        /* PERFECT FRANKY STAGE DIAGONAL STACK */
-        .stage-zone.franky-active .card {
-            position: absolute !important; margin-left: 0;
-            box-shadow: -2px 2px 8px rgba(0,0,0,0.9);
-            transition: transform 0.2s ease, z-index 0s;
-        }
-        .stage-zone.franky-active .card:nth-child(1) { transform: translate(0, 0); z-index: 20; }
-        .stage-zone.franky-active .card:nth-child(2) { transform: translate(6px, 6px); z-index: 21; }
-        .stage-zone.franky-active .card:nth-child(3) { transform: translate(12px, 12px); z-index: 22; }
-        .stage-zone.franky-active .card:nth-child(4) { transform: translate(18px, 18px); z-index: 23; }
-        .stage-zone.franky-active .card:nth-child(5) { transform: translate(24px, 24px); z-index: 24; }
-        .stage-zone.franky-active .card:hover { z-index: 100 !important; transform: translate(25px, -15px) scale(1.15) !important; }
-
-        #opp-board { transform: rotate(180deg); }
-        #opp-board .card { transform: rotate(180deg); } 
-        #opp-board .card.rested { transform: rotate(270deg); }
-        .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
-
-        /* BOARD CARDS: Scale perfectly to match playmat zone width */
-        .board-section .card { width: var(--board-card-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
-        .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
+        #opp-board { transform: rotate(180deg); margin-top: 15px;} #opp-board .card { transform: rotate(180deg); } #opp-board .card.rested { transform: rotate(270deg); } .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
         
-        .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
+        .board-section .card { position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; } .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
+        .char-zone .card, #opp-char-zone-front .card { width: var(--ch-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;} .don-zone .card, #opp-don-zone .card { width: var(--dz-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;} .franky-extra-zone .card { width: var(--board-card-w) !important; height: 100% !important; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0; } .life-zone .card, #opp-life-zone .card { width: 100%; aspect-ratio: 71/100; height: auto; position: absolute !important; left: 0 !important; transform: none !important;} .leader-zone .card, #opp-leader-zone .card, .stage-zone .card, #opp-stage-zone .card, .drop-deck .card, #opp-drop-deck .card, .drop-trash .card, #opp-drop-trash .card, .don-deck .card, #opp-don-deck .card { width: 100%; height: auto !important; aspect-ratio: 71/100 !important; }
         
-        /* FIX: Life cards anchor flush to the Left edge! */
-        .life-zone .card { position: absolute !important; left: 0 !important; transform: none !important; z-index: 20;}
+        .card[data-is-don="true"] { cursor: pointer !important; } .card.rested { transform: rotate(90deg); filter: brightness(0.65); } .card-back { background-image: var(--card-back-url) !important; color: transparent !important; } .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; } .no-restand { outline: 3px dashed #9b59b6 !important; }
+        .power-badge { display: flex !important; position: absolute; top: -8px; right: -8px; background: #e74c3c; border: 2px solid #fff; color: white; border-radius: 12px; padding: 2px 6px; font-size: 1.3vh; font-weight: bold; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.8); } .power-badge.hidden { display: none !important; } .don-badge { display: none !important; }
+        .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; } .kw-tag { display:none; font-size:1vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); } .blocker-tag { background:#3498db; color:#fff; } .rush-tag { background:#f39c12; color:#000; } .banish-tag { background:#8e44ad; color:#fff; } .double-attack-tag { background:#e74c3c; color:#fff; }
         
-        .card[data-is-don="true"] { cursor: pointer !important; }
-        .card.rested { transform: rotate(90deg); filter: brightness(0.65); }
-        .card-back { background-image: var(--card-back-url) !important; color: transparent !important; }
+        .stat-container { display: flex; gap: 8px; margin-bottom: 5px; } .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.4vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);} .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
+        #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; } #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; color: #ddd; } #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); } #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;} #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
         
-        .frozen { outline: 4px solid #34dbdb !important; box-shadow: 0 0 20px #34dbdb !important; }
-        .no-restand { outline: 3px dashed #9b59b6 !important; }
-
-        .power-badge { display: flex !important; position: absolute; top: -8px; right: -8px; background: #e74c3c; border: 2px solid #fff; color: white; border-radius: 12px; padding: 2px 6px; font-size: 1.3vh; font-weight: bold; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 2px 5px rgba(0,0,0,0.8); }
-        .power-badge.hidden { display: none !important; }
-        .don-badge { display: none !important; }
-
-        .keyword-tags { position:absolute; bottom:-5px; right:-5px; display:flex; flex-direction:column; gap:2px; z-index:30; pointer-events:none; }
-        .kw-tag { display:none; font-size:1vh; font-weight:bold; padding:2px 4px; border:1px solid #fff; border-radius:4px; box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        .blocker-tag { background:#3498db; color:#fff; }
-        .rush-tag { background:#f39c12; color:#000; }
-        .banish-tag { background:#8e44ad; color:#fff; }
-        .double-attack-tag { background:#e74c3c; color:#fff; }
-
-        /* LEFT COLUMN */
-        .stat-container { display: flex; gap: 8px; margin-bottom: 5px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); text-align: center; font-size: 1.4vh; font-weight: bold; color: #fff; cursor: pointer; transition: 0.2s; text-shadow: 0 2px 4px #000; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
-        .stat-card:hover { border-color: var(--op-blue); background: rgba(52, 152, 219, 0.2); }
-
-        #chat-container { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; min-height: 100px; margin-bottom: 10px; }
-        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; color: #ddd; }
-        #chat-form { display: flex; height: 35px; border-top: 1px solid rgba(255,255,255,0.1); }
-        #chat-input { flex: 1; background: rgba(0,0,0,0.8); border: none; color: #fff; padding: 0 10px; font-size: 13px; outline: none;}
-        #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
-
-        #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
+        #hand-container { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; min-height: 25vh; margin-top: 10px; } #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;} #hand-bar { width: 100%; height: 100%; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 10px 20px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); gap: 15px; } #hand-bar::-webkit-scrollbar { height: 10px; } #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 5px; } #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 5px; } #hand-bar .card { position: relative !important; width: var(--hand-card-w) !important; height: var(--hand-card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s; flex-shrink: 0; } #hand-bar .card:hover { transform: scale(1.05) translateY(-10px); z-index: 100 !important;}
         
-        /* FIX: NEW HORIZONTAL SCROLLING SINGLE-ROW HAND */
-        #hand-bar { height: 26vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 10px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
-        #hand-bar::-webkit-scrollbar { height: 8px; }
-        #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        #hand-bar::-webkit-scrollbar-thumb { background: var(--op-blue); border-radius: 4px; }
-
-        #hand-bar .card { position: relative !important; width: var(--hand-card-w) !important; height: var(--hand-card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s; flex-shrink: 0;}
-        #hand-bar .card:hover { transform: scale(1.05) translateY(-5px); z-index: 100 !important;}
-
-        /* RIGHT COLUMN: INSPECTOR & END TURN */
-        #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
+        /* CARD ZOOM SET TO TOP-CENTER */
+        #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: top center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; margin-bottom: 10px; }
         
-        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;}
-        #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); }
-        #btn-end-turn:disabled { background: rgba(85,85,85,0.8) !important; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
+        #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;} #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); } #btn-end-turn:disabled { background: rgba(85,85,85,0.8) !important; color: #aaa; border-color: #444; cursor: not-allowed; box-shadow: none; transform: none; }
+        #btn-concede { width: 100%; background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; } #btn-concede:hover { background: #e74c3c; color: #fff; }
         
-        #btn-concede { width: 100%; background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        #btn-concede:hover { background: #e74c3c; color: #fff; }
-
-        /* MODALS & MENUS */
-        #context-menu { position: absolute; display: none; background: rgba(15,15,20,0.95); border: 1px solid var(--op-blue); z-index: 999999; border-radius: 6px; width: 220px; box-shadow: 0 15px 30px rgba(0,0,0,0.9); backdrop-filter: blur(5px);}
-        #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;}
-        #context-menu div:hover { background: var(--op-blue); }
-
+        #context-menu { position: absolute; display: none; background: rgba(15,15,20,0.95); border: 1px solid var(--op-blue); z-index: 999999; border-radius: 6px; width: 220px; box-shadow: 0 15px 30px rgba(0,0,0,0.9); backdrop-filter: blur(5px);} #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;} #context-menu div:hover { background: var(--op-blue); }
         #custom-modal-overlay, #sync-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(8px);}
         #custom-modal-box { background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9);}
         #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px; line-height: 1.4;}
@@ -192,22 +51,20 @@
         #home-screen { position: fixed; inset: 0; background: url('https://i.imgur.com/WLjtJv7.jpeg') no-repeat center center; background-size: cover; z-index: 999999; display: flex; align-items: center; justify-content: center; }
         #home-screen::before { content:''; position:absolute; inset:0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 0; }
         .menu-box { position: relative; z-index: 1; background: rgba(15,15,20,0.85); backdrop-filter: blur(15px); padding:40px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); width:450px; text-align: center; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 30px 60px rgba(0,0,0,0.9);}
-        
         button { font-family: 'Segoe UI', Tahoma, sans-serif; background: #333; color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1.2vh; border-radius: 6px; cursor: pointer; font-size: 1.4vh; font-weight: bold; transition: 0.2s; }
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
-        /* THE DEV ALIGNMENT TOOL UI */
-        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 320px; color: white;}
+        /* THE DEV ALIGNMENT TOOL UI (MODERNIZED) */
+        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;}
         #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
         .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
         .align-slider { width: 150px; cursor: pointer;}
 
         /* TRANSPARENT FLOATING SEARCH MODAL */
-        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 99998; justify-content: center; align-items: center; }
-        #search-modal-container { background: rgba(20,20,25,0.8); backdrop-filter: blur(20px); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
-        
+        #search-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 99998; justify-content: center; align-items: center; }
+        #search-modal-container { background: rgba(20,20,25,0.95); border: 2px solid var(--op-blue); padding: 30px; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); width: 80%; max-height: 80%; overflow-y: auto; display: flex; flex-direction: column;}
         #search-modal .card { position: relative !important; width: 14vh !important; height: auto !important; aspect-ratio: 71/100; border-radius: 8px; border: 2px solid #000; box-shadow: 0 4px 15px rgba(0,0,0,0.8); transition: transform 0.1s;}
-        #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important;}
+        #search-modal .card:hover { transform: scale(1.05); z-index: 100 !important; box-shadow: 0 0 20px var(--op-gold);}
 
         /* COMBAT & MODES */
         #combat-arrow { position: fixed; z-index: 99999; transform-origin: left center; display: none; background-image: url('https://i.imgur.com/CaL2XXy.png'); background-size: 100% 100%; height: 30px; pointer-events: none; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.8));}
@@ -221,7 +78,6 @@
         .arena-math { font-size: 18px; margin-top: 5px; color: #ccc; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 15px;}
 
         #counter-controls { display:none; position:fixed; bottom:10vh; left:50%; transform:translateX(-50%); background:rgba(15,15,20,0.95); border:2px solid var(--op-blue); padding:15px 30px; border-radius:12px; z-index:90000; align-items:center; gap:20px; box-shadow:0 20px 50px rgba(0,0,0,0.9); backdrop-filter: blur(10px);}
-        
         #select-overlay { position: fixed; inset: 0; background: rgba(231,76,60,0.15); z-index: 89999; display: none; pointer-events: none; }
         #select-msg { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); background: #e74c3c; padding: 15px 30px; font-size: 2.2vh; font-weight: bold; border-radius: 10px; z-index: 90000; display: flex; align-items: center; gap: 20px; pointer-events: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.7); border: 2px solid #fff;}
 
@@ -310,20 +166,26 @@
 <div id="align-tool">
     <h3>ALIGNMENT TOOL</h3>
     
-    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
-        <span style="color:var(--op-gold);">Card Scale %:</span> 
-        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateCardScale(this.value)"> 
+    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom:10px;">
+        <span style="color:var(--op-blue);">Standard Card Size %:</span> 
+        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('board-card-w', this.value)"> 
         <span id="val-card-w" style="width:40px; text-align:right;"></span>
+    </div>
+    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
+        <span style="color:var(--op-gold);">DON!! Card Size %:</span> 
+        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('don-card-w', this.value)"> 
+        <span id="val-don-w" style="width:40px; text-align:right;"></span>
     </div>
 
     <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
         <option value="ld">Leader Area</option>
         <option value="st">Stage Area</option>
+        <option value="fz">Franky Extra Stages</option>
         <option value="dk">Deck Area</option>
         <option value="tr">Trash Area</option>
         <option value="dd">DON!! Deck</option>
-        <option value="ch">Character Row</option>
         <option value="lf">Life Column</option>
+        <option value="ch">Character Row</option>
         <option value="dz">DON!! Area</option>
     </select>
 
@@ -331,8 +193,14 @@
     <div class="align-group"><span>Left (X) %:</span> <input type="range" class="align-slider" id="slider-l" min="0" max="100" step="0.1" oninput="updateAlign('l', this.value)"> <span id="val-l" style="width:40px; text-align:right;"></span></div>
     
     <div id="width-height-controls">
-        <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
-        <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+        <div class="align-group"><span>Box Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
+        <div class="align-group"><span>Box Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
+    </div>
+
+    <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;">
+        <span style="color:var(--op-blue);">Inner Card %:</span> 
+        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="updateAlign('cw', this.value)"> 
+        <span id="val-cw" style="width:40px; text-align:right;"></span>
     </div>
     
     <div style="margin-top:20px; display:flex; gap:5px;">
@@ -343,6 +211,7 @@
 </div>
 
 <div id="home-screen">
+    <button onclick="openAlignAuth()" style="position:absolute; bottom:20px; left:20px; background:rgba(0,0,0,0.9); color:var(--op-gold); border:2px solid var(--op-gold); font-size:14px; z-index: 99999999; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 900; box-shadow: 0 4px 15px rgba(0,0,0,0.9);">🛠 ALIGN TOOL</button>
     <div class="menu-box" id="menu-main">
         <h1 style="margin:0; color:var(--op-blue); font-size: 28px; font-style: italic; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">OPCG SIMULATOR</h1>
         
@@ -381,8 +250,6 @@
         <hr style="border-color:rgba(255,255,255,0.1); width:100%; margin: 10px 0;">
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
-
-    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
 
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
@@ -450,9 +317,6 @@
         </form>
     </div>
 
-    <div id="hand-label">Your Hand</div>
-    <div id="hand-bar" onwheel="this.scrollLeft += (event.deltaY > 0 ? 100 : -100); event.preventDefault();"></div>
-
     <div id="sidebar-manual-controls" style="display:none; margin-top:10px;">
         <button onclick="deckToLife()" style="background:#e74c3c; margin-bottom: 5px; width:100%; padding: 8px;">+1 LIFE FROM DECK</button>
         <div style="display:flex; gap:5px;">
@@ -467,6 +331,7 @@
         <div class="opp-hud">Hand: <span id="opp-hand-count">0</span> | Deck: <span id="opp-deck-count">0</span></div>
         <div id="opp-life-zone" class="slot life-zone"></div>
         <div id="opp-char-zone-front" class="flex-zone char-zone"></div>
+        <div id="opp-franky-extra-zone" class="flex-zone franky-extra-zone"></div>
         <div id="opp-leader-zone" class="slot leader-zone"></div>
         <div id="opp-stage-zone" class="slot stage-zone"></div>
         <div id="opp-drop-deck" class="slot drop-deck"></div>
@@ -478,12 +343,18 @@
     <div id="my-board" class="board-section">
         <div id="life-zone" class="slot life-zone"></div>
         <div id="char-zone-front" class="flex-zone char-zone"></div>
+        <div id="franky-extra-zone" class="flex-zone franky-extra-zone"></div>
         <div id="leader-zone" class="slot leader-zone active-zone"></div>
         <div id="stage-zone" class="slot stage-zone"></div>
         <div id="drop-deck" class="slot drop-deck card-back"></div>
         <div id="don-deck" class="slot don-deck"></div>
         <div id="don-zone" class="flex-zone don-zone"></div>
         <div id="drop-trash" class="slot drop-trash"></div>
+    </div>
+    
+    <div id="hand-container">
+        <div id="hand-label">Your Hand</div>
+        <div id="hand-bar" onwheel="this.scrollLeft += (event.deltaY > 0 ? 100 : -100); event.preventDefault();"></div>
     </div>
 </div>
 
@@ -499,6 +370,7 @@
 <div id="context-menu"></div>
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
+
 <script>
     const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
@@ -518,6 +390,17 @@
     window.sanjiUsedThisTurn = false; 
     window.rogerBuffActive = false; window.rogerBuffExpiresTurn = 0;
     window.tempSearchCallback = null; window.locked7Plus = false; window.stussyUsedThisTurn = false;
+
+    // --- ALIGN TOOL LOGIC ---
+    let savedAlign = JSON.parse(localStorage.getItem('opcg_align') || "{}"); for (const [key, val] of Object.entries(savedAlign)) { document.documentElement.style.setProperty(key, val); }
+    socket.on('global_align_update', (alignData) => { if (alignData && Object.keys(alignData).length > 0) { savedAlign = alignData; localStorage.setItem('opcg_align', JSON.stringify(savedAlign)); for (const [key, val] of Object.entries(savedAlign)) { document.documentElement.style.setProperty(key, val); } } });
+    function openAlignAuth() { showModal("Enter Developer Code:", "prompt", (val) => { if (val === "717") { document.getElementById('home-screen').style.display = 'none'; document.body.classList.add('align-mode-active'); document.getElementById('align-tool').style.display = 'block'; createCard('https://i.imgur.com/TwmysAX.png', 0, 0, {zone: 'leader-zone'}); createCard('https://i.imgur.com/2lEVHJP.png', 0, 0, {zone: 'char-zone-front'}); createCard('https://i.imgur.com/KdMSz8v.png', 0, 0, {zone: 'stage-zone'}); createCard(DON_URL, 0, 0, {zone: 'don-zone'}); const lf = createCard('https://m.media-amazon.com/images/I/51xnq29+enL._AC_.jpg', 0, 0, {zone: 'life-zone'}); lf.style.position = 'absolute'; loadZoneAlign(); } else { showModal("Access Denied.", "alert"); } }); }
+    function closeAlignTool() { window.location.reload(); }
+    function loadZoneAlign() { const zoneId = document.getElementById('align-zone').value; const targetIds = { 'ld': 'leader-zone', 'st': 'stage-zone', 'fz': 'franky-extra-zone', 'dk': 'drop-deck', 'tr': 'drop-trash', 'dd': 'don-deck', 'lf': 'life-zone', 'ch': 'char-zone-front', 'dz': 'don-zone' }; const target = document.getElementById(targetIds[zoneId]); document.querySelectorAll('.zone-is-selected').forEach(z => z.classList.remove('zone-is-selected')); if(target) target.classList.add('zone-is-selected'); const rs = getComputedStyle(document.documentElement); document.getElementById('slider-t').value = parseFloat(rs.getPropertyValue(`--${zoneId}-t`)) || 0; document.getElementById('slider-l').value = parseFloat(rs.getPropertyValue(`--${zoneId}-l`)) || 0; document.getElementById('slider-w').value = parseFloat(rs.getPropertyValue(`--${zoneId}-w`)) || 0; document.getElementById('slider-h').value = parseFloat(rs.getPropertyValue(`--${zoneId}-h`)) || 0; document.getElementById('val-t').innerText = document.getElementById('slider-t').value + "%"; document.getElementById('val-l').innerText = document.getElementById('slider-l').value + "%"; document.getElementById('val-w').innerText = document.getElementById('slider-w').value + "%"; document.getElementById('val-h').innerText = document.getElementById('slider-h').value + "%"; const innerCtrl = document.getElementById('inner-card-control'); if (['ch', 'dz'].includes(zoneId)) { innerCtrl.style.display = 'flex'; document.getElementById('slider-cw').value = parseFloat(rs.getPropertyValue(`--${zoneId}-cw`)) || 11.5; document.getElementById('val-cw').innerText = document.getElementById('slider-cw').value + "%"; } else { innerCtrl.style.display = 'none'; } document.getElementById('slider-card-w').value = parseFloat(rs.getPropertyValue('--board-card-w')) || 11.5; document.getElementById('val-card-w').innerText = document.getElementById('slider-card-w').value + "%"; document.getElementById('slider-don-w').value = parseFloat(rs.getPropertyValue('--don-card-w')) || 11.5; document.getElementById('val-don-w').innerText = document.getElementById('slider-don-w').value + "%"; }
+    function updateAlign(prop, val) { const zoneId = document.getElementById('align-zone').value; document.documentElement.style.setProperty(`--${zoneId}-${prop}`, val + '%'); document.getElementById(`val-${prop}`).innerText = val + "%"; savedAlign[`--${zoneId}-${prop}`] = val + '%'; }
+    function updateGlobalSize(prop, val) { document.documentElement.style.setProperty(`--${prop}`, val + '%'); const displayId = prop === 'board-card-w' ? 'val-card-w' : 'val-don-w'; document.getElementById(displayId).innerText = val + "%"; savedAlign[`--${prop}`] = val + '%'; }
+    function saveAlign() { localStorage.setItem('opcg_align', JSON.stringify(savedAlign)); socket.emit('game_action', {type: 'global_align_update', alignData: savedAlign}); showModal("Alignment Saved & Synced!", "alert"); }
+    function resetAlign() { showModal("Reset all alignment to default?", "confirm", () => { savedAlign = {}; localStorage.removeItem('opcg_align'); window.location.reload(); }); }
 
     const CARD_DB = {
         // --- FRANKY CORE (Red/Purple) ---
@@ -561,7 +444,6 @@
         "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
         "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
     };
-
     // --- DECK BUILDER LOGIC ---
     function getColorCode(c) { const map = {"Red":"#e74c3c", "Purple":"#8e44ad", "Green":"#2ecc71", "Yellow":"#f1c40f"}; return map[c] || "#fff"; }
     function openDeckBuilder() { document.getElementById('home-screen').style.display = 'none'; document.getElementById('deck-builder-screen').style.display = 'flex'; editingDeck = { name: "New Deck", leader: null, main: {} }; document.getElementById('db-name').value = ""; clearLeader(); }
