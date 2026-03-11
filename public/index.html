@@ -47,9 +47,7 @@
         
         #left-col { width: 360px; display: flex; flex-direction: column; padding: 15px; gap: 10px; border-right: 2px solid rgba(255,255,255,0.1); }
         #center-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 10px; overflow: hidden; position: relative; }
-        
-        /* WIDENED RIGHT COLUMN FOR ZOOM */
-        #right-col { width: 24vw; min-width: 380px; max-width: 480px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
+        #right-col { width: 330px; display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 2px solid rgba(255,255,255,0.1); align-items: center; justify-content: space-between; }
 
         /* PRECISE PLAYMAT ALIGNMENT SYSTEM */
         .board-section { 
@@ -71,7 +69,9 @@
         .slot { flex-direction: column; align-items: center; justify-content: flex-start; }
         .flex-zone { flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; }
 
-        /* DEV MODE VISIBILITY LIGHTS */
+        /* ========================================================
+           DEV MODE VISIBILITY LIGHTS! (Triggered by 717 Code)
+           ======================================================== */
         body.align-mode-active .slot, 
         body.align-mode-active .flex-zone {
             background-color: rgba(52, 152, 219, 0.3) !important; 
@@ -79,29 +79,29 @@
             box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
         }
 
+        /* HIGHLIGHTS THE SPECIFIC ZONE YOU ARE CURRENTLY MOVING */
         body.align-mode-active .zone-is-selected {
             background-color: rgba(231, 76, 60, 0.5) !important;
             border: 3px solid var(--op-red) !important;
             box-shadow: 0 0 20px var(--op-red) !important;
             z-index: 1000 !important;
         }
+        /* ======================================================== */
 
-        /* DYNAMIC PLACEMENT */
+        /* DYNAMIC PLACEMENT (Driven by CSS Variables) */
         .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; }
         .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; }
         
+        /* Single slots are PERMANENTLY locked to var(--board-card-w) */
         .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--board-card-w); aspect-ratio: 71/100; }
         .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--board-card-w); aspect-ratio: 71/100; }
         .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;}
         .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--board-card-w); aspect-ratio: 71/100; background: transparent !important; border: none !important; box-shadow: none !important;}
         .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--board-card-w); aspect-ratio: 71/100; background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; }
         
-        /* THE OVERLAPPING DON ZONE FIX */
-        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; gap: 0 !important; padding-left: 10px; }
-        .don-zone .card, #opp-don-zone .card { margin-left: -5vw !important; box-shadow: -2px 2px 6px rgba(0,0,0,0.8); z-index: 10; transition: transform 0.2s, z-index 0s, margin 0.2s !important; }
-        .don-zone .card:first-child, #opp-don-zone .card:first-child { margin-left: 0 !important; }
-        .don-zone .card:hover, #opp-don-zone .card:hover { transform: translateY(-15px) !important; z-index: 100 !important; }
+        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: flex-start; justify-content: flex-start; }
 
+        /* PERFECT FRANKY STAGE DIAGONAL STACK */
         .stage-zone.franky-active .card {
             position: absolute !important; margin-left: 0;
             box-shadow: -2px 2px 8px rgba(0,0,0,0.9);
@@ -119,13 +119,13 @@
         #opp-board .card.rested { transform: rotate(270deg); }
         .opp-hud { position: absolute; bottom: -30px; right: 10px; background: rgba(192, 57, 43, 0.9); padding: 5px 15px; border-radius: 6px; font-weight: bold; font-size: 1.3vh; color: #fff; z-index: 50; transform: rotate(180deg); box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
 
-        /* BOARD CARDS CSS (Restored to exact Golden Age spec) */
+        /* BOARD CARDS: Scale perfectly to match playmat zone width */
         .board-section .card { width: var(--board-card-w); height: auto; aspect-ratio: 71/100; position: absolute; background-size: 100% 100%; border-radius: 6px; border: 1px solid #111; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); z-index: 20; transition: transform 0.2s ease, filter 0.2s, box-shadow 0.2s; background-color: #222; }
         .card:hover { box-shadow: 0 0 15px var(--op-gold); z-index: 100 !important; }
         
-        .char-zone .card, #opp-char-zone-front .card { width: var(--ch-cw); aspect-ratio: 71/100; height: auto; position: relative !important; left: 0 !important; top: 0 !important; flex-shrink: 0;}
-        .don-zone .card, #opp-don-zone .card { width: var(--dz-cw); aspect-ratio: 71/100; height: auto; position: relative !important; top: 0 !important; flex-shrink: 0;}
+        .flex-zone .card:not([data-is-don="true"]) { position: relative !important; left: 0 !important; top: 0 !important; z-index: 20 !important; flex-shrink: 0; }
         
+        /* FIX: Life cards anchor flush to the Left edge! */
         .life-zone .card { position: absolute !important; left: 0 !important; transform: none !important; z-index: 20;}
         
         .card[data-is-don="true"] { cursor: pointer !important; }
@@ -158,6 +158,8 @@
         #chat-btn { background: var(--op-blue); border: none; color: #fff; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 13px; }
 
         #hand-label { font-weight: 900; color: var(--op-gold); text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-size: 16px; text-shadow: 0 2px 4px #000;}
+        
+        /* FIX: NEW HORIZONTAL SCROLLING SINGLE-ROW HAND */
         #hand-bar { height: 26vh; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: flex-start; padding: 15px; gap: 10px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);}
         #hand-bar::-webkit-scrollbar { height: 8px; }
         #hand-bar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
@@ -166,8 +168,8 @@
         #hand-bar .card { position: relative !important; width: var(--hand-card-w) !important; height: var(--hand-card-h) !important; border-radius: 6px; border: 1px solid #000; box-shadow: 2px 4px 8px rgba(0,0,0,0.7); background-size: 100% 100%; transition: transform 0.1s; flex-shrink: 0;}
         #hand-bar .card:hover { transform: scale(1.05) translateY(-5px); z-index: 100 !important;}
 
-        /* RIGHT COLUMN */
-        #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: top center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
+        /* RIGHT COLUMN: INSPECTOR & END TURN */
+        #right-col-inspector { width: 100%; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; border-radius: 12px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: background-image 0.2s; background-image: var(--card-back-url); border: 2px solid transparent; }
         
         #btn-end-turn { width: 100%; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #000; font-size: 2.2vh; font-weight: 900; padding: 15px; border-radius: 10px; border: 2px solid #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,0,0,0.6); transition: 0.2s; margin-top: 10px;}
         #btn-end-turn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 8px 20px rgba(241, 196, 15, 0.6); }
@@ -176,22 +178,12 @@
         #btn-concede { width: 100%; background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         #btn-concede:hover { background: #e74c3c; color: #fff; }
 
-        /* NEW OP SIM STYLE ACTION UI */
-        #action-ui-container { display:none; position:fixed; bottom: 15vh; right: 26vw; z-index: 99999; flex-direction: column; align-items: flex-end; gap: 5px; pointer-events: auto; }
-        #action-ui-title { background: rgba(0,0,0,0.9); border: 2px solid #b58945; color: #fff; padding: 8px 15px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: none; text-align: right; min-width: 200px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.8);}
-        #action-ui-buttons { display: flex; flex-direction: column; gap: 5px; width: 100%; align-items: flex-end; }
-        .action-btn { background: #dfc8a3; color: #000; padding: 10px 20px; border: 2px solid #5c4018; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; text-align: right; font-size: 16px; transition: 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        .action-btn:hover { background: #f5e2c2; border-color: #8e652a; transform: scale(1.02); }
-
         /* MODALS & MENUS */
         #context-menu { position: absolute; display: none; background: rgba(15,15,20,0.95); border: 1px solid var(--op-blue); z-index: 999999; border-radius: 6px; width: 220px; box-shadow: 0 15px 30px rgba(0,0,0,0.9); backdrop-filter: blur(5px);}
         #context-menu div { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 1.3vh; font-weight: bold; transition: background 0.1s;}
         #context-menu div:hover { background: var(--op-blue); }
 
-        /* MULLIGAN NO BLUR FIX */
-        #custom-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999999; justify-content:center; align-items:center; flex-direction:column; }
-        #sync-overlay { display:none; position:fixed; top:35%; left:50%; transform:translate(-50%, -50%); background:rgba(20,20,25,0.95); padding: 30px 60px; border: 2px solid var(--op-gold); border-radius: 12px; z-index:9999999; font-size: 24px; font-weight: bold; box-shadow: 0 20px 50px rgba(0,0,0,1); letter-spacing: 2px; }
-        
+        #custom-modal-overlay, #sync-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(8px);}
         #custom-modal-box { background: linear-gradient(135deg, #1a1a2e, #16213e); padding:30px; border-radius:15px; border:2px solid var(--op-blue); width:450px; text-align:center; box-shadow: 0 25px 60px rgba(0,0,0,0.9);}
         #custom-modal-msg { margin-top:0; font-size: 18px; color: #fff; margin-bottom: 20px; line-height: 1.4;}
         #custom-modal-input { width:80%; padding:12px; margin-bottom:20px; text-align:center; background:rgba(0,0,0,0.6); color:#fff; border:1px solid var(--op-blue); font-size: 16px; border-radius: 6px;}
@@ -205,7 +197,7 @@
         button:hover { background: var(--op-blue); border-color: #fff; transform: translateY(-1px); }
 
         /* THE DEV ALIGNMENT TOOL UI */
-        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 340px; color: white;}
+        #align-tool { display:none; position:fixed; top:20px; left:20px; background:rgba(20,20,25,0.95); backdrop-filter: blur(10px); border:2px solid var(--op-gold); padding:20px; z-index:999999; border-radius:12px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); width: 320px; color: white;}
         #align-tool h3 { margin: 0 0 15px 0; color: var(--op-gold); text-align: center; font-size: 20px; text-transform: uppercase; }
         .align-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; font-weight: bold;}
         .align-slider { width: 150px; cursor: pointer;}
@@ -260,6 +252,15 @@
         
         .color-dots { display:flex; gap:6px; margin-bottom:10px; justify-content:center; } 
         .color-dot { width:16px; height:16px; border-radius:50%; border:1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        /* --- OP SIM NEW ADDITIONS ONLY --- */
+        .don-zone { gap: 0 !important; padding-left: 10px; }
+        .don-zone .card, #opp-don-zone .card { margin-left: -5.5vw !important; box-shadow: -2px 2px 6px rgba(0,0,0,0.8) !important; transition: transform 0.2s, z-index 0s, margin 0.2s !important; }
+        .don-zone .card:first-child, #opp-don-zone .card:first-child { margin-left: 0 !important; }
+        .don-zone .card:hover, #opp-don-zone .card:hover { transform: translateY(-15px) !important; z-index: 100 !important; }
+        
+        .action-btn { background: #dfc8a3; color: #000; padding: 10px 20px; border: 2px solid #5c4018; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; text-align: right; font-size: 16px; transition: 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .action-btn:hover { background: #f5e2c2; border-color: #8e652a; transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -267,11 +268,6 @@
 <div id="sync-overlay">WAITING FOR OPPONENT...</div>
 <div id="combat-arrow"></div>
 <div id="turn-indicator"></div>
-
-<div id="action-ui-container" style="display:none; position:fixed; bottom: 20vh; right: 26vw; z-index: 99999; flex-direction: column; align-items: flex-end; gap: 5px;">
-    <div id="action-ui-title" style="background: rgba(0,0,0,0.9); border: 2px solid #b58945; color: #fff; padding: 8px 15px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: none; text-align: right; min-width: 200px;"></div>
-    <div id="action-ui-buttons" style="display: flex; flex-direction: column; gap: 5px; width: 100%; align-items: flex-end;"></div>
-</div>
 
 <div id="visual-decklist-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,10,15,0.98); z-index:9999999; flex-direction:column; padding: 40px; overflow-y:auto; box-sizing: border-box; backdrop-filter: blur(15px);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid var(--op-blue); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
@@ -320,20 +316,13 @@
     </div>
 </div>
 
-<button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none; z-index: 99999999;">🛠 Align</button>
-
 <div id="align-tool">
     <h3>ALIGNMENT TOOL</h3>
     
-    <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:10px; margin-bottom:10px;">
-        <span style="color:var(--op-blue);">Standard Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('board-card-w', this.value)"> 
-        <span id="val-card-w" style="width:40px; text-align:right;"></span>
-    </div>
     <div class="align-group" style="border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:15px; margin-bottom:15px;">
-        <span style="color:var(--op-gold);">DON!! Card Size %:</span> 
-        <input type="range" class="align-slider" id="slider-don-w" min="5" max="25" step="0.1" oninput="updateGlobalSize('don-card-w', this.value)"> 
-        <span id="val-don-w" style="width:40px; text-align:right;"></span>
+        <span style="color:var(--op-gold);">Card Scale %:</span> 
+        <input type="range" class="align-slider" id="slider-card-w" min="5" max="25" step="0.1" oninput="updateCardScale(this.value)"> 
+        <span id="val-card-w" style="width:40px; text-align:right;"></span>
     </div>
 
     <select id="align-zone" onchange="loadZoneAlign()" style="width:100%; padding:10px; margin-bottom:15px; background:#000; color:var(--op-gold); border:1px solid #555; border-radius:6px; outline:none; font-weight:bold;">
@@ -353,12 +342,6 @@
     <div id="width-height-controls">
         <div class="align-group"><span>Width %:</span> <input type="range" class="align-slider" id="slider-w" min="5" max="100" step="0.1" oninput="updateAlign('w', this.value)"> <span id="val-w" style="width:40px; text-align:right;"></span></div>
         <div class="align-group"><span>Height %:</span> <input type="range" class="align-slider" id="slider-h" min="5" max="100" step="0.1" oninput="updateAlign('h', this.value)"> <span id="val-h" style="width:40px; text-align:right;"></span></div>
-    </div>
-
-    <div class="align-group" id="inner-card-control" style="display:none; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px; margin-top:10px;">
-        <span style="color:var(--op-blue);">Inner Card %:</span> 
-        <input type="range" class="align-slider" id="slider-cw" min="5" max="30" step="0.1" oninput="updateAlign('cw', this.value)"> 
-        <span id="val-cw" style="width:40px; text-align:right;"></span>
     </div>
     
     <div style="margin-top:20px; display:flex; gap:5px;">
@@ -408,6 +391,8 @@
         <button onclick="startDevMode()" style="background:#8e44ad; padding:12px; font-size:14px;">SOLO / TEST DECK</button>
     </div>
 
+    <button onclick="openAlignAuth()" style="position:absolute; bottom:10px; left:10px; background:transparent; color:rgba(255,255,255,0.4); border:none; font-size:12px; box-shadow:none;">🛠 Align</button>
+
     <div class="menu-box" id="menu-join" style="display:none;">
         <h2 style="margin:0; color:#e67e22; font-size: 24px;">JOIN LOBBY</h2>
         <input type="text" id="room-code-input" placeholder="ENTER 4-LETTER CODE" style="padding:12px; font-size:20px; text-align:center; text-transform:uppercase; background:rgba(0,0,0,0.8); color:#fff; border:1px solid #555; border-radius: 6px;">
@@ -442,6 +427,16 @@
         </div>
         <button onclick="importDeck()" style="background:#8e44ad; padding:12px;">IMPORT STRING</button>
         <button onclick="closeDeckBuilder()" style="background:#e74c3c; padding:12px;">EXIT TO MENU</button>
+    </div>
+</div>
+
+<div id="search-modal">
+    <div id="search-modal-container">
+        <div style="display:flex; width: 100%; justify-content:space-between; margin-bottom:20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px;">
+            <h2 id="insp-title" style="margin:0; color:var(--op-blue); font-size: 28px;">Search / Inspect</h2>
+            <button onclick="closeInspector()" style="background:#c0392b; padding:10px 30px; font-size: 16px;">CLOSE</button>
+        </div>
+        <div id="insp-grid" style="display:flex; flex-wrap: wrap; gap: 15px; width: 100%; justify-content: center;"></div>
     </div>
 </div>
 
@@ -510,10 +505,14 @@
     </div>
 </div>
 
+<div id="action-ui-container" style="display:none; position:fixed; bottom: 20vh; right: 26vw; z-index: 99999; flex-direction: column; align-items: flex-end; gap: 5px;">
+    <div id="action-ui-title" style="background: rgba(0,0,0,0.9); border: 2px solid #b58945; color: #fff; padding: 8px 15px; border-radius: 4px; font-weight: bold; margin-bottom: 5px; display: none; text-align: right; min-width: 200px;"></div>
+    <div id="action-ui-buttons" style="display: flex; flex-direction: column; gap: 5px; width: 100%; align-items: flex-end;"></div>
+</div>
+
 <div id="context-menu"></div>
 <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
 <script src="/socket.io/socket.io.js"></script>
-
 <script>
     const socket = io(); 
     const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
@@ -570,8 +569,6 @@
         "https://i.imgur.com/PxaLb4K.jpeg": { name: "Dracule Mihawk (8c)", type: "Character", color: ["Green"], cost: 8, power: 8000, counter: 0, traits: ["Seven Warlords", "Muggy Kingdom"], blocker: true, hasOnPlay: true },
         "https://i.imgur.com/3L6BkzS.jpeg": { name: "Dracule Mihawk (9c)", type: "Character", color: ["Green"], cost: 9, power: 10000, counter: 0, traits: ["Seven Warlords"] },
         "https://i.imgur.com/i9ZX3rY.jpeg": { name: "Hattori", type: "Character", color: ["Green"], cost: 1, power: 0, counter: 2000, traits: ["CP0"], hasMain: true, hasTrigger: true },
-        
-        // --- NEW CARDS ---
         "https://imgur.com/I37Ygrt.png": { name: "Spandam", type: "Character", color: ["Green"], cost: 5, power: 3000, counter: 0, traits: ["CP0"], blocker: true, hasOnPlay: true, hasTrigger: true },
         "https://imgur.com/kAk6O5c.png": { name: "Charlotte Katakuri", type: "Character", color: ["Yellow"], cost: 4, power: 6000, counter: 0, traits: ["Big Mom Pirates"], hasOnPlay: true },
         "https://imgur.com/Z4SfFla.png": { name: "S-Snake", type: "Character", color: ["Yellow"], cost: 4, power: 5000, counter: 1000, traits: ["Egghead", "Seraphim"], hasOnPlay: true, hasTrigger: true }
@@ -597,35 +594,20 @@
         showModal("Deck Saved!", "alert", () => closeDeckBuilder()); 
     }
     function closeDeckBuilder() { document.getElementById('deck-builder-screen').style.display = 'none'; document.getElementById('home-screen').style.display = 'flex'; renderHomeDecks(); }
-    function importDeck() { window.showModal("Paste deck string:", "prompt", (val) => { try { editingDeck = JSON.parse(atob(val)); document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool(); } catch(e) { showModal("Invalid string.", "alert"); } }); }
+    function importDeck() { showModal("Paste deck string:", "prompt", (val) => { try { editingDeck = JSON.parse(atob(val)); document.getElementById('db-name').value = editingDeck.name; renderDeckList(); updateDeckBuilderPool(); } catch(e) { showModal("Invalid string.", "alert"); } }); }
 
-    // --- MAIN MENU DECK MANAGEMENT & PLAYMAT ---
     function renderHomeDecks() {
-        const list = document.getElementById('home-deck-list');
-        list.innerHTML = '';
+        const list = document.getElementById('home-deck-list'); list.innerHTML = '';
         if (savedDecks.length === 0) { list.innerHTML = "<span style='color:#777; font-style:italic;'>No decks saved. Create one!</span>"; return; }
         savedDecks.forEach((d, i) => {
-            const div = document.createElement('div');
-            div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center";
-            div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "rgba(255,255,255,0.05)";
-            div.style.border = "1px solid rgba(255,255,255,0.1)"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
-
+            const div = document.createElement('div'); div.style.display = "flex"; div.style.justifyContent = "space-between"; div.style.alignItems = "center"; div.style.padding = "8px"; div.style.background = (activeDeckIndex === i) ? "var(--op-blue)" : "rgba(255,255,255,0.05)"; div.style.border = "1px solid rgba(255,255,255,0.1)"; div.style.borderRadius = "4px"; div.style.cursor = "pointer";
             const nameSpan = document.createElement('span'); nameSpan.innerText = d.name; nameSpan.style.fontWeight = "bold"; nameSpan.style.flex = "1";
             nameSpan.onclick = () => { activeDeckIndex = i; renderHomeDecks(); };
-
             const btnContainer = document.createElement('div'); btnContainer.style.display = "flex"; btnContainer.style.gap = "5px";
-
-            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px";
-            editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
-
-            const listBtn = document.createElement('button'); listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad";
-            listBtn.onclick = (e) => { e.stopPropagation(); showVisualDecklist(i); };
-
-            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c";
-            delBtn.onclick = (e) => { e.stopPropagation(); window.showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
-
-            btnContainer.appendChild(editBtn); btnContainer.appendChild(listBtn); btnContainer.appendChild(delBtn);
-            div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
+            const editBtn = document.createElement('button'); editBtn.innerText = "EDIT"; editBtn.style.padding = "5px"; editBtn.style.fontSize = "10px"; editBtn.onclick = (e) => { e.stopPropagation(); editSavedDeck(i); };
+            const listBtn = document.createElement('button'); listBtn.innerText = "LIST"; listBtn.style.padding = "5px"; listBtn.style.fontSize = "10px"; listBtn.style.background = "#8e44ad"; listBtn.onclick = (e) => { e.stopPropagation(); showVisualDecklist(i); };
+            const delBtn = document.createElement('button'); delBtn.innerText = "X"; delBtn.style.padding = "5px"; delBtn.style.fontSize = "10px"; delBtn.style.background = "#e74c3c"; delBtn.onclick = (e) => { e.stopPropagation(); showModal("Delete this deck?", "confirm", () => { savedDecks.splice(i, 1); localStorage.setItem('opcg_decks', JSON.stringify(savedDecks)); if (activeDeckIndex === i) activeDeckIndex = -1; else if (activeDeckIndex > i) activeDeckIndex--; renderHomeDecks(); }); };
+            btnContainer.appendChild(editBtn); btnContainer.appendChild(listBtn); btnContainer.appendChild(delBtn); div.appendChild(nameSpan); div.appendChild(btnContainer); list.appendChild(div);
         });
         if (activeDeckIndex === -1 && savedDecks.length > 0) { activeDeckIndex = 0; renderHomeDecks(); }
     }
@@ -637,93 +619,46 @@
     }
 
     function showVisualDecklist(index) {
-        const d = savedDecks[index];
-        document.getElementById('visual-decklist-title').innerText = d.name;
-        const cont = document.getElementById('visual-decklist-content');
-        cont.innerHTML = '';
-        
-        const leaderArr = [d.leader];
-        const chars = []; const events = []; const stages = [];
-        let total = 0;
-        
-        Object.keys(d.main).forEach(url => {
-            total += d.main[url];
-            if(CARD_DB[url]?.type === 'Character') chars.push({url, count: d.main[url]});
-            else if(CARD_DB[url]?.type === 'Event') events.push({url, count: d.main[url]});
-            else if(CARD_DB[url]?.type === 'Stage') stages.push({url, count: d.main[url]});
-        });
+        const d = savedDecks[index]; document.getElementById('visual-decklist-title').innerText = d.name;
+        const cont = document.getElementById('visual-decklist-content'); cont.innerHTML = ''; 
+        const leaderArr = [d.leader]; const chars = []; const events = []; const stages = []; let total = 0; 
+        Object.keys(d.main).forEach(url => { total += d.main[url]; if(CARD_DB[url]?.type === 'Character') chars.push({url, count: d.main[url]}); else if(CARD_DB[url]?.type === 'Event') events.push({url, count: d.main[url]}); else if(CARD_DB[url]?.type === 'Stage') stages.push({url, count: d.main[url]}); });
 
         const createSection = (title, items) => {
             if(items.length === 0) return;
-            const sec = document.createElement('div');
-            sec.innerHTML = `<h2 style="color:var(--op-blue); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h2>`;
-            const grid = document.createElement('div');
-            grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '15px';
+            const sec = document.createElement('div'); sec.innerHTML = `<h2 style="color:var(--op-blue); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;">${title}</h2>`;
+            const grid = document.createElement('div'); grid.style.display = 'flex'; grid.style.flexWrap = 'wrap'; grid.style.gap = '15px';
             items.forEach(item => {
                 const url = item.url || item; const count = item.count || 1;
-                const wrap = document.createElement('div');
-                wrap.style.position = 'relative'; wrap.style.width = '120px'; wrap.style.height = '168px';
-                wrap.style.backgroundImage = `url('${url}')`; wrap.style.backgroundSize = '100% 100%'; wrap.style.borderRadius = '8px';
-                wrap.style.cursor = 'pointer';
+                const wrap = document.createElement('div'); wrap.style.position = 'relative'; wrap.style.width = '120px'; wrap.style.height = '168px'; wrap.style.backgroundImage = `url('${url}')`; wrap.style.backgroundSize = '100% 100%'; wrap.style.borderRadius = '8px'; wrap.style.cursor = 'pointer';
                 wrap.onclick = () => { document.getElementById('zoom-img').src = url; document.getElementById('zoom-overlay').style.display = 'flex'; };
-                if(title !== 'Leader') {
-                    wrap.innerHTML = `<div style="position:absolute; bottom:-10px; right:-10px; background:#e74c3c; color:#fff; padding:5px 10px; border-radius:50%; font-weight:bold; border:2px solid #fff; font-size:16px;">x${count}</div>`;
-                }
+                if(title !== 'Leader') { wrap.innerHTML = `<div style="position:absolute; bottom:-10px; right:-10px; background:#e74c3c; color:#fff; padding:5px 10px; border-radius:50%; font-weight:bold; border:2px solid #fff; font-size:16px;">x${count}</div>`; }
                 grid.appendChild(wrap);
             });
             sec.appendChild(grid); cont.appendChild(sec);
         };
-
         createSection('Leader', leaderArr); createSection('Characters', chars); createSection('Events', events); createSection('Stages', stages);
-
-        document.getElementById('btn-copy-deck-text').onclick = () => {
-            let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown'}\n\n`; 
-            Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name} x${d.main[url]}\n`; });
-            text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => showModal("Decklist copied to clipboard!", "alert"));
-        };
+        document.getElementById('btn-copy-deck-text').onclick = () => { let text = `Deck: ${d.name}\nLeader: ${CARD_DB[d.leader]?.name || 'Unknown'}\n\n`; Object.keys(d.main).forEach(url => { text += `${CARD_DB[url]?.name} x${d.main[url]}\n`; }); text += `\nTotal: ${total}/50`; navigator.clipboard.writeText(text).then(() => showModal("Decklist copied to clipboard!", "alert")); };
         document.getElementById('visual-decklist-overlay').style.display = 'flex';
     }
 
     window.onload = () => { renderHomeDecks(); };
 
     // --- LOBBY LOGIC ---
-    function getSelectedPlaymat() {
-        const sel = document.getElementById('playmat-selector');
-        return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg';
-    }
-
-    function prepActiveDeck() {
-        if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false;
-        const d = savedDecks[activeDeckIndex];
-        activeLobbyDeckUrlArray = [d.leader]; 
-        Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) activeLobbyDeckUrlArray.push(url); });
-        return true;
-    }
-
+    function getSelectedPlaymat() { const sel = document.getElementById('playmat-selector'); return sel ? sel.value : 'https://i.imgur.com/SSN1DUI.jpeg'; }
+    function prepActiveDeck() { if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false; const d = savedDecks[activeDeckIndex]; activeLobbyDeckUrlArray = [d.leader]; Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) activeLobbyDeckUrlArray.push(url); }); return true; }
     function setupPlayerBoardVisuals(leaderUrl) {
         const isFranky = CARD_DB[leaderUrl] && CARD_DB[leaderUrl].name === "Franky";
-        const board = document.getElementById('my-board');
-        let chosenMat = getSelectedPlaymat();
-
-        if(isFranky) {
-            chosenMat = "https://i.imgur.com/SSN1DUI.jpeg"; // Force Yellow OP Sim
-            document.getElementById('stage-zone').classList.add('franky-active');
-            if(document.getElementById('playmat-selector')) document.getElementById('playmat-selector').value = chosenMat;
-        } else {
-            document.getElementById('stage-zone').classList.remove('franky-active');
-        }
-
-        board.style.backgroundImage = `url('${chosenMat}')`;
-        if (chosenMat.includes('WjiUDr0')) board.classList.add('mat-white');
-        else board.classList.remove('mat-white');
+        const board = document.getElementById('my-board'); let chosenMat = getSelectedPlaymat();
+        if(isFranky) { chosenMat = "https://i.imgur.com/SSN1DUI.jpeg"; document.getElementById('stage-zone').classList.add('franky-active'); if(document.getElementById('playmat-selector')) document.getElementById('playmat-selector').value = chosenMat; } 
+        else { document.getElementById('stage-zone').classList.remove('franky-active'); }
+        board.style.backgroundImage = `url('${chosenMat}')`; if (chosenMat.includes('WjiUDr0')) board.classList.add('mat-white'); else board.classList.remove('mat-white');
     }
 
     function startDevMode() { 
         if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
         isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; window.locked7Plus = false; window.stussyUsedThisTurn = false;
-        
         setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
-
         document.getElementById('home-screen').style.display = 'none'; document.getElementById('sidebar-manual-controls').style.display = 'block'; 
         DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
         createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); 
@@ -732,42 +667,25 @@
         for(let i=0; i<5; i++) drawCardAction(); 
     }
 
-    function createLobby() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
-        socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }); 
-    }
-    function showJoinLobby() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
-        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; 
-    }
+    function createLobby() { if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } socket.emit('create_room', (res) => { document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = res.roomId; document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); }); }
+    function showJoinLobby() { if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-join').style.display = 'block'; }
     function joinLobby() { socket.emit('join_room', document.getElementById('room-code-input').value.trim(), (res) => { if(res.success) { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('display-room-code').innerText = document.getElementById('room-code-input').value.trim(); document.getElementById('lobby-status').innerText = "Waiting for opponent..."; socket.emit('deck_selected', "custom"); } else { showModal("Invalid room.", "alert"); } }); }
     function backToMain() { document.getElementById('menu-join').style.display = 'none'; document.getElementById('menu-main').style.display = 'block'; }
-    function randomMatch() { 
-        if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; }
-        document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; 
-        socket.emit('join_random', (res) => { 
-            document.getElementById('display-room-code').innerText = res.roomId; 
-            if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } 
-            else { socket.emit('deck_selected', "custom"); }
-        }); 
-    }
+    function randomMatch() { if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } document.getElementById('menu-main').style.display = 'none'; document.getElementById('menu-deck').style.display = 'block'; document.getElementById('lobby-status').innerText = "Searching for opponent..."; socket.emit('join_random', (res) => { document.getElementById('display-room-code').innerText = res.roomId; if(!res.waiting) { document.getElementById('lobby-status').innerText = "Opponent found! Connecting..."; socket.emit('deck_selected', "custom"); } else { socket.emit('deck_selected', "custom"); } }); }
     function copyCode() { navigator.clipboard.writeText(document.getElementById('display-room-code').innerText).then(()=>showModal("Code copied!", "alert")); }
     socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Connecting..."; });
 
     // --- GAME INITIALIZATION ---
     socket.on('game_start', (data) => {
         document.getElementById('home-screen').style.display = 'none'; isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; window.locked7Plus = false; window.stussyUsedThisTurn = false;
-        
         setupPlayerBoardVisuals(activeLobbyDeckUrlArray[0]);
-
         DECK_ARR = activeLobbyDeckUrlArray.slice(1); shuffleArray(DECK_ARR); 
         createCard(activeLobbyDeckUrlArray[0], 0, 0, {zone:'leader-zone'}); const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
         for(let i=0; i<leaderLife; i++) { if(DECK_ARR.length){ const c = createCard(DECK_ARR.pop(),0,0,{isLife:true, isBack:true}); c.style.position = 'absolute'; document.getElementById('life-zone').appendChild(c); } } updateLifePositions();
         for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); refreshStats();
         
-        // OP SIM STYLE MULLIGAN PROMPT
         setTimeout(() => { 
-            window.showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { 
+            showModal("Mulligan? (Return hand to deck and redraw 5)", "confirm", () => { 
                 document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.unshift(c.dataset.url); c.remove(); }); 
                 shuffleArray(DECK_ARR); 
                 for(let i=0; i<5; i++) if(DECK_ARR.length) createCard(DECK_ARR.pop(),0,0,{inHand:true}); 
@@ -780,15 +698,15 @@
 
     socket.on('begin_game', () => { document.getElementById('sync-overlay').style.display = 'none'; isMyTurn = isFirst; if(isFirst) myTurnCount = 1; updateTurnUI(); if(isFirst) { OPP_DON_TOTAL = 0; spawnDonLocal(); } showModal(`Game Start! You go ${isFirst ? 'FIRST' : 'SECOND'}.`, "alert", () => saveState()); });
 
-    // --- UI & UTILITY FUNCTIONS ---
+    // --- OP SIM STYLE ACTION UI ---
     function createActionBtn(text, color, onClick) {
         const btn = document.createElement('button'); btn.innerText = text; btn.className = 'action-btn';
         if(color) btn.style.background = color;
         btn.onclick = onClick; return btn;
     }
-    
-    function hideActionMenu() { document.getElementById('action-ui-container').style.display = 'none'; }
-    
+
+    function hideActionMenu() { const c = document.getElementById('action-ui-container'); if(c) c.style.display = 'none'; }
+
     function showActionMenu(c) {
         if(selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
         rightClickedCard = c; const db = CARD_DB[c.dataset.url] || {}; 
@@ -800,11 +718,6 @@
         let hasActions = false;
         title.innerText = db.name || "Unknown Card";
 
-        if(!(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode)) { 
-            btns.appendChild(createActionBtn("🔍 Inspect", "#555", () => { document.getElementById('zoom-img').src=c.dataset.url; document.getElementById('zoom-overlay').style.display='flex'; hideActionMenu(); }));
-            hasActions = true;
-        }
-
         let canAttack = false; 
         if(c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') { 
             if(!c.classList.contains('rested') && !c.classList.contains('frozen') && (isMyTurn || isDevMode)) { 
@@ -815,10 +728,6 @@
         }
         
         if(canAttack) { btns.appendChild(createActionBtn("Attack", "#c0392b", () => { window.simulateAttack(); hideActionMenu(); })); hasActions = true; }
-        else if ((c.parentElement.id === 'char-zone-front' || c.parentElement.id === 'leader-zone') && !c.classList.contains('rested') && (isMyTurn || isDevMode)) {
-            if(c.classList.contains('frozen')) { btns.appendChild(createActionBtn("FROZEN (Cannot Act)", "#34dbdb", () => {})); hasActions = true; }
-            else { btns.appendChild(createActionBtn("Attack (Summon Sickness)", "#888", () => {})); hasActions = true; }
-        }
 
         if (!c.classList.contains('frozen')) {
             if (db?.hasMain && !['hand-bar', 'life-zone'].includes(c.parentElement.id) && db?.name !== "Franky" && db?.name !== "Hattori" && db?.name !== "Stussy") { btns.appendChild(createActionBtn("Activate Main", "#f39c12", () => { window.activateMain(); hideActionMenu(); })); hasActions = true; } 
@@ -831,10 +740,6 @@
 
         if (db?.name === "Franky" && db?.type === "Leader" && (isMyTurn || isDevMode)) { btns.appendChild(createActionBtn("Activate Main (Return 2 DON!!)", "#f39c12", () => { window.frankyMainEffect(); hideActionMenu(); })); hasActions = true; } 
 
-        if (db?.name === "General Franky" && c.parentElement.id === 'hand-bar') { btns.appendChild(createActionBtn("Bottom Deck & Draw 1", "#8e44ad", () => { window.bottomGeneralFranky(); hideActionMenu(); })); hasActions = true; } 
-        if (isDevMode && c.parentElement.id !== 'hand-bar' && c.parentElement.id !== 'life-zone' && c.parentElement.id !== 'leader-zone') { btns.appendChild(createActionBtn("Trash", "#e67e22", () => { window.moveToTrash(c); hideActionMenu(); })); hasActions = true; } 
-        if (!isDevMode && c.id.includes('opp-') && (c.parentElement.id === 'opp-char-zone-front' || c.parentElement.id === 'opp-stage-zone')) { btns.appendChild(createActionBtn("Request K.O. / Trash", "#8e44ad", () => { window.requestKO(c.id); hideActionMenu(); })); hasActions = true; }
-
         if(hasActions) {
             btns.appendChild(createActionBtn("Cancel", "#333", () => { hideActionMenu(); }));
             title.style.display = 'block';
@@ -842,8 +747,8 @@
         }
     }
 
-    // OVERRIDING SHOWMODAL TO USE OP SIM SIDE UI
-    window.showModal = function(msg, type, onConfirm, onCancel, defaultVal = "") { 
+    // OVERWRITING SHOWMODAL FOR OP SIM SIDE UI
+    function showModal(msg, type, onConfirm, onCancel, defaultVal = "") { 
         if (type === 'prompt') {
             const over = document.getElementById('custom-modal-overlay'); document.getElementById('custom-modal-msg').innerHTML = msg; const inp = document.getElementById('custom-modal-input'); const b1 = document.getElementById('custom-modal-btn-1'); const b2 = document.getElementById('custom-modal-btn-2'); over.style.display = 'flex'; 
             const newB1 = b1.cloneNode(true); b1.parentNode.replaceChild(newB1, b1); const newB2 = b2.cloneNode(true); b2.parentNode.replaceChild(newB2, b2); 
@@ -877,7 +782,6 @@
     // --- CARD CREATION & EVENTS ---
     function createCard(url, x, y, opts = {}) { 
         const c = document.createElement('div'); c.className = 'card'; c.id = opts.id || 'c-' + cardIDCounter++; c.dataset.url = url; c.dataset.isDon = (url === DON_URL).toString(); c.dataset.isLife = (opts.isLife || false).toString(); c.style.backgroundImage = `url('${url}')`; 
-        
         c.innerHTML = `
             <div class="don-badge">0</div>
             <div class="power-badge hidden">+0</div>
@@ -890,9 +794,8 @@
             
         if (opts.isBack) c.classList.add('card-back'); 
         
-        if (!opts.isOpponent) { 
-            bindCardEvents(c); 
-        } else { 
+        if (!opts.isOpponent) { bindCardEvents(c); } 
+        else { 
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
             c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
             c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
@@ -921,32 +824,19 @@
             if (combatState.step === 'counter') { 
                 if (c.parentElement.id === 'hand-bar' && db && (db.counter !== undefined || db.isCounter)) { 
                     let cv = db.counter || 0;
-                    if (db.isCounter && !db.counter) {
-                        if (db.name === "Gum Gum Giant") cv = 4000;
-                        else cv = 2000; 
-                    }
-
+                    if (db.isCounter && !db.counter) { if (db.name === "Gum Gum Giant") cv = 4000; else cv = 2000; }
                     if (selectedCounterCards.includes(c)) { 
-                        selectedCounterCards = selectedCounterCards.filter(card => card !== c); 
-                        c.style.outline = ""; 
-                        currentCounterTotal -= cv; 
-                        
-                        if(db.type === 'Event') {
-                            const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested'));
-                            for(let i=0; i<db.cost; i++) if(restedDons[i]) restedDons[i].classList.remove('rested');
-                        }
+                        selectedCounterCards = selectedCounterCards.filter(card => card !== c); c.style.outline = ""; currentCounterTotal -= cv; 
+                        if(db.type === 'Event') { const restedDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"].rested')); for(let i=0; i<db.cost; i++) if(restedDons[i]) restedDons[i].classList.remove('rested'); }
                     } else { 
                         if(db.type === 'Event') {
                             const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]:not(.rested)')).filter(d => !d.dataset.parentId);
                             if(activeDons.length < db.cost) { showModal(`Need ${db.cost} active DON!! to use ${db.name}`, "alert"); return; }
                             for(let i=0; i<db.cost; i++) activeDons[i].classList.add('rested');
                         }
-                        selectedCounterCards.push(c); 
-                        c.style.outline = "4px solid #3498db"; 
-                        currentCounterTotal += cv; 
+                        selectedCounterCards.push(c); c.style.outline = "4px solid #3498db"; currentCounterTotal += cv; 
                     } 
-                    updateArenaCounter(currentCounterTotal); 
-                    socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); 
+                    updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); 
                 } else if (c.parentElement.id === 'char-zone-front' && db?.name === "Dracule Mihawk (9c)" && c.dataset.usedDefend !== "true") {
                     showModal("Trash 1 card from hand to give +2000 defense?", "confirm", () => { startSelection('hand_trash', 1, "Select 1 to trash", (cards) => { TRASH_ARR.push(cards[0].dataset.url); document.getElementById('drop-trash').style.backgroundImage = `url('${cards[0].dataset.url}')`; cards[0].remove(); c.dataset.usedDefend = "true"; currentCounterTotal += 2000; updateArenaCounter(currentCounterTotal); socket.emit('game_action', {type:'update_counter', counterValue: currentCounterTotal}); appendChat("Dracule Mihawk (9c) provided +2000 defense!", "#3498db"); }, () => askCounterPhase()); });
                 }
@@ -966,7 +856,6 @@
             e.preventDefault(); 
             if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; 
             document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; 
-            hideActionMenu();
         }; 
     }
 
@@ -979,12 +868,10 @@
             const db = CARD_DB[c.dataset.url]; 
             if(!db) return;
             
-            let isOppCard = c.id.startsWith('opp-');
-            let zone = c.parentElement.id;
+            let isOppCard = c.id.startsWith('opp-'); let zone = c.parentElement.id;
             let onField = zone === 'char-zone-front' || zone === 'leader-zone' || zone === 'opp-char-zone-front' || zone === 'opp-leader-zone';
 
             const rushT = c.querySelector('.rush-tag'); const banishT = c.querySelector('.banish-tag'); const doubleT = c.querySelector('.double-attack-tag'); const blockerT = c.querySelector('.blocker-tag');
-            
             if(rushT) rushT.style.display = (onField && (db.rush || c.dataset.hasRush === "true")) ? 'block' : 'none';
             if(banishT) banishT.style.display = (onField && (db.banish || c.dataset.banish === "true")) ? 'block' : 'none';
             if(doubleT) doubleT.style.display = (onField && (db.doubleAttack || c.dataset.doubleAttack === "true")) ? 'block' : 'none';
@@ -998,9 +885,7 @@
             if(db.power !== undefined) { 
                 let base = db.power; 
                 let attachedDon = document.querySelectorAll(`[data-parent-id="${c.id}"]`).length; 
-                let donBoost = 0;
-                if (!isOppCard && isMyTurn) donBoost = attachedDon * 1000;
-                if (isOppCard && !isMyTurn) donBoost = attachedDon * 1000;
+                let donBoost = 0; if (!isOppCard && isMyTurn) donBoost = attachedDon * 1000; if (isOppCard && !isMyTurn) donBoost = attachedDon * 1000;
                 let temp = parseInt(c.dataset.tempPower || 0); 
                 
                 let passiveBoost = 0;
@@ -1014,12 +899,8 @@
                 
                 let badge = c.querySelector('.power-badge');
                 if(badge) { 
-                    if(totalBoost !== 0) { 
-                        badge.innerText = totalBoost > 0 ? `+${totalBoost}` : `${totalBoost}`; 
-                        badge.classList.remove('hidden'); 
-                    } else { 
-                        badge.classList.add('hidden'); 
-                    } 
+                    if(totalBoost !== 0) { badge.innerText = totalBoost > 0 ? `+${totalBoost}` : `${totalBoost}`; badge.classList.remove('hidden'); } 
+                    else { badge.classList.add('hidden'); } 
                 }
             } 
         });
@@ -1027,38 +908,23 @@
 
     function saveState() {
         if(isDevMode) { updatePowerDisplay(); return; } 
-        organizeDon(); 
-        updatePowerDisplay();
+        organizeDon(); updatePowerDisplay();
         
         let currentMat = document.getElementById('my-board').style.backgroundImage;
         let cleanPlaymatUrl = currentMat ? currentMat.replace(/(url\(|\)|"|')/g, '') : 'https://i.imgur.com/SSN1DUI.jpeg';
 
         const field = Array.from(document.querySelectorAll('#my-board .card:not(#drop-deck):not(#don-deck)')).map(c => ({ id: c.id, url: c.dataset.url, zone: c.parentElement.id, isDon: c.dataset.isDon, isLife: c.dataset.isLife, parentId: c.dataset.parentId, rested: c.classList.contains('rested'), back: c.classList.contains('card-back'), tempPower: c.dataset.tempPower || 0, unblockable: c.dataset.unblockable || false, rush: (c.dataset.hasRush === "true"), banish: (c.dataset.banish === "true"), doubleAttack: (c.dataset.doubleAttack === "true"), turnPlayed: c.dataset.turnPlayed, frozen: c.classList.contains('frozen'), frozenUntil: c.dataset.frozenUntil, noRestand: c.dataset.noRestand }));
-        socket.emit('board_update', { 
-            deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, 
-            field, handCount: document.querySelectorAll('#hand-bar .card').length,
-            playmat: cleanPlaymatUrl
-        }); 
+        socket.emit('board_update', { deck: DECK_ARR.length, trash: TRASH_ARR.length, don: DON_DECK_COUNT, totalDon: 10 - DON_DECK_COUNT, field, handCount: document.querySelectorAll('#hand-bar .card').length, playmat: cleanPlaymatUrl }); 
         refreshStats();
     }
 
     socket.on('opponent_board_update', (s) => {
-        let oppLeaderUrl = "";
-        s.field.forEach(d => { if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url; });
-        
-        const oppBoard = document.getElementById('opp-board');
-        let oppMat = s.playmat || 'https://i.imgur.com/SSN1DUI.jpeg';
+        let oppLeaderUrl = ""; s.field.forEach(d => { if(d.zone === 'leader-zone' || d.zone === 'my-leader-zone') oppLeaderUrl = d.url; });
+        const oppBoard = document.getElementById('opp-board'); let oppMat = s.playmat || 'https://i.imgur.com/SSN1DUI.jpeg';
 
-        if(CARD_DB[oppLeaderUrl]?.name === "Franky") {
-            document.getElementById('opp-stage-zone').classList.add('franky-active');
-            oppMat = "https://i.imgur.com/SSN1DUI.jpeg"; 
-        } else {
-            document.getElementById('opp-stage-zone').classList.remove('franky-active');
-        }
-
-        oppBoard.style.backgroundImage = `url('${oppMat}')`;
-        if (oppMat.includes('WjiUDr0')) oppBoard.classList.add('mat-white');
-        else oppBoard.classList.remove('mat-white');
+        if(CARD_DB[oppLeaderUrl]?.name === "Franky") { document.getElementById('opp-stage-zone').classList.add('franky-active'); oppMat = "https://i.imgur.com/SSN1DUI.jpeg"; } 
+        else { document.getElementById('opp-stage-zone').classList.remove('franky-active'); }
+        oppBoard.style.backgroundImage = `url('${oppMat}')`; if (oppMat.includes('WjiUDr0')) oppBoard.classList.add('mat-white'); else oppBoard.classList.remove('mat-white');
 
         document.querySelectorAll('#opp-board .card').forEach(c => c.remove());
         s.field.forEach(d => {
@@ -1067,9 +933,7 @@
             if(z) { 
                 const c = createCard(d.url, 0, 0, { isOpponent: true, isLife: d.isLife==="true", isBack: d.back, id: 'opp-'+d.id }); 
                 if(d.rested) c.classList.add('rested'); if(d.frozen) c.classList.add('frozen'); if(d.frozenUntil) c.dataset.frozenUntil = d.frozenUntil; if(d.noRestand === "true") c.dataset.noRestand = "true"; if(d.noRestand) c.classList.add('no-restand'); if(d.parentId) c.dataset.parentId = 'opp-'+d.parentId; 
-                c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; 
-                c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
-                
+                c.dataset.tempPower = d.tempPower; c.dataset.unblockable = d.unblockable; c.dataset.hasRush = d.rush; c.dataset.banish = d.banish; c.dataset.doubleAttack = d.doubleAttack;
                 z.appendChild(c); if(d.isLife === "true") { c.style.position = 'absolute'; c.style.left = '0'; c.style.transform = 'none'; c.style.top = (z.children.length * 15) + 'px'; } 
             }
         });
@@ -1080,35 +944,22 @@
 
     function refreshPhase() {
         if(isDevMode) { isMyTurn = true; myTurnCount++; turnNum++; updateTurnUI(); }
-
         const donZone = document.getElementById('don-zone');
         document.querySelectorAll('.card[data-is-don="true"]').forEach(don => {
             if (don.id && don.id.startsWith('opp-')) return;
             don.removeAttribute('data-parent-id'); delete don.dataset.parentId; don.classList.remove('rested'); 
-            
             don.style.removeProperty('position'); don.style.removeProperty('left'); don.style.removeProperty('top'); don.style.removeProperty('z-index');
             don.style.position = "relative"; don.style.left = "0"; don.style.top = "0"; don.style.zIndex = "20";
-            
             if (donZone) donZone.appendChild(don); 
         });
 
         document.querySelectorAll('#my-board .card:not([data-is-don="true"])').forEach(c => {
             delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.hasRush; delete c.dataset.usedDefend; 
             if(c.dataset.luffyBuff === "true") delete c.dataset.luffyBuff;
-
-            if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } 
-            else { c.classList.remove('rested'); } 
-
-            if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) {
-                c.classList.remove('frozen'); 
-                delete c.dataset.frozenUntil;
-            }
-
-            updateBadges(c.id); 
-            const badge = c.querySelector('.don-badge');
-            if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
+            if(c.dataset.noRestand === "true") { delete c.dataset.noRestand; c.classList.remove('no-restand'); } else { c.classList.remove('rested'); } 
+            if (c.dataset.frozenUntil && myTurnCount >= parseInt(c.dataset.frozenUntil)) { c.classList.remove('frozen'); delete c.dataset.frozenUntil; }
+            updateBadges(c.id); const badge = c.querySelector('.don-badge'); if (badge) { badge.innerText = "0"; badge.style.display = "none"; }
         });
-
         organizeDon(); drawCardAction(); spawnDonLocal(false); spawnDonLocal(false); saveState();
     }
 
@@ -1120,9 +971,7 @@
 
     window.endTurn = function() { 
         if(!isDevMode && !isMyTurn) return; 
-        let eotQueue = [];
-        const leader = document.querySelector('#leader-zone .card');
-        
+        let eotQueue = []; const leader = document.querySelector('#leader-zone .card');
         const luccis = Array.from(document.querySelectorAll('#char-zone-front .card')).filter(c => CARD_DB[c.dataset.url]?.name === "Rob Lucci (Y)" && c.dataset.restandAtEOT === "true");
         luccis.forEach(l => { eotQueue.push(() => { l.classList.remove('rested'); delete l.dataset.restandAtEOT; appendChat("Rob Lucci restands via effect!", "#f1c40f"); processQueue(eotQueue); }); });
         
@@ -1137,13 +986,11 @@
         eotQueue.push(() => { 
             document.querySelectorAll('#my-board .card').forEach(c => { delete c.dataset.tempPower; delete c.dataset.unblockable; delete c.dataset.doubleAttack; }); 
             isMyTurn = false; updatePowerDisplay(); 
-            if(!isDevMode) { updateTurnUI(); socket.emit('pass_turn'); } 
-            else { organizeDon(); setTimeout(() => refreshPhase(), 500); } 
+            if(!isDevMode) { updateTurnUI(); socket.emit('pass_turn'); } else { organizeDon(); setTimeout(() => refreshPhase(), 500); } 
         }); 
         processQueue(eotQueue);
     }
     function processQueue(q) { if(q.length > 0) { const fn = q.shift(); fn(); } }
-
     function returnDonAndCheckSanji(count, onComplete) { startSelection('don_minus', count, `Select ${count} DON!! to return`, (selectedDons) => { selectedDons.forEach(d => { if(d.dataset.parentId) { updateBadges(d.dataset.parentId); } d.remove(); DON_DECK_COUNT++; }); organizeDon(); saveState(); const hasSanji = Array.from(document.querySelectorAll('#char-zone-front .card:not(.rested)')).some(c => CARD_DB[c.dataset.url]?.name === "Sanji & Pudding"); if (hasSanji && !window.sanjiUsedThisTurn && count >= 2) { showModal("Activate Sanji to add 1 Active DON!!?", "confirm", () => { window.sanjiUsedThisTurn = true; spawnDonLocal(false); onComplete(); }, () => onComplete()); } else { onComplete(); } }); }
 
     // --- SELECTION LOGIC ---
@@ -1151,16 +998,10 @@
     window.cancelSelection = function() { document.body.classList.remove('select-mode'); document.getElementById('select-overlay').style.display = 'none'; document.getElementById('select-msg').style.display = 'none'; document.querySelectorAll('.card').forEach(c => c.style.outline = ""); if (selectConfig && selectConfig.onCancel) selectConfig.onCancel(); selectConfig = null; }
     function handleSelection(card) { 
         if(selectConfig.mode === 'don_minus') { if(card.dataset.isDon !== "true" || card.parentElement.id.includes('opp-')) { showModal("Select your DON!!", "alert"); return; } } 
-        else if(selectConfig.mode === 'stussy_freeze') { 
-            if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } 
-            if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { showModal("Select a Character or Leader", "alert"); return; } 
-        }
+        else if(selectConfig.mode === 'stussy_freeze') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && card.parentElement.id !== 'char-zone-front' && card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'leader-zone' && card.parentElement.id !== 'opp-leader-zone') { showModal("Select a Character or Leader", "alert"); return; } }
         else if(selectConfig.mode === 'seraphim_freeze') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 6) { showModal("Select Opponent Character Cost 6 or less", "alert"); return; } }
         else if(selectConfig.mode === 'doflamingo_lock') { if(!card.id.includes('opp-') || !card.classList.contains('rested') || card.parentElement.id.includes('don')) { showModal("Select Opponent Rested Card", "alert"); return; } }
-        else if(selectConfig.mode === 'lucci_g_rest') { 
-            if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } 
-            if(isDevMode && !['char-zone-front', 'opp-char-zone-front', 'leader-zone', 'opp-leader-zone'].includes(card.parentElement.id)) { showModal("Select a Character or Leader", "alert"); return; } 
-        }
+        else if(selectConfig.mode === 'lucci_g_rest') { if(!isDevMode && (!card.id.includes('opp-') || (card.parentElement.id !== 'opp-char-zone-front' && card.parentElement.id !== 'opp-leader-zone'))) { showModal("Select Opponent Character or Leader", "alert"); return; } if(isDevMode && !['char-zone-front', 'opp-char-zone-front', 'leader-zone', 'opp-leader-zone'].includes(card.parentElement.id)) { showModal("Select a Character or Leader", "alert"); return; } }
         else if(selectConfig.mode === 'lucci_g_rest_trigger') { const db = CARD_DB[card.dataset.url]; if(!card.id.includes('opp-') || card.parentElement.id !== 'opp-char-zone-front' || !db || db.cost > 3) { showModal("Select Opponent Character 3 Cost or less", "alert"); return; } }
         else if(selectConfig.mode === 'play_lucci_free') { const db = CARD_DB[card.dataset.url]; if(card.parentElement.id !== 'hand-bar' || !db || !db.name.includes("Rob Lucci")) { showModal("Select a Rob Lucci from hand", "alert"); return; } }
         else if(selectConfig.mode === 'katakuri_life') { if(card.parentElement.id !== 'life-zone' && card.parentElement.id !== 'opp-life-zone') { showModal("Select a Life card", "alert"); return; } }
@@ -1178,14 +1019,7 @@
         else if(selectConfig.mode === 'trash_for_play_stage') { if(card.parentElement.id !== 'stage-zone') { showModal("Select a Stage on your field.", "alert"); return; } }
 
         selectConfig.current.push(card); card.style.outline = "4px solid #e74c3c"; document.getElementById('select-text').innerText = `Selected (${selectConfig.current.length}/${selectConfig.max})`; 
-        
-        if(selectConfig.current.length >= selectConfig.max) { 
-            const completed = [...selectConfig.current]; 
-            const cb = selectConfig.callback; 
-            selectConfig.onCancel = null; 
-            window.cancelSelection(); 
-            if(cb) cb(completed); 
-        } 
+        if(selectConfig.current.length >= selectConfig.max) { const completed = [...selectConfig.current]; const cb = selectConfig.callback; selectConfig.onCancel = null; window.cancelSelection(); if(cb) cb(completed); } 
     }
 
     // --- DRAG & DROP LOGIC ---
@@ -1195,7 +1029,7 @@
         } 
         if (combatState.step === 'wait_counter') { e.stopPropagation(); e.preventDefault(); return; } 
     }, true);
-
+    
     window.addEventListener('mousemove', (e) => { 
         if (!dragged || selectConfig || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
         if(!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) { isDragging = true; if(dragged.parentElement.id !== 'viewport') { document.getElementById('viewport').appendChild(dragged); dragged.style.position = 'absolute'; } } 
@@ -1207,7 +1041,7 @@
         const c = dragged; dragged = null; 
         if(!isDragging) { 
             if(c.parentElement.id === 'hand-bar' && !isDevMode) playCardConfirm(c); 
-            else if (c.dataset.isDon !== "true") showActionMenu(c); // TRIGGER SIDE MENU ON LEFT CLICK
+            else if(c.dataset.isDon !== "true" && !c.parentElement.id.includes('opp-') && !c.parentElement.id.includes('deck') && !c.parentElement.id.includes('trash')) showActionMenu(c);
             return; 
         } 
         
@@ -1258,13 +1092,13 @@
                     d.style.setProperty('top', (p.offsetTop + 15 + (idx * 15)) + 'px', 'important'); 
                     d.style.setProperty('z-index', (10 - idx).toString(), 'important'); 
                     d.style.opacity = "1"; 
-                    d.style.marginLeft = "0"; // Override overlapping for attached dons
+                    d.style.marginLeft = "0"; 
                 } 
             } else { 
                 document.getElementById('don-zone').appendChild(d); 
                 d.style.removeProperty('position'); d.style.removeProperty('left'); d.style.removeProperty('top'); d.style.removeProperty('z-index'); 
                 d.style.opacity = "1"; d.style.position = "relative"; d.style.left = "0"; d.style.top = "0"; d.style.zIndex = "20"; 
-                d.style.marginLeft = ""; // Let CSS handle overlap
+                d.style.marginLeft = ""; 
             } 
         }); 
     }
