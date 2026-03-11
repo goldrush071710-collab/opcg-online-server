@@ -1,6 +1,7 @@
 // ==========================================
-// MASTER ENGINE (FULLY PATCHED)
+// MASTER ENGINE (FULLY UNIFIED & PATCHED)
 // ==========================================
+
 const root = document.documentElement; const socket = io(); const DON_URL = 'https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg';
 let isDevMode = false, isMyTurn = false, isFirst = true, myTurnCount = 0;
 let DECK_ARR = [], TRASH_ARR = [], turnNum = 0, DON_DECK_COUNT = 10, OPP_DON_TOTAL = 0;
@@ -77,7 +78,7 @@ function getSelectedPlaymat() { const sel = document.getElementById('playmat-sel
 function prepActiveDeck() { if(activeDeckIndex === -1 || !savedDecks[activeDeckIndex]) return false; const d = savedDecks[activeDeckIndex]; activeLobbyDeckUrlArray = [d.leader]; Object.keys(d.main).forEach(url => { for(let k=0; k<d.main[url]; k++) { activeLobbyDeckUrlArray.push(url); } }); return true; }
 function setupPlayerBoardVisuals() { const board = document.getElementById('my-board'); let chosenMat = getSelectedPlaymat(); board.style.backgroundImage = `url('${chosenMat}')`; if (chosenMat.includes('WjiUDr0')) { board.classList.add('mat-white'); } else { board.classList.remove('mat-white'); } }
 
-// === PATCHED START SEQUENCE (NO SOCKET FLOOD) ===
+// --- GAME STARTUP LOOP ---
 function startDevMode() { 
     if(!prepActiveDeck()) { showModal("Select an active deck first!", "alert"); return; } 
     isDevMode = true; turnNum = 1; myTurnCount = 1; isMyTurn = true; 
@@ -96,7 +97,8 @@ function startDevMode() {
     const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
     for(let i=0; i<leaderLife; i++) { 
         if(DECK_ARR.length) { 
-            const c = createCard(DECK_ARR.shift(), 0, 0, {isLife: true, isBack: true}); 
+            const url = DECK_ARR.shift();
+            const c = createCard(url, 0, 0, {isLife: true, isBack: true}); 
             c.style.position = 'absolute'; 
             document.getElementById('life-zone').appendChild(c); 
         } 
@@ -105,7 +107,8 @@ function startDevMode() {
     
     for(let i=0; i<5; i++) { 
         if(DECK_ARR.length) {
-            createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); 
+            const handUrl = DECK_ARR.shift();
+            createCard(handUrl, 0, 0, {inHand: true}); 
         }
     } 
     
@@ -139,8 +142,8 @@ function copyCode() { navigator.clipboard.writeText(document.getElementById('dis
 
 socket.on('player_joined', () => { document.getElementById('lobby-status').innerText = "Opponent joined! Connecting..."; });
 
-// === PATCHED START SEQUENCE (NO SOCKET FLOOD) ===
 socket.on('game_start', (data) => {
+    console.log("Multiplayer game starting...");
     document.getElementById('home-screen').style.display = 'none'; 
     isFirst = data.isFirst; isDevMode = false; myTurnCount = 0; turnNum = 1; 
     window.locked7Plus = false; window.leaderUsedThisTurn = false; window.magellanDefensiveUsed = false; window.stussyUsedThisTurn = false;
@@ -155,7 +158,8 @@ socket.on('game_start', (data) => {
     const leaderLife = CARD_DB[activeLobbyDeckUrlArray[0]]?.life || 5; 
     for(let i=0; i<leaderLife; i++) { 
         if(DECK_ARR.length) { 
-            const c = createCard(DECK_ARR.shift(), 0, 0, {isLife: true, isBack: true}); 
+            const url = DECK_ARR.shift();
+            const c = createCard(url, 0, 0, {isLife: true, isBack: true}); 
             c.style.position = 'absolute'; 
             document.getElementById('life-zone').appendChild(c); 
         } 
@@ -164,7 +168,8 @@ socket.on('game_start', (data) => {
     
     for(let i=0; i<5; i++) { 
         if(DECK_ARR.length) {
-            createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); 
+            const handUrl = DECK_ARR.shift();
+            createCard(handUrl, 0, 0, {inHand: true}); 
         }
     } 
     
@@ -175,7 +180,12 @@ socket.on('game_start', (data) => {
         showModal("Mulligan? (Return hand, draw 5)", "confirm", () => { 
             document.querySelectorAll('#hand-bar .card').forEach(c => { DECK_ARR.push(c.dataset.url); c.remove(); }); 
             shuffleArray(DECK_ARR); 
-            for(let i=0; i<5; i++) { if(DECK_ARR.length) createCard(DECK_ARR.shift(), 0, 0, {inHand: true}); } 
+            for(let i=0; i<5; i++) { 
+                if(DECK_ARR.length) {
+                    const hUrl = DECK_ARR.shift();
+                    createCard(hUrl, 0, 0, {inHand: true}); 
+                }
+            } 
             refreshStats(); saveState();
             socket.emit('mulligan_done'); document.getElementById('sync-overlay').style.display = 'flex'; 
         }, () => { 
@@ -799,6 +809,78 @@ function performTopDeckSearch(numToLook, validTraits, avoidNameStr, addRestToHan
 
 function openStructuredSearch(num, traits, avoidNameStr, addRestToHand = true, toBottom = true) {
     performTopDeckSearch(num, traits, avoidNameStr, addRestToHand, toBottom);
+}
+
+function startSelection(type, count, msg, onComplete, onCancel) {
+    selectConfig = { type, count, onComplete, onCancel, selected: [] };
+    document.getElementById('select-msg').style.display = 'flex';
+    document.getElementById('select-text').innerText = msg;
+    document.body.classList.add('select-mode');
+}
+
+function handleSelection(c) {
+    if(!selectConfig) return;
+    if (selectConfig.type.includes('target') || selectConfig.type.includes('ko') || selectConfig.type.includes('minus') || selectConfig.type.includes('rest')) {
+        if (!c.id.includes('opp-')) return showModal("Must select an opponent's card.", "alert");
+    }
+    if (selectConfig.type.includes('hand')) {
+        if (c.parentElement.id !== 'hand-bar') return showModal("Must select from your hand.", "alert");
+    }
+    if (selectConfig.type === 'rest_active_don') {
+        if (c.dataset.isDon !== "true" || c.classList.contains('rested') || c.dataset.parentId) return showModal("Must select an active, unattached DON!!", "alert");
+    }
+    c.style.outline = "4px solid #f1c40f";
+    selectConfig.selected.push(c);
+    if (selectConfig.selected.length >= selectConfig.count) {
+        let callback = selectConfig.onComplete;
+        let selectedItems = [...selectConfig.selected];
+        cancelSelection();
+        if (callback) callback(selectedItems);
+    }
+}
+
+function cancelSelection() {
+    if (selectConfig && selectConfig.onCancel) selectConfig.onCancel();
+    if (selectConfig) { selectConfig.selected.forEach(c => c.style.outline = ""); }
+    selectConfig = null;
+    document.getElementById('select-msg').style.display = 'none';
+    document.body.classList.remove('select-mode');
+}
+
+function returnDonAndCheckSanji(count, callback) {
+    const activeDons = Array.from(document.querySelectorAll('#don-zone .card[data-is-don="true"]')).filter(d => !d.dataset.parentId);
+    if (activeDons.length < count) {
+        showModal(`Need ${count} unattached DON!! on the field to return.`, "alert");
+        return;
+    }
+    startSelection('return_don', count, `Select ${count} DON!! to return`, (dons) => {
+        dons.forEach(d => { d.remove(); DON_DECK_COUNT++; });
+        window.batchState.donReturnedCount += count;
+        window.batchState.donReturnedThisTurn = true;
+        organizeDon(); refreshStats(); saveState();
+        if (callback) callback();
+    });
+}
+
+function openInspector(type, param, reqTraits) {
+    document.getElementById('search-modal').style.display = 'flex';
+    const grid = document.getElementById('insp-grid');
+    grid.innerHTML = '';
+    let sourceArr = type === 'trash' ? TRASH_ARR : DECK_ARR;
+    sourceArr.forEach((url, i) => {
+        const div = document.createElement('div'); div.className = 'card'; div.style.backgroundImage = `url('${url}')`;
+        div.onclick = () => {
+            if (param === 'play_rested') {
+                if (reqTraits && !reqTraits.some(t => (CARD_DB[url]?.traits||[]).includes(t))) return showModal("Invalid trait.", "alert");
+                createCard(sourceArr.splice(i, 1)[0], 0, 0, {zone: 'char-zone-front'}).classList.add('rested');
+            } else if (param === 'play_active') {
+                if (reqTraits && !reqTraits.some(t => (CARD_DB[url]?.traits||[]).includes(t))) return showModal("Invalid trait.", "alert");
+                createCard(sourceArr.splice(i, 1)[0], 0, 0, {zone: 'char-zone-front'});
+            }
+            closeInspector(); saveState();
+        };
+        grid.appendChild(div);
+    });
 }
 
 function shuffleArray(array) {
