@@ -20,11 +20,12 @@
         
         .life-zone { top: var(--lf-t); left: var(--lf-l); width: var(--lf-w); height: var(--lf-h); align-items: flex-start; justify-content: flex-start; } .char-zone { top: var(--ch-t); left: var(--ch-l); width: var(--ch-w); height: var(--ch-h); padding-left: 0; } .leader-zone { top: var(--ld-t); left: var(--ld-l); width: var(--ld-w); height: var(--ld-h); } .stage-zone { top: var(--st-t); left: var(--st-l); width: var(--st-w); height: var(--st-h); } .drop-deck { top: var(--dk-t); left: var(--dk-l); width: var(--dk-w); height: var(--dk-h); background-image: var(--card-back-url); background-size: 100% 100%; border-radius: 6px; color: transparent;} .drop-trash { top: var(--tr-t); left: var(--tr-l); width: var(--tr-w); height: var(--tr-h); background: transparent !important; border: none !important; box-shadow: none !important;} .don-deck { top: var(--dd-t); left: var(--dd-l); width: var(--dd-w); height: var(--dd-h); background-image: url('https://tcgplayer-cdn.tcgplayer.com/product/456059_in_1000x1000.jpg'); background-size: 100% 100%; border-radius: 6px; color: transparent; } 
         
-        /* SURGICAL DON ZONE FIX: OVERLAP ACTIVATED & FIXED */
-        .don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: center; justify-content: flex-start; gap: 0 !important; padding-left: 10px; flex-wrap: nowrap !important; overflow: visible; }
-        .don-zone .card, #opp-don-zone .card { margin-left: -6.5vw !important; box-shadow: -4px 0 8px rgba(0,0,0,0.7); z-index: 10; transition: transform 0.2s, z-index 0s !important; }
+   /* SURGICAL DON ZONE FIX: TIGHT OVERLAP (LIKE IMAGE) */
+        .don-zone, #opp-don-zone { top: var(--dz-t); left: var(--dz-l); width: var(--dz-w); height: var(--dz-h); align-items: center; justify-content: flex-start; gap: 0 !important; padding-left: 10px; flex-wrap: nowrap !important; }
+        .don-zone .card, #opp-don-zone .card { margin-left: -8.5vw !important; box-shadow: -4px 0 8px rgba(0,0,0,0.8); transition: transform 0.2s ease !important; }
         .don-zone .card:first-child, #opp-don-zone .card:first-child { margin-left: 0 !important; }
         .don-zone .card:hover, #opp-don-zone .card:hover { transform: translateY(-15px) !important; z-index: 100 !important; }
+        .don-zone .card.rested, #opp-don-zone .card.rested { margin-left: -3vw !important; margin-right: 3vw !important; transform: rotate(90deg) scale(0.9) !important; z-index: 5 !important; box-shadow: 0 4px 8px rgba(0,0,0,0.8); }
 
         .franky-extra-zone { top: var(--fz-t); left: var(--fz-l); width: var(--fz-w); height: var(--fz-h); flex-direction: row-reverse; justify-content: flex-start; gap: 8px; flex-wrap: nowrap; }
         
@@ -685,13 +686,13 @@
             
         if (opts.isBack) c.classList.add('card-back'); 
         
-        if (!opts.isOpponent) { bindCardEvents(c); } 
+if (!opts.isOpponent) { bindCardEvents(c); } 
         else { 
             c.onmousedown = (e) => { if (e.button !== 0) return; if (selectConfig) { handleSelection(c); return; } };
-            c.onauxclick = (e) => { if (e.button === 1) { if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } }; 
-            c.oncontextmenu = (e) => { e.preventDefault(); if(c.classList.contains('card-back')) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; }; 
+            c.onauxclick = (e) => { if (e.button === 1) e.preventDefault(); }; 
+            c.oncontextmenu = (e) => { e.preventDefault(); }; 
             c.onmouseenter = () => { if(!c.classList.contains('card-back')) document.getElementById('right-col-inspector').style.backgroundImage = `url('${c.dataset.url}')`; };
-        } 
+        }
         
         if (opts.inHand) document.getElementById('hand-bar').appendChild(c); else if (opts.zone) document.getElementById(opts.zone).appendChild(c); 
         return c; 
@@ -741,14 +742,12 @@
             offX = e.clientX - c.getBoundingClientRect().left; offY = e.clientY - c.getBoundingClientRect().top; startX = e.clientX; startY = e.clientY; dragged = c; isDragging = false; c.dataset.origZone = c.parentElement.id; 
         };
         
-        c.onauxclick = (e) => { if (e.button === 1) { e.preventDefault(); if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; } };
+        c.onauxclick = (e) => { if (e.button === 1) e.preventDefault(); };
         
         c.oncontextmenu = (e) => { 
             e.preventDefault(); 
-            if(c.classList.contains('card-back') && c.parentElement.id.includes('life-zone') && !isDevMode) return; 
-            document.getElementById('zoom-img').src = c.dataset.url; document.getElementById('zoom-overlay').style.display = 'flex'; 
             hideActionMenu(); 
-        }; 
+        };
     }
 
     // --- GAMEPLAY MECHANICS ---
@@ -928,8 +927,9 @@
         if(isDragging) { dragged.style.left = (e.clientX - offX - 250) + 'px'; dragged.style.top = (e.clientY - offY) + 'px'; dragged.style.zIndex = 5000; document.querySelectorAll(`[data-parent-id="${dragged.id}"]`).forEach((don, i) => { don.style.setProperty('position', 'absolute', 'important'); don.style.setProperty('left', (e.clientX - offX - 250 + 5 + (i*8)) + 'px', 'important'); don.style.setProperty('top', (e.clientY - offY + 15 + (i*15)) + 'px', 'important'); don.style.setProperty('z-index', (10 - i).toString(), 'important'); }); } 
     });
     
-    window.addEventListener('mouseup', (e) => { 
-        if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return; 
+  window.addEventListener('mouseup', (e) => { 
+        if (e.button !== 0) return; // SAFETY LOCK: Only process left-clicks
+        if (!dragged || combatState.step === 'counter' || combatState.step === 'wait_counter') return;
         const c = dragged; dragged = null; 
         if(!isDragging) { 
             if(c.parentElement.id === 'hand-bar' && !isDevMode) playCardConfirm(c); 
@@ -1015,3 +1015,4 @@
 </script>
 </body>
 </html>
+
