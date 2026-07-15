@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Cards Simulator</title>
+  <link rel="icon" type="image/svg+xml" href="images/basic/custom-sim-logo.svg">
+  <link rel="stylesheet" href="styles.css?v=creation-9">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-nav">
+      <button class="brand" type="button" data-view="home" aria-label="Home">
+        <img src="images/basic/custom-sim-logo.svg" alt="">
+        <span>
+          <strong>Custom Cards Sim</strong>
+          <small>OPTCG style practice table</small>
+        </span>
+      </button>
+
+      <nav class="nav-tabs" aria-label="Main views">
+        <button class="nav-tab active" type="button" data-view="home">Home</button>
+        <button class="nav-tab" type="button" data-view="builder">Deck Builder</button>
+        <button class="nav-tab" type="button" data-view="game">Practice Board</button>
+      </nav>
+
+      <div class="nav-actions" aria-hidden="true"></div>
+    </header>
+
+    <main>
+      <section class="view active" id="homeView" data-view-panel="home">
+        <section class="home-launch">
+          <img src="images/basic/custom-sim-logo.svg" alt="">
+          <h1>Custom OPTCG Online Simulator</h1>
+          <div class="home-launch-actions">
+            <button type="button" data-view="builder">Deck Builder</button>
+            <button type="button" data-view="game">Practice VS Self</button>
+            <button class="ghost" type="button" id="multiplayerButton">Multiplayer</button>
+          </div>
+          <div class="home-hidden-stats" aria-hidden="true">
+            <span id="homeLeader">None</span>
+            <span id="homeDeckCount">0</span>
+            <span id="homePoolCount">Loading</span>
+            <span id="leaderTotal">0</span>
+            <span id="characterTotal">0</span>
+            <span id="eventTotal">0</span>
+            <span id="stageTotal">0</span>
+            <button type="button" id="quickBuild"></button>
+            <button type="button" id="clearDeckHome"></button>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="builderView" data-view-panel="builder">
+        <div class="builder-window">
+          <aside class="filter-stack">
+            <button class="tip-button" id="showSearchTips" type="button" title="Search tips">i</button>
+            <input id="searchInput" type="search" placeholder="Search cards">
+            <button class="red-button" id="runSearch" type="button">Search</button>
+            <button type="button" class="red-button" id="resetFilters">Reset</button>
+            <input id="filterQuick" type="hidden">
+
+            <div class="color-wheel-wrap" aria-label="Color shortcuts">
+              <svg class="color-wheel" viewBox="0 0 120 120" role="img" aria-label="Choose a color">
+                <polygon class="wheel-core" points="60,60 60,8 105,34 105,86 60,112 15,86 15,34"></polygon>
+                <polygon class="wheel-wedge yellow" data-color-shortcut="yellow" points="60,60 60,8 15,34"></polygon>
+                <polygon class="wheel-wedge red" data-color-shortcut="red" points="60,60 60,8 105,34"></polygon>
+                <polygon class="wheel-wedge green" data-color-shortcut="green" points="60,60 105,34 105,86"></polygon>
+                <polygon class="wheel-wedge blue" data-color-shortcut="blue" points="60,60 105,86 60,112"></polygon>
+                <polygon class="wheel-wedge purple" data-color-shortcut="purple" points="60,60 60,112 15,86"></polygon>
+                <polygon class="wheel-wedge black" data-color-shortcut="black" points="60,60 15,86 15,34"></polygon>
+              </svg>
+            </div>
+
+            <input id="colorFilter" type="hidden" value="">
+            <div class="sort-buttons" aria-label="Sort by">
+              <span>Sort By</span>
+              <button class="active" type="button" data-sort-field="number">Card #</button>
+              <button type="button" data-sort-field="cost">Cost</button>
+              <button type="button" data-sort-field="name">Name</button>
+              <button type="button" data-sort-field="power">Power</button>
+            </div>
+            <div class="filter-row">
+              <select id="setFilter" aria-label="Set"><option value="">Set</option></select>
+              <select id="categoryFilter" aria-label="Type">
+                <option value="">Type</option>
+                <option value="leader">Leader</option>
+                <option value="character">Character</option>
+                <option value="event">Event</option>
+                <option value="stage">Stage</option>
+              </select>
+              <select id="costFilter" aria-label="Cost"><option value="">Cost</option></select>
+              <select id="powerFilter" aria-label="Power"><option value="">Power</option></select>
+              <select id="counterFilter" aria-label="Counter"><option value="">Counter</option></select>
+              <select id="rarityFilter" aria-label="Rarity"><option value="">Rarity</option></select>
+              <select id="blockFilter" aria-label="Block"><option value="">Block</option></select>
+            </div>
+          </aside>
+
+          <section class="builder-main">
+            <section class="collection-panel">
+              <div class="collection-top">
+                <div></div>
+                <h2>My Collection</h2>
+                <div class="collection-actions">
+                  <span class="count-pill"><span id="filteredCount">0</span> shown</span>
+                </div>
+              </div>
+              <div class="card-grid" id="cardGrid" aria-live="polite"></div>
+            </section>
+
+            <section class="deck-table">
+              <div class="deck-tabs">
+                <span class="active">Deck Builder</span>
+                <button type="button" id="savedDecksTab">Saved Decks</button>
+                <button type="button" id="cardCreationTab">Card Creation</button>
+              </div>
+
+              <div class="deck-toolbar">
+                <label class="deck-name-field">
+                  <span id="deckTitle">Untitled Deck</span>
+                  <input id="deckName" type="text" placeholder="Deck name">
+                </label>
+                <div class="deck-counts">
+                  <strong><span id="deckCount">0</span>/50</strong>
+                  <span>Main deck</span>
+                </div>
+                <div class="deck-tools">
+                  <button class="red-button" type="button" id="saveDeckMini">Save</button>
+                  <button class="red-button" type="button" id="clearDeck">Clear</button>
+                </div>
+              </div>
+
+              <div id="deckWarnings" class="warnings"></div>
+              <section class="saved-decks-panel" id="savedDecksPanel" hidden>
+                <div class="saved-decks-header">
+                  <strong>Saved Decks</strong>
+                  <button class="ghost" type="button" id="closeSavedDecks">Close</button>
+                </div>
+                <div id="savedDeckList" class="saved-deck-list"></div>
+              </section>
+              <section class="card-creation-panel" id="cardCreationPanel" hidden>
+                <div class="saved-decks-header">
+                  <strong>Card Creation</strong>
+                  <button class="ghost" type="button" id="closeCardCreation">Close</button>
+                </div>
+
+                <div class="creation-layout">
+                  <form id="cardCreationForm" class="card-creation-form">
+                    <div class="import-grid">
+                      <label>
+                        Card PNG
+                        <input id="creationImage" type="file" accept="image/png,image/jpeg,image/webp" required>
+                      </label>
+                      <label>
+                        Card #
+                        <input id="creationCardNumber" type="text" placeholder="JJBA-001" required>
+                      </label>
+                      <label>
+                        Name
+                        <input id="creationName" type="text" placeholder="Character name" required>
+                      </label>
+                      <label>
+                        Card Type
+                        <select id="creationCategory">
+                          <option value="leader">Leader</option>
+                          <option value="character" selected>Character</option>
+                          <option value="event">Event</option>
+                          <option value="stage">Stage</option>
+                        </select>
+                      </label>
+                      <label>
+                        Colors
+                        <select id="creationColors">
+                          <option value="">Colorless</option>
+                          <option value="red">Red</option>
+                          <option value="green">Green</option>
+                          <option value="blue">Blue</option>
+                          <option value="purple">Purple</option>
+                          <option value="black">Black</option>
+                          <option value="yellow">Yellow</option>
+                          <option value="red, green">Red / Green</option>
+                          <option value="red, blue">Red / Blue</option>
+                          <option value="red, purple">Red / Purple</option>
+                          <option value="red, black">Red / Black</option>
+                          <option value="red, yellow">Red / Yellow</option>
+                          <option value="green, blue">Green / Blue</option>
+                          <option value="green, purple">Green / Purple</option>
+                          <option value="green, black">Green / Black</option>
+                          <option value="green, yellow">Green / Yellow</option>
+                          <option value="blue, purple">Blue / Purple</option>
+                          <option value="blue, black">Blue / Black</option>
+                          <option value="blue, yellow">Blue / Yellow</option>
+                          <option value="purple, black">Purple / Black</option>
+                          <option value="purple, yellow">Purple / Yellow</option>
+                          <option value="black, yellow">Black / Yellow</option>
+                        </select>
+                      </label>
+                      <label>
+                        Cost / Life
+                        <select id="creationCost">
+                          <option value="">None</option>
+                          <option value="0">0</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                          <option value="10">10</option>
+                        </select>
+                      </label>
+                      <label>
+                        Power
+                        <input id="creationPower" type="number" min="0" step="1000" placeholder="5000">
+                      </label>
+                      <label>
+                        Counter
+                        <select id="creationCounter">
+                          <option value="">None</option>
+                          <option value="0">0</option>
+                          <option value="1000">+1000</option>
+                          <option value="2000">+2000</option>
+                        </select>
+                      </label>
+                      <label>
+                        Attribute
+                        <select id="creationAttribute">
+                          <option value="">None</option>
+                          <option value="Strike">Strike</option>
+                          <option value="Slash">Slash</option>
+                          <option value="Ranged">Ranged</option>
+                          <option value="Special">Special</option>
+                          <option value="Wisdom">Wisdom</option>
+                        </select>
+                      </label>
+                      <label>
+                        Types
+                        <input id="creationTypes" type="text" placeholder="Hamon/Bizarre">
+                      </label>
+                      <label>
+                        Rarity
+                        <select id="creationRarity">
+                          <option value="">None</option>
+                          <option value="C">C</option>
+                          <option value="UC">UC</option>
+                          <option value="R">R</option>
+                          <option value="SR">SR</option>
+                          <option value="SEC">SEC</option>
+                          <option value="L">L</option>
+                          <option value="P">P</option>
+                        </select>
+                      </label>
+                      <label>
+                        Keywords
+                        <select id="creationKeywords">
+                          <option value="">None</option>
+                          <option value="Blocker">Blocker</option>
+                          <option value="Rush">Rush</option>
+                          <option value="Rush:Characters">Rush:Character</option>
+                          <option value="Banish">Banish</option>
+                          <option value="Double Attack">Double Attack</option>
+                          <option value="Unblockable">Unblockable</option>
+                          <option value="Blocker, Rush">Blocker / Rush</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div class="effect-workshop block-workshop">
+                      <div class="script-toolbar">
+                        <div>
+                          <strong>Card Effects</strong>
+                          <span>Type normal card text, convert it, then review/edit the plain-English form.</span>
+                        </div>
+                        <div class="block-toolbar-actions">
+                          <button class="ghost" id="openEffectTutorial" type="button">Effect Help</button>
+                          <button class="ghost" id="convertEffectTextToBlocks" type="button" onclick="window.convertCreationTextToEffects?.()">Convert Text To Effects</button>
+                          <button class="ghost" id="addEffectBlock" type="button">Add Effect Manually</button>
+                        </div>
+                      </div>
+
+                      <label class="block-text-field">
+                        Effect Text
+                        <textarea id="creationEffectText" spellcheck="false" placeholder="[When Attacking] You may trash 1 card from your hand: This Leader gains +1000 power until the end of this turn.&#10;[Once Per Turn] If a Character would be K.O.'d by a card effect, you may give this Leader -1000 power instead."></textarea>
+                      </label>
+
+                      <section class="effect-review-panel">
+                        <div class="effect-block-section-head">
+                          <strong>Effect Summary</strong>
+                          <span>Check this before saving. If it misunderstood something, edit the form below.</span>
+                        </div>
+                        <div id="effectBlockSummary" class="effect-block-summary">No effect converted yet.</div>
+                      </section>
+
+                      <section class="effect-review-panel">
+                        <div class="effect-block-section-head">
+                          <strong>Editable Effects</strong>
+                          <span>No code required. Use dropdowns and numbers to fix parser mistakes.</span>
+                        </div>
+                        <div class="effect-block-editor" id="effectBlockEditor" aria-live="polite"></div>
+                      </section>
+
+                      <details class="advanced-effect-panel">
+                        <summary>Developer JSON</summary>
+                        <div class="effect-json-panel">
+                          <div class="effect-block-section-head">
+                            <strong>JSON Preview</strong>
+                            <button class="ghost" id="applyEffectBlockJson" type="button">Apply JSON</button>
+                          </div>
+                          <textarea id="effectBlockJsonPreview" spellcheck="false"></textarea>
+                        </div>
+                      </details>
+
+                      <div id="effectBlockWarnings" class="effect-validation-list"></div>
+                    </div>
+
+                    <div class="import-actions">
+                      <span id="creationStatus">Ready</span>
+                      <button class="ghost" id="clearCreationForm" type="button">Clear</button>
+                      <button type="submit">Save Card</button>
+                    </div>
+                  </form>
+
+                  <aside class="creation-preview">
+                    <strong>Image Preview</strong>
+                    <div id="creationImagePreview" class="creation-image-preview">
+                      <span>No image yet</span>
+                    </div>
+                    <div class="creation-ai-note">
+                      <strong>Recipe filters</strong>
+                      <p>Search filters can use name, card type, color, type/subtype, cost, power, counter, life, attribute, rarity, set, and keyword. Example: <code>Where type includes "Bizarre"</code> or <code>Where cost &lt;= 3</code>.</p>
+                    </div>
+                  </aside>
+                </div>
+              </section>
+              <dialog class="effect-tutorial-dialog" id="effectTutorialDialog">
+                <div class="import-header">
+                  <div>
+                    <strong>Effect Wording Help</strong>
+                    <p>Use these examples when typing card text, then convert and check the summary.</p>
+                  </div>
+                  <button class="ghost" type="button" id="closeEffectTutorial">Close</button>
+                </div>
+                <div class="effect-tutorial-grid">
+                  <section>
+                    <strong>Common timings</strong>
+                    <p><code>[On Play]</code>, <code>[Activate:Main]</code>, <code>[When Attacking]</code>, <code>[On Block]</code>, <code>[Counter]</code>, <code>[Trigger]</code></p>
+                    <p>Slash timings work like <code>[When Attacking] / [On Block]</code>.</p>
+                  </section>
+                  <section>
+                    <strong>Targets</strong>
+                    <p><code>up to 2 of your opponent's Characters</code></p>
+                    <p><code>your Leader or 1 of your Characters</code></p>
+                    <p><code>your [Yuji Itadori] cards</code></p>
+                  </section>
+                  <section>
+                    <strong>Keywords</strong>
+                    <p><code>[Blocker]</code>, <code>[Rush]</code>, <code>[Character:Rush]</code>, <code>[Double Attack]</code>, <code>[Banish]</code>, <code>[Unblockable]</code></p>
+                    <p><code>DON!! x2 This Character gains Rush:Character.</code></p>
+                  </section>
+                  <section>
+                    <strong>Examples</strong>
+                    <p><code>[On Play] You may trash 1 card from your hand: K.O. up to 1 of your opponent's Characters with a cost of 3 or less.</code></p>
+                    <p><code>[On Play] Up to 2 of your opponent's Characters cannot attack until the end of your opponent's next turn.</code></p>
+                    <p><code>If you have 3 or less cards in your hand, This Character gains +1000 power.</code></p>
+                  </section>
+                </div>
+              </dialog>
+              <div class="deck-board-scroll">
+                <section class="leader-slot" id="leaderSlot"></section>
+                <div class="deck-list" id="deckList"></div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="gameView" data-view-panel="game">
+        <h2 id="gameTitle" class="visually-hidden">Self-practice setup</h2>
+        <div class="practice-shell setup-mode">
+          <section class="game-board" id="gameBoard"></section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="card-tile">
+      <button class="card-image" type="button" data-action="preview"></button>
+      <div class="card-body">
+        <strong></strong>
+        <span></span>
+      </div>
+      <div class="card-actions">
+        <button type="button" data-action="add">Add</button>
+        <button class="ghost" type="button" data-action="inspect">Inspect</button>
+        <button class="ghost custom-edit-action" type="button" data-action="edit" hidden>Edit</button>
+        <button class="ghost danger custom-delete-action" type="button" data-action="delete" hidden>Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <dialog id="cardDialog">
+    <div id="cardPreview"></div>
+    <button type="button" id="closePreview">Close</button>
+  </dialog>
+
+  <dialog id="searchTipsDialog">
+    <h2>Search Tips</h2>
+    <ul>
+      <li><code>&amp;&amp;</code> searches for multiple terms.</li>
+      <li><code>||</code> matches any term.</li>
+      <li><code>()</code> separates logic blocks.</li>
+      <li><code>[exact phrase]</code> matches an exact phrase.</li>
+      <li><code>1..5</code> searches a number range across cost, power, counter, and life.</li>
+      <li>Leader cost uses starting life for leader cards.</li>
+    </ul>
+    <p><strong>Examples:</strong></p>
+    <p><code>luffy &amp;&amp; red</code>, <code>[animal]</code>, <code>2..4</code>, <code>(luffy &amp;&amp; 1..3) || (zoro &amp;&amp; red)</code></p>
+    <button type="button" id="closeSearchTips">Close</button>
+  </dialog>
+
+  <dialog id="cardImportDialog">
+    <form id="cardImportForm" class="card-import-form">
+      <div class="import-header">
+        <div>
+          <p class="eyebrow">Custom card intake</p>
+          <h2>Import Card</h2>
+        </div>
+        <button class="ghost" type="button" id="closeCardImport">Close</button>
+      </div>
+
+      <div class="import-grid">
+        <label>
+          Card PNG
+          <input id="importImage" type="file" accept="image/png,image/jpeg,image/webp" required>
+        </label>
+        <label>
+          Card #
+          <input id="importCardNumber" type="text" placeholder="JJBA-001" required>
+        </label>
+        <label>
+          Name
+          <input id="importName" type="text" placeholder="Character name" required>
+        </label>
+        <label>
+          Card Type
+          <select id="importCategory">
+            <option value="leader">Leader</option>
+            <option value="character" selected>Character</option>
+            <option value="event">Event</option>
+            <option value="stage">Stage</option>
+          </select>
+        </label>
+        <label>
+          Colors
+          <input id="importColors" type="text" placeholder="red, green">
+        </label>
+        <label>
+          Cost / Life
+          <input id="importCost" type="number" min="0" placeholder="Cost for non-leaders">
+        </label>
+        <label>
+          Power
+          <input id="importPower" type="number" min="0" step="1000" placeholder="5000">
+        </label>
+        <label>
+          Counter
+          <input id="importCounter" type="number" min="0" step="1000" placeholder="1000">
+        </label>
+        <label>
+          Attribute
+          <input id="importAttribute" type="text" placeholder="strike, slash, special">
+        </label>
+        <label>
+          Types
+          <input id="importTypes" type="text" placeholder="Morioh/Stand User">
+        </label>
+        <label>
+          Rarity
+          <input id="importRarity" type="text" placeholder="C, R, SR, L">
+        </label>
+        <label>
+          Keywords
+          <input id="importKeywords" type="text" placeholder="Blocker, Rush">
+        </label>
+      </div>
+
+      <label class="import-effect-field">
+        Effect Text
+        <textarea id="importEffectText" rows="5" placeholder="On Play: Draw 1 card.&#10;Activate: Main Once Per Turn: Rest 1 DON!!: ..."></textarea>
+      </label>
+
+      <details class="wording-guide">
+        <summary>Best wording for effects</summary>
+        <ul>
+          <li>Start each ability with timing: <code>On Play:</code>, <code>Activate: Main</code>, <code>When Attacking:</code>, <code>Counter:</code>, or <code>Trigger:</code>.</li>
+          <li>Write costs before the colon after timing: <code>Activate: Main Once Per Turn: Rest 3 DON!! cards:</code>.</li>
+          <li>Use exact zone words: <code>hand</code>, <code>deck</code>, <code>trash</code>, <code>life</code>, <code>stage</code>, <code>leader</code>, <code>character</code>.</li>
+          <li>Say whether choices are optional: <code>up to 1</code> means optional, <code>1</code> means required.</li>
+          <li>Use clear durations: <code>during this battle</code>, <code>during this turn</code>, <code>until the end of your opponent's next turn</code>.</li>
+          <li>For searches, say exactly how many cards to look at, what can be added, and where the rest go.</li>
+        </ul>
+      </details>
+
+      <div class="import-actions">
+        <span id="importStatus">Imported cards: 0</span>
+        <button class="ghost danger" id="clearImportedCards" type="button">Clear Imports</button>
+        <button type="submit">Add To Library</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/core/effectBlocks.js?v=blocks-1"></script>
+  <script src="js/core/effectBlockParser.js?v=blocks-1"></script>
+  <script src="js/core/effectBlockValidator.js?v=blocks-1"></script>
+  <script src="js/core/effectBlockUi.js?v=blocks-1"></script>
+    <script src="js/core/customEffectV2.js?v=custom-v2-10"></script>
+  <script src="js/core/customEffectV2Ui.js?v=custom-v2-6"></script>
+  <script src="js/cards/decks.js?v=creation-8"></script>
+    <script src="app.js?v=creation-16"></script>
+</body>
+</html>
